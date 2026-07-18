@@ -1,0 +1,16 @@
+services:
+    postgres:
+        image: docker.io/library/postgres:18.4-alpine3.24
+        container_name: doraemon_db
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: doraemon
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        ports:
+            - '5432:5432'
+        volumes:
+            - pgdata:/var/lib/postgresql
+
+volumes:
+    pgdata:
