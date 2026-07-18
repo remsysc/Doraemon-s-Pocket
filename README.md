@@ -1,58 +1,121 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Doraemon's Pocket 
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Inventory management system for WalangBrownout Appliances — Laravel API + React SPA, PostgreSQL, Sanctum cookie auth.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Backend:** Laravel 13, PostgreSQL, Laravel Sanctum (SPA cookie auth)
+- **Frontend:** React + React Router, Vite, Tailwind CSS — lives in the same repo under `resources/js/`
+- **Database:** PostgreSQL via Docker/Podman (see `docker-compose.yml`)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+> Frontend and backend run from the **same repo** and the **same dev server** (`php artisan serve` + Vite together). There's no separate frontend project to clone or CORS setup to configure for local dev.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Prerequisites
 
-## Learning Laravel
+- PHP 8.3+
+- Composer
+- Node 20.19+ (check with `node -v`)
+- Docker or Podman (with `docker-compose`/`podman-compose`)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## First-Time Setup
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Clone the repo, then run these once:
 
 ```bash
-composer require laravel/boost --dev
+# 1. Install PHP dependencies
+composer install
 
-php artisan boost:install
+# 2. Copy the env file and generate an app key
+cp .env.example .env
+php artisan key:generate
+
+# 3. Start PostgreSQL
+docker compose up -d
+# (Podman users: podman-compose up -d, or add `podman` as a docker alias)
+
+# 4. Point Laravel at Postgres — edit .env and set:
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=doraemon
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+
+# 5. Run migrations
+php artisan migrate
+
+# 6. Install JS dependencies (React, Vite plugins, etc.)
+npm install
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Steps 1–5 are backend-only. Step 6 is what the frontend team needs — same command either way, since it's one `package.json` for the whole project.
 
-## Contributing
+## Running the Project
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+One command runs everything (Laravel server, queue listener, log tailer, and Vite dev server together):
 
-## Code of Conduct
+```bash
+composer dev
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+This starts:
+| Process | What it does |
+|---|---|
+| `php artisan serve` | Laravel backend at `http://localhost:8000` |
+| `npm run dev` (Vite) | React dev server with hot reload, injected into the same page via `@vite()` |
+| `php artisan queue:listen` | Background job processing |
+| `php artisan pail` | Live log tailing in the terminal |
 
-## Security Vulnerabilities
+Once it's running, open **`http://localhost:8000`** — that's the whole app, frontend and backend, same origin. No separate frontend URL/port to visit.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+If you only need the backend running (e.g. testing API endpoints with Postman) you can instead run just:
 
-## License
+```bash
+php artisan serve
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Project Structure — Who Owns What
+
+```
+app/                  ← Backend: models, controllers, middleware       (Rem)
+database/             ← Migrations, seeders                            (Rem)
+routes/api.php        ← JSON API endpoints (the contract)              (Rem)
+routes/web.php        ← Single catch-all route, rarely touched         (Rem)
+
+resources/js/         ← Frontend: all React code lives here            (Lagunzad & Larce)
+  ├─ main.jsx           entry point, mounts React into the page
+  ├─ App.jsx            root component + routes
+  ├─ pages/             Login, Register, Dashboard, etc.
+  ├─ components/        shared UI, ProtectedRoute wrapper
+  ├─ lib/               API client (axios/fetch calls to routes/api.php)
+  ├─ context/           auth context, etc.
+  └─ hooks/
+
+public/build/         ← Generated by `npm run build` — never edit directly
+```
+
+Rule of thumb: backend work touches `app/`, `database/`, `routes/api.php`. Frontend work touches `resources/js/`. This keeps merge conflicts rare since each team works in separate folders.
+
+**Shared file to watch:** `package.json` — if backend and frontend both add dependencies in the same week, this can conflict. Just give each other a heads-up before adding a new package.
+
+## API Endpoints (current)
+
+All under `/api`, JSON in/out, session-cookie authenticated via Sanctum after login.
+
+- `POST /register` — create account (`name`, `email`, `password`, `password_confirmation`, `role`)
+- `POST /login` — `email`, `password`
+- `POST /logout` — auth required
+- `GET /user` — current authenticated user
+- `GET|POST /categories`, `GET|PUT|DELETE /categories/{category}`
+- `GET|POST /products`, `GET|PUT|DELETE /products/{product}`
+- `GET|POST /lots`, `GET|PUT|DELETE /lots/{lot}`
+
+## Useful Commands
+
+```bash
+composer dev              # run backend + frontend + queue + logs together
+php artisan migrate        # run pending migrations
+php artisan migrate:fresh  # drop all tables and re-migrate (dev only!)
+npm run build               # production frontend build (outputs to public/build)
+composer test              # run PHPUnit tests
+```
