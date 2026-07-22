@@ -1,18 +1,23 @@
 <?php
-
 namespace App\Http\Middleware;
-
 use Closure;
 
-
-class RoleMiddleware {
-
-    public  function handle($request, Closure $next, ...$roles){
+class RoleMiddleware
+{
+    /**
+     * @param mixed $request
+     * @param Closure(): void $next
+     * @param mixed $roles
+     */
+    public function handle($request, Closure $next, ...$roles)
+    {
         $user = $request->user();
-        if(!$user){
+        if (!$user)
+        {
             abort(401, 'Unauthorized');
         }
-        if(!in_array($user->role, $roles)){
+        if (!in_array($user->role, $roles))
+        {
             abort(403, 'Forbidden');
         }
         return $next($request);
