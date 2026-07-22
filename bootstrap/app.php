@@ -17,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => App\Http\Middleware\RoleMiddleware::class,
         ]);
+        
+        $middleware->statefulApi();
+
+        $middleware->appendToGroup('api', [
+            \Illuminate\Session\Middleware\StartSession::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
