@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
+import {
+    login,
+    type LoginPayload,
+    type ValidationErrorResponse,
+} from "../../lib/api";
 import "../../../css/auth.css";
 
 export default function Login() {
     const navigate = useNavigate();
 
-    const [form, setForm] = useState({
+    const [form, setForm] = useState<LoginPayload>({
         email: "",
         password: "",
     });
@@ -14,16 +20,15 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setForm({
             ...form,
             [e.target.name]: e.target.value,
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
         setError("");
 
         if (!form.email || !form.password) {
@@ -33,20 +38,29 @@ export default function Login() {
 
         setLoading(true);
 
-        // Simulate login request
-        setTimeout(() => {
+        try {
+            await login(form);
             navigate("/dashboard");
-        }, 1200);
+        } catch (err) {
+            if (err instanceof AxiosError && err.response?.status === 422) {
+                const data = err.response.data as ValidationErrorResponse;
+                const firstError = Object.values(data.errors)[0]?.[0];
+                setError(firstError ?? "Invalid credentials.");
+            } else {
+                setError("Something went wrong. Please try again.");
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
+        
         <div className="auth-page">
             <div className="auth-card">
                 <div className="auth-header">
                     <div className="auth-logo">⚡</div>
-
                     <h1>WalangBrownout</h1>
-
                     <p>Power Outage Monitoring System</p>
                 </div>
 
@@ -55,7 +69,6 @@ export default function Login() {
                 <form className="auth-form" onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Email Address</label>
-
                         <input
                             type="email"
                             name="email"
@@ -67,7 +80,6 @@ export default function Login() {
 
                     <div className="form-group">
                         <label>Password</label>
-
                         <div className="password-wrapper">
                             <input
                                 type={showPassword ? "text" : "password"}
@@ -76,7 +88,6 @@ export default function Login() {
                                 value={form.password}
                                 onChange={handleChange}
                             />
-
                             <button
                                 type="button"
                                 className="toggle-password"
