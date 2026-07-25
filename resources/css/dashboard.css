@@ -1,0 +1,99 @@
+body{
+    margin:0;
+    background:#f4f7fb;
+    font-family:Segoe UI,sans-serif;
+}
+
+.dashboard{
+    min-height:100vh;
+}
+
+.topbar{
+    background:#1565c0;
+    color:white;
+    padding:18px 40px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    box-shadow:0 5px 18px rgba(0,0,0,.08);
+}
+
+.cards{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(220px,1fr));
+
+    gap:20px;
+
+    padding:35px;
+}
+
+.card{
+
+    background:white;
+
+    padding:25px;
+
+    border-radius:14px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+
+}
+
+.card h3{
+    color:#777;
+    margin-bottom:15px;
+}
+
+.card h1{
+    color:#1565c0;
+    margin:0;
+    font-size:42px;
+}
+
+.reports{
+
+    margin:35px;
+
+    background:white;
+
+    border-radius:14px;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+
+    padding:25px;
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    margin-top:20px;
+}
+
+th{
+
+    background:#1565c0;
+
+    color:white;
+
+    padding:14px;
+}
+
+td{
+
+    padding:14px;
+
+    border-bottom:1px solid #eee;
+}
+
+tr:hover{
+
+    background:#f8fbff;
+}
