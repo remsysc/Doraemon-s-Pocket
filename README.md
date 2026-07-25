@@ -26,31 +26,37 @@ cd Doraemon-s-Pocket
 # 2. Copy the env file
 cp .env.example .env
 
-# 3. Generate an app key
+# 3. Build the images
+docker compose build
+
+# 4. Generate an app key
 docker compose run --rm app php artisan key:generate
 
-# 4. Start everything
+# 5. Start everything
 docker compose up
+
+# 6. Seed the database (first time only)
+docker compose exec app php artisan db:seed
 ```
 
 That's it. Visit **`http://localhost:8000`**.
 
 `docker compose up` starts four services:
 
-| Container | What it does |
-|---|---|
-| `doraemon_db` | PostgreSQL database |
-| `doraemon_app` | Laravel on port 8000 — runs migrations and seeds on startup |
-| `doraemon_vite` | Vite dev server on port 5173 — hot module replacement |
-| `doraemon_queue` | Laravel queue worker |
+| Container        | What it does                                                |
+| ---------------- | ----------------------------------------------------------- |
+| `doraemon_db`    | PostgreSQL database                                         |
+| `doraemon_app`   | Laravel on port 8000 — runs migrations and seeds on startup |
+| `doraemon_vite`  | Vite dev server on port 5173 — hot module replacement       |
+| `doraemon_queue` | Laravel queue worker                                        |
 
 Seeded accounts to log in with:
 
-| Email | Password | Role |
-|---|---|---|
-| `admin@test.com` | `password` | Admin |
+| Email                 | Password   | Role               |
+| --------------------- | ---------- | ------------------ |
+| `admin@test.com`      | `password` | Admin              |
 | `purchasing@test.com` | `password` | Purchasing Manager |
-| `warehouse@test.com` | `password` | Warehouse Staff |
+| `warehouse@test.com`  | `password` | Warehouse Staff    |
 
 ### Stopping
 
@@ -125,18 +131,18 @@ This keeps merge conflicts rare since each team works in separate folders.
 
 All under `/api`, JSON in/out, session-cookie authenticated via Sanctum after login.
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/register` | — | Create account |
-| POST | `/login` | — | Login |
-| POST | `/logout` | ✓ | Logout |
-| GET | `/user` | ✓ | Current user |
-| GET/POST | `/categories` | ✓ | List / create categories |
-| GET/PUT/DELETE | `/categories/{id}` | ✓ | Show / update / delete |
-| GET/POST | `/products` | ✓ | List / create products |
-| GET/PUT/DELETE | `/products/{id}` | ✓ | Show / update / delete |
-| GET/POST | `/lots` | ✓ | List / create lots |
-| GET/PUT/DELETE | `/lots/{id}` | ✓ | Show / update / delete |
+| Method         | Endpoint           | Auth | Description              |
+| -------------- | ------------------ | ---- | ------------------------ |
+| POST           | `/register`        | —    | Create account           |
+| POST           | `/login`           | —    | Login                    |
+| POST           | `/logout`          | ✓    | Logout                   |
+| GET            | `/user`            | ✓    | Current user             |
+| GET/POST       | `/categories`      | ✓    | List / create categories |
+| GET/PUT/DELETE | `/categories/{id}` | ✓    | Show / update / delete   |
+| GET/POST       | `/products`        | ✓    | List / create products   |
+| GET/PUT/DELETE | `/products/{id}`   | ✓    | Show / update / delete   |
+| GET/POST       | `/lots`            | ✓    | List / create lots       |
+| GET/PUT/DELETE | `/lots/{id}`       | ✓    | Show / update / delete   |
 
 ---
 

@@ -10,10 +10,10 @@ echo "Database is ready."
 
 echo "Running migrations..."
 php artisan migrate --force
-
-echo "Seeding database..."
-php artisan db:seed --force
-
+if ! php artisan tinker --execute="exit(App\Models\User::exists() ? 1 : 0)"; then
+    echo "Seeding database..."
+    php artisan db:seed --force
+fi
 echo "Clearing caches..."
 php artisan config:clear
 php artisan route:clear
