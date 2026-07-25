@@ -12,7 +12,8 @@ export default function Register() {
         email: "",
         password: "",
         password_confirmation: "",
-        role: "warehouse_staff" as "admin" | "purchasing_manager" | "warehouse_staff",
+        role: "warehouse_staff" as
+            "admin" | "purchasing_manager" | "warehouse_staff",
     });
 
     const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +21,9 @@ export default function Register() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (
+        e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    ) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
@@ -28,7 +31,12 @@ export default function Register() {
         e.preventDefault();
         setError("");
 
-        if (!form.name || !form.email || !form.password || !form.password_confirmation) {
+        if (
+            !form.name ||
+            !form.email ||
+            !form.password ||
+            !form.password_confirmation
+        ) {
             setError("Please complete all fields.");
             return;
         }
@@ -92,9 +100,17 @@ export default function Register() {
 
                     <div className="form-group">
                         <label>Role</label>
-                        <select name="role" value={form.role} onChange={handleChange}>
-                            <option value="warehouse_staff">Warehouse Staff</option>
-                            <option value="purchasing_manager">Purchasing Manager</option>
+                        <select
+                            name="role"
+                            value={form.role}
+                            onChange={handleChange}
+                        >
+                            <option value="warehouse_staff">
+                                Warehouse Staff
+                            </option>
+                            <option value="purchasing_manager">
+                                Purchasing Manager
+                            </option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>

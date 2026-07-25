@@ -1,4 +1,4 @@
-# Doraemon's Pocket 
+# Doraemon's Pocket
 
 Inventory management system for WalangBrownout Appliances — Laravel API + React SPA, PostgreSQL, Sanctum cookie auth.
 
@@ -6,116 +6,152 @@ Inventory management system for WalangBrownout Appliances — Laravel API + Reac
 
 - **Backend:** Laravel 13, PostgreSQL, Laravel Sanctum (SPA cookie auth)
 - **Frontend:** React + React Router, Vite, Tailwind CSS — lives in the same repo under `resources/js/`
-- **Database:** PostgreSQL via Docker/Podman (see `docker-compose.yml`)
+- **Database:** PostgreSQL (runs in a container)
 
-> Frontend and backend run from the **same repo** and the **same dev server** (`php artisan serve` + Vite together). There's no separate frontend project to clone or CORS setup to configure for local dev.
+> Frontend and backend run from the **same repo**. There's no separate frontend project to clone or CORS setup to configure.
 
-## Prerequisites
+---
 
-- PHP 8.3+
-- Composer
-- Node 20.19+ (check with `node -v`)
-- Docker or Podman (with `docker-compose`/`podman-compose`)
+## Getting Started (Docker)
 
-## First-Time Setup
+The recommended way for everyone. No PHP, Composer, or Node required on your machine.
 
-Clone the repo, then run these once:
+**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) with the Compose plugin.
 
 ```bash
-# 1. Install PHP dependencies
-composer install
+# 1. Clone the repo
+git clone <repo-url>
+cd Doraemon-s-Pocket
 
-# 2. Copy the env file and generate an app key
+# 2. Copy the env file
 cp .env.example .env
+
+# 3. Generate an app key
+docker compose run --rm app php artisan key:generate
+
+# 4. Start everything
+docker compose up
+```
+
+That's it. Visit **`http://localhost:8000`**.
+
+`docker compose up` starts four services:
+
+| Container | What it does |
+|---|---|
+| `doraemon_db` | PostgreSQL database |
+| `doraemon_app` | Laravel on port 8000 — runs migrations and seeds on startup |
+| `doraemon_vite` | Vite dev server on port 5173 — hot module replacement |
+| `doraemon_queue` | Laravel queue worker |
+
+Seeded accounts to log in with:
+
+| Email | Password | Role |
+|---|---|---|
+| `admin@test.com` | `password` | Admin |
+| `purchasing@test.com` | `password` | Purchasing Manager |
+| `warehouse@test.com` | `password` | Warehouse Staff |
+
+### Stopping
+
+```bash
+docker compose down        # stop containers, keep database
+docker compose down -v     # stop containers and wipe the database
+```
+
+### Rebuilding after dependency changes
+
+If someone adds a Composer or npm package, rebuild the images:
+
+```bash
+docker compose up --build
+```
+
+---
+
+## Getting Started (Local — without Docker)
+
+Only needed if you can't use Docker. Requires PHP 8.4+, Composer, Node 22+, and a local PostgreSQL instance.
+
+```bash
+# 1. Install dependencies
+composer install
+npm install
+
+# 2. Copy env and generate key
+cp .env.example .env
+# Edit .env: set DB_HOST=127.0.0.1 and fill in your local DB credentials
 php artisan key:generate
 
-# 3. Start PostgreSQL
-docker compose up -d
-# (Podman users: podman-compose up -d, or add `podman` as a docker alias)
-
-# 4. Point Laravel at Postgres — edit .env and set:
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=doraemon
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-
-# 5. Run migrations
+# 3. Run migrations and seed
 php artisan migrate
+php artisan db:seed
 
-# 6. Install JS dependencies (React, Vite plugins, etc.)
-npm install
+# 4. Start the dev servers
+composer run dev
 ```
 
-Steps 1–5 are backend-only. Step 6 is what the frontend team needs — same command either way, since it's one `package.json` for the whole project.
+Visit **`http://localhost:8000`**.
 
-## Running the Project
+---
 
-One command runs everything (Laravel server, queue listener, log tailer, and Vite dev server together):
-
-```bash
-composer dev
-```
-
-This starts:
-| Process | What it does |
-|---|---|
-| `php artisan serve` | Laravel backend at `http://localhost:8000` |
-| `npm run dev` (Vite) | React dev server with hot reload, injected into the same page via `@vite()` |
-| `php artisan queue:listen` | Background job processing |
-| `php artisan pail` | Live log tailing in the terminal |
-
-Once it's running, open **`http://localhost:8000`** — that's the whole app, frontend and backend, same origin. No separate frontend URL/port to visit.
-
-If you only need the backend running (e.g. testing API endpoints with Postman) you can instead run just:
-
-```bash
-php artisan serve
-```
-
-## Project Structure — Who Owns What
+## Project Structure
 
 ```
-app/                  ← Backend: models, controllers, middleware       (Rem)
-database/             ← Migrations, seeders                            (Rem)
-routes/api.php        ← JSON API endpoints (the contract)              (Rem)
-routes/web.php        ← Single catch-all route, rarely touched         (Rem)
+app/                  ← Backend: models, controllers, middleware
+database/             ← Migrations, seeders
+routes/api.php        ← JSON API endpoints
+routes/web.php        ← Single catch-all route (serves the SPA)
 
-resources/js/         ← Frontend: all React code lives here            (Lagunzad & Larce)
-  ├─ main.jsx           entry point, mounts React into the page
-  ├─ App.jsx            root component + routes
+resources/js/         ← Frontend: all React code lives here
+  ├─ main.tsx           entry point
+  ├─ App.tsx            root component + routes
   ├─ pages/             Login, Register, Dashboard, etc.
-  ├─ components/        shared UI, ProtectedRoute wrapper
-  ├─ lib/               API client (axios/fetch calls to routes/api.php)
-  ├─ context/           auth context, etc.
-  └─ hooks/
+  ├─ lib/               API client (axios calls to routes/api.php)
+  └─ ...
 
-public/build/         ← Generated by `npm run build` — never edit directly
+docker/               ← Dockerfiles and config
+  ├─ app/Dockerfile
+  └─ app/entrypoint.sh
 ```
 
-Rule of thumb: backend work touches `app/`, `database/`, `routes/api.php`. Frontend work touches `resources/js/`. This keeps merge conflicts rare since each team works in separate folders.
+Backend work touches `app/`, `database/`, `routes/api.php`.
+Frontend work touches `resources/js/`.
+This keeps merge conflicts rare since each team works in separate folders.
 
-**Shared file to watch:** `package.json` — if backend and frontend both add dependencies in the same week, this can conflict. Just give each other a heads-up before adding a new package.
+---
 
-## API Endpoints (current)
+## API Endpoints
 
 All under `/api`, JSON in/out, session-cookie authenticated via Sanctum after login.
 
-- `POST /register` — create account (`name`, `email`, `password`, `password_confirmation`, `role`)
-- `POST /login` — `email`, `password`
-- `POST /logout` — auth required
-- `GET /user` — current authenticated user
-- `GET|POST /categories`, `GET|PUT|DELETE /categories/{category}`
-- `GET|POST /products`, `GET|PUT|DELETE /products/{product}`
-- `GET|POST /lots`, `GET|PUT|DELETE /lots/{lot}`
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/register` | — | Create account |
+| POST | `/login` | — | Login |
+| POST | `/logout` | ✓ | Logout |
+| GET | `/user` | ✓ | Current user |
+| GET/POST | `/categories` | ✓ | List / create categories |
+| GET/PUT/DELETE | `/categories/{id}` | ✓ | Show / update / delete |
+| GET/POST | `/products` | ✓ | List / create products |
+| GET/PUT/DELETE | `/products/{id}` | ✓ | Show / update / delete |
+| GET/POST | `/lots` | ✓ | List / create lots |
+| GET/PUT/DELETE | `/lots/{id}` | ✓ | Show / update / delete |
+
+---
 
 ## Useful Commands
 
 ```bash
-composer dev              # run backend + frontend + queue + logs together
-php artisan migrate        # run pending migrations
-php artisan migrate:fresh  # drop all tables and re-migrate (dev only!)
-npm run build               # production frontend build (outputs to public/build)
-composer test              # run PHPUnit tests
+# Run a one-off artisan command inside the container
+docker compose exec app php artisan <command>
+
+# Re-run migrations fresh (wipes data)
+docker compose exec app php artisan migrate:fresh --seed
+
+# View Laravel logs
+docker compose logs app
+
+# Open a shell inside the app container
+docker compose exec app bash
 ```

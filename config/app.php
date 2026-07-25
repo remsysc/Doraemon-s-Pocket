@@ -123,4 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    // Vite dev server URL — override when running inside Docker if needed
+    'vite_dev_server_url' => env('VITE_DEV_SERVER_URL', 'http://localhost:5173'),
+
 ];

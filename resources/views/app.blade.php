@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name') }}</title>
     @if(app()->environment('local'))
+    @php $viteHost = config('app.vite_dev_server_url', 'http://localhost:5173'); @endphp
     <script type="module">
-        import RefreshRuntime from 'http://localhost:5173/@react-refresh'
+        import RefreshRuntime from '{{ $viteHost }}/@react-refresh'
         RefreshRuntime.injectIntoGlobalHook(window)
         window.$RefreshReg$ = () => {}
         window.$RefreshSig$ = () => () => {}
