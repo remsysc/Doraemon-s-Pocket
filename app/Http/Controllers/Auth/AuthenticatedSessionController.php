@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +31,7 @@ class AuthenticatedSessionController extends Controller
         return response()->json(Auth::user());
     }
 
-    public function destroy(Request $request): JsonResponse
+    public function destroy(Request $request): Response
     {
         Auth::guard('web')->logout();
 
