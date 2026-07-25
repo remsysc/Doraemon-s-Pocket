@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import '../../../css/auth.css';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "../../../css/auth.css";
 
 export default function Login() {
     const navigate = useNavigate();
 
     const [form, setForm] = useState({
-        email: '',
-        password: '',
+        email: "",
+        password: "",
     });
 
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError] = useState("");
 
     const handleChange = (e) => {
         setForm({
@@ -24,10 +24,10 @@ export default function Login() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        setError('');
+        setError("");
 
         if (!form.email || !form.password) {
-            setError('Please fill in all fields.');
+            setError("Please fill in all fields.");
             return;
         }
 
@@ -35,35 +35,24 @@ export default function Login() {
 
         // Simulate login request
         setTimeout(() => {
-            navigate('/dashboard');
+            navigate("/dashboard");
         }, 1200);
     };
 
     return (
         <div className="auth-page">
             <div className="auth-card">
-
                 <div className="auth-header">
                     <div className="auth-logo">⚡</div>
 
                     <h1>WalangBrownout</h1>
 
-                    <p>
-                        Power Outage Monitoring System
-                    </p>
+                    <p>Power Outage Monitoring System</p>
                 </div>
 
-                {error && (
-                    <div className="auth-error">
-                        {error}
-                    </div>
-                )}
+                {error && <div className="auth-error">{error}</div>}
 
-                <form
-                    className="auth-form"
-                    onSubmit={handleSubmit}
-                >
-
+                <form className="auth-form" onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Email Address</label>
 
@@ -81,7 +70,7 @@ export default function Login() {
 
                         <div className="password-wrapper">
                             <input
-                                type={showPassword ? 'text' : 'password'}
+                                type={showPassword ? "text" : "password"}
                                 name="password"
                                 placeholder="Enter your password"
                                 value={form.password}
@@ -91,11 +80,9 @@ export default function Login() {
                             <button
                                 type="button"
                                 className="toggle-password"
-                                onClick={() =>
-                                    setShowPassword(!showPassword)
-                                }
+                                onClick={() => setShowPassword(!showPassword)}
                             >
-                                {showPassword ? '🙈' : '👁'}
+                                {showPassword ? "🙈" : "👁"}
                             </button>
                         </div>
                     </div>
@@ -105,18 +92,14 @@ export default function Login() {
                         className="auth-button"
                         disabled={loading}
                     >
-                        {loading ? 'Signing In...' : 'Sign In'}
+                        {loading ? "Signing In..." : "Sign In"}
                     </button>
-
                 </form>
 
                 <div className="auth-footer">
-                    Don't have an account?{' '}
-                    <Link to="/register">
-                        Create one
-                    </Link>
+                    Don't have an account?{" "}
+                    <Link to="/register">Create one</Link>
                 </div>
-
             </div>
         </div>
     );

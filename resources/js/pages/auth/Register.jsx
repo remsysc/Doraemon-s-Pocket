@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import '../../../css/auth.css';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "../../../css/auth.css";
 
 export default function Register() {
     const navigate = useNavigate();
 
     const [form, setForm] = useState({
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
     });
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [error, setError] = useState("");
 
     const handleChange = (e) => {
         setForm({
@@ -27,7 +27,7 @@ export default function Register() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        setError('');
+        setError("");
 
         if (
             !form.name ||
@@ -35,26 +35,25 @@ export default function Register() {
             !form.password ||
             !form.confirmPassword
         ) {
-            setError('Please complete all fields.');
+            setError("Please complete all fields.");
             return;
         }
 
         if (form.password !== form.confirmPassword) {
-            setError('Passwords do not match.');
+            setError("Passwords do not match.");
             return;
         }
 
         setLoading(true);
 
         setTimeout(() => {
-            navigate('/login');
+            navigate("/login");
         }, 1500);
     };
 
     return (
         <div className="auth-page">
             <div className="auth-card">
-
                 <div className="auth-header">
                     <div className="auth-logo">⚡</div>
 
@@ -63,12 +62,9 @@ export default function Register() {
                     <p>Power Outage Monitoring System</p>
                 </div>
 
-                {error && (
-                    <div className="auth-error">{error}</div>
-                )}
+                {error && <div className="auth-error">{error}</div>}
 
                 <form className="auth-form" onSubmit={handleSubmit}>
-
                     <div className="form-group">
                         <label>Full Name</label>
 
@@ -98,7 +94,7 @@ export default function Register() {
 
                         <div className="password-wrapper">
                             <input
-                                type={showPassword ? 'text' : 'password'}
+                                type={showPassword ? "text" : "password"}
                                 name="password"
                                 value={form.password}
                                 onChange={handleChange}
@@ -107,11 +103,9 @@ export default function Register() {
                             <button
                                 type="button"
                                 className="toggle-password"
-                                onClick={() =>
-                                    setShowPassword(!showPassword)
-                                }
+                                onClick={() => setShowPassword(!showPassword)}
                             >
-                                {showPassword ? '🙈' : '👁'}
+                                {showPassword ? "🙈" : "👁"}
                             </button>
                         </div>
                     </div>
@@ -121,7 +115,7 @@ export default function Register() {
 
                         <div className="password-wrapper">
                             <input
-                                type={showConfirm ? 'text' : 'password'}
+                                type={showConfirm ? "text" : "password"}
                                 name="confirmPassword"
                                 value={form.confirmPassword}
                                 onChange={handleChange}
@@ -130,31 +124,21 @@ export default function Register() {
                             <button
                                 type="button"
                                 className="toggle-password"
-                                onClick={() =>
-                                    setShowConfirm(!showConfirm)
-                                }
+                                onClick={() => setShowConfirm(!showConfirm)}
                             >
-                                {showConfirm ? '🙈' : '👁'}
+                                {showConfirm ? "🙈" : "👁"}
                             </button>
                         </div>
                     </div>
 
-                    <button
-                        className="auth-button"
-                        disabled={loading}
-                    >
-                        {loading ? 'Creating Account...' : 'Create Account'}
+                    <button className="auth-button" disabled={loading}>
+                        {loading ? "Creating Account..." : "Create Account"}
                     </button>
-
                 </form>
 
                 <div className="auth-footer">
-                    Already have an account?{' '}
-                    <Link to="/login">
-                        Sign In
-                    </Link>
+                    Already have an account? <Link to="/login">Sign In</Link>
                 </div>
-
             </div>
         </div>
     );
