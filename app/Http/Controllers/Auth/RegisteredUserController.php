@@ -10,22 +10,39 @@ use Illuminate\Validation\Rules;
 
 class RegisteredUserController extends Controller
 {
+    /**
+     * Register a new user.
+     *
+     * @bodyParam password_confirmation string required Must match password. Example: architecto
+     */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:admin,purchasing_manager,warehouse_staff'],
+            "name" => ["required", "string", "max:255"],
+            "email" => [
+                "required",
+                "string",
+                "email",
+                "max:255",
+                "unique:users,email",
+            ],
+            "password" => ["required", "confirmed", Rules\Password::defaults()],
+            "role" => [
+                "required",
+                "in:admin,purchasing_manager,warehouse_staff",
+            ],
         ]);
 
         $user = User::create($validated);
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        $token = $user->createToken("api-token")->plainTextToken;
 
-        return response()->json([
-            'token' => $token,
-            'user' => $user,
-        ], 201);
+        return response()->json(
+            [
+                "token" => $token,
+                "user" => $user,
+            ],
+            201,
+        );
     }
 }
