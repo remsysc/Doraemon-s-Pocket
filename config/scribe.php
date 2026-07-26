@@ -112,7 +112,7 @@ return [
         "default" => false,
 
         // Where is the auth value meant to be sent in a request?
-        "in" => AuthIn::BEARER->value,
+        "in" => "bearer",
 
         // The name of the auth parameter (e.g. token, key, apiKey) or header (e.g. Authorization, Api-Key).
         "name" => "key",
