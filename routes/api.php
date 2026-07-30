@@ -25,18 +25,20 @@ Route::middleware("auth:sanctum")->group(function () {
     //Route::get('/lots/{lot}', [LotController::class, 'show']);
 
     // ---- Purchasing Manager + Admin: catalog & procurement writes ----
-    /*Route::middleware('role:admin,purchasing_manager')->group(function () {
-        Route::post('/categories', [CategoryController::class, 'store']);
-        Route::put('/categories/{category}', [CategoryController::class, 'update']);
-        Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+    Route::middleware("role:admin,purchasing_manager")->group(function () {
+        // Route::post('/categories', [CategoryController::class, 'store']);
+        // Route::put('/categories/{category}', [CategoryController::class, 'update']);
+        //Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
 
-        Route::post('/products', [ProductController::class, 'store']);
-        Route::put('/products/{product}', [ProductController::class, 'update']);
-        Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+        Route::post("/products", [ProductController::class, "store"]);
+        Route::put("/products/{product}", [ProductController::class, "update"]);
+        Route::delete("/products/{product}", [
+            ProductController::class,
+            "destroy",
+        ]);
 
-        Route::post('/lots', [LotController::class, 'store']);
-        Route::put('/lots/{lot}', [LotController::class, 'update']);
-        Route::delete('/lots/{lot}', [LotController::class, 'destroy']);
+        //Route::post('/lots', [LotController::class, 'store']);
+        //Route::put('/lots/{lot}', [LotController::class, 'update']);
+        // Route::delete('/lots/{lot}', [LotController::class, 'destroy']);
     });
-    */
 });
