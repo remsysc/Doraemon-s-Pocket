@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\DestroyProductRequest;
-use App\Http\Requests\StoreProductRequest;
-use App\Http\Requests\UpdateProductRequest;
+use App\Http\Requests\Products\IndexProductRequest;
+use App\Http\Requests\Products\StoreProductRequest;
+use App\Http\Requests\Products\UpdateProductRequest;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
+use Response;
 
 class ProductController extends Controller
 {
@@ -26,8 +27,10 @@ class ProductController extends Controller
 
     //gets all the product, not paginated yet
     // TODO: CREATE A PAGINATION
-    public function index(): JsonResponse
-    {
+    public function index(
+        IndexProductRequest $request,
+        Product $product,
+    ): JsonResponse {
         $products = Product::with("category")->get();
 
         return response()->json([
@@ -48,7 +51,7 @@ class ProductController extends Controller
     /*
      * Deactivates the product
      */
-    public function destroy(Product $product)
+    public function destroy(DestroyProductRequest $request, Product $product)
     {
         $product->update(["is_active" => false]);
         return response()->noContent();

@@ -26,9 +26,15 @@ Route::middleware("auth:sanctum")->group(function () {
 
     // ---- Purchasing Manager + Admin: catalog & procurement writes ----
     Route::middleware("role:admin,purchasing_manager")->group(function () {
-        // Route::post('/categories', [CategoryController::class, 'store']);
-        // Route::put('/categories/{category}', [CategoryController::class, 'update']);
-        //Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+        Route::post("/categories", [CategoryController::class, "store"]);
+        Route::put("/categories/{category}", [
+            CategoryController::class,
+            "update",
+        ]);
+        Route::delete("/categories/{category}", [
+            CategoryController::class,
+            "destroy",
+        ]);
 
         Route::post("/products", [ProductController::class, "store"]);
         Route::put("/products/{product}", [ProductController::class, "update"]);
