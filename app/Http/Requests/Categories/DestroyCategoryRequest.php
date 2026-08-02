@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Categories;
 
+use App\Models\Category;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -13,7 +14,7 @@ class DestroyCategoryRequest extends FormRequest
     public function authorize(): bool
     {
         $category = $this->route("category");
-        return $this->user()->can("delete", $category) ?? false;
+        return $this->user()->can("delete", $category);
     }
 
     /**
@@ -23,8 +24,6 @@ class DestroyCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-                //
-            ];
+        return [];
     }
 }

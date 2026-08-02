@@ -32,7 +32,7 @@ class ProductPolicy
      */
     public function view(User $user, Product $product): bool
     {
-        return in_array($user->role, ["purchasing_manager", "warehouse_staff"]);
+        return $this->viewAny($user);
     }
 
     /**
