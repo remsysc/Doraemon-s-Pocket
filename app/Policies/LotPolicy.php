@@ -28,10 +28,15 @@ class LotPolicy
 
     /**
      * Determine whether the user can create models.
+     *
+     * A Lot represents a physical stock receipt (expiry_date, bin_location),
+     * so Warehouse Staff owns it, not Purchasing Manager, as of the
+     * 2026-08-04 RBAC refinement (PRD §4/§6, SPEC FR-16). Admin is granted
+     * via before().
      */
     public function create(User $user): bool
     {
-        return $user->role === "purchasing_manager";
+        return $user->role === "warehouse_staff";
     }
 
     /**
@@ -39,7 +44,7 @@ class LotPolicy
      */
     public function update(User $user, Lot $lot): bool
     {
-        return $user->role === "purchasing_manager";
+        return $user->role === "warehouse_staff";
     }
 
     /**
@@ -47,7 +52,7 @@ class LotPolicy
      */
     public function delete(User $user, Lot $lot): bool
     {
-        return false;
+        return $user->role === "warehouse_staff";
     }
 
     /**

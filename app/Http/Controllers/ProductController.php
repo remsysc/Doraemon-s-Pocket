@@ -32,6 +32,7 @@ class ProductController extends Controller
         IndexProductRequest $request,
     ): AnonymousResourceCollection {
         $products = QueryBuilder::for(Product::class)
+            ->with("category")
             ->allowedIncludes("category")
             ->allowedFilters("name", "description", "category_id", "is_active")
             ->allowedSorts("name", "created_at")

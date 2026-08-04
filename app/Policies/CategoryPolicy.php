@@ -38,10 +38,14 @@ class CategoryPolicy
 
     /**
      * Determine whether the user can create models.
+     *
+     * Category is catalog/master data, Admin-governed only as of the
+     * 2026-08-04 RBAC refinement (PRD §4/§6, SPEC FR-7) — Purchasing
+     * Manager no longer writes it. Admin is granted via before().
      */
     public function create(User $user): bool
     {
-        return $user->role === "purchasing_manager";
+        return false;
     }
 
     /**
@@ -49,7 +53,7 @@ class CategoryPolicy
      */
     public function update(User $user, Category $category): bool
     {
-        return $user->role === "purchasing_manager";
+        return false;
     }
 
     /**
