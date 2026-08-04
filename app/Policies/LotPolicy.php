@@ -47,7 +47,7 @@ class LotPolicy
      */
     public function delete(User $user, Lot $lot): bool
     {
-        return false;
+        return $user->role === "purchasing_manager";
     }
 
     /**
