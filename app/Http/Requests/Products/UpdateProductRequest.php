@@ -29,11 +29,7 @@ class UpdateProductRequest extends FormRequest
         $product = $this->route("product");
 
         return [
-            "category_id" => [
-                "sometimes",
-                "uuid",
-                "exists:categories,category_id",
-            ],
+            "category_id" => ["sometimes", "uuid", "exists:categories,id"],
             "name" => [
                 "sometimes",
                 "string",
@@ -45,7 +41,6 @@ class UpdateProductRequest extends FormRequest
                 ),
             ],
             "description" => ["sometimes", "nullable", "string", "max:1000"],
-            "price" => ["sometimes", "numeric", "min:0"],
             "is_active" => ["sometimes", "boolean"],
         ];
     }
