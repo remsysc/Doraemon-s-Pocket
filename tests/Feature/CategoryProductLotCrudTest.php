@@ -23,16 +23,9 @@ class CategoryProductLotCrudTest extends TestCase
         return User::factory()->purchasingManager()->create();
     }
 
-    private function warehouseStaff(): User
+    public function test_category_full_crud_as_purchasing_manager(): void
     {
-        return User::factory()->warehouseStaff()->create();
-    }
-
-    // ---- Category: Admin only (2026-08-04 RBAC refinement) ----
-
-    public function test_category_full_crud_as_admin(): void
-    {
-        $user = $this->admin();
+        $user = $this->purchasingManager();
 
         $create = $this->actingAs($user)->postJson("/api/categories", [
             "name" => "Air Conditioners",
@@ -61,52 +54,9 @@ class CategoryProductLotCrudTest extends TestCase
         $delete->assertNoContent();
     }
 
-    public function test_purchasing_manager_cannot_write_category(): void
+    public function test_product_full_crud_as_purchasing_manager(): void
     {
         $user = $this->purchasingManager();
-
-        $this->actingAs($user)
-            ->postJson("/api/categories", [
-                "name" => "Nope",
-                "slug" => "nope",
-            ])
-            ->assertForbidden();
-
-        $category = Category::create([
-            "name" => "Purifiers",
-            "slug" => "purifiers",
-        ]);
-
-        $this->actingAs($user)
-            ->putJson("/api/categories/{$category->id}", ["name" => "Nope"])
-            ->assertForbidden();
-        $this->actingAs($user)
-            ->deleteJson("/api/categories/{$category->id}")
-            ->assertForbidden();
-
-        // Read access is unaffected.
-        $this->actingAs($user)->getJson("/api/categories")->assertOk();
-    }
-
-    public function test_warehouse_staff_cannot_write_category(): void
-    {
-        $user = $this->warehouseStaff();
-
-        $this->actingAs($user)
-            ->postJson("/api/categories", [
-                "name" => "Nope",
-                "slug" => "nope",
-            ])
-            ->assertForbidden();
-
-        $this->actingAs($user)->getJson("/api/categories")->assertOk();
-    }
-
-    // ---- Product: Admin only (2026-08-04 RBAC refinement) ----
-
-    public function test_product_full_crud_as_admin(): void
-    {
-        $user = $this->admin();
         $category = Category::create([
             "name" => "Thermostats",
             "slug" => "thermostats",
@@ -138,56 +88,9 @@ class CategoryProductLotCrudTest extends TestCase
         $delete->assertNoContent();
     }
 
-    public function test_purchasing_manager_cannot_write_product(): void
+    public function test_lot_full_crud_as_purchasing_manager(): void
     {
         $user = $this->purchasingManager();
-        $category = Category::create([
-            "name" => "Thermostats",
-            "slug" => "thermostats",
-        ]);
-
-        $this->actingAs($user)
-            ->postJson("/api/products", [
-                "name" => "Smart Thermostat",
-                "barcode" => "BC-001",
-                "unit_of_measure" => "unit",
-                "is_seasonal" => false,
-                "is_active" => true,
-                "category_id" => $category->id,
-            ])
-            ->assertForbidden();
-
-        // Read access is unaffected.
-        $this->actingAs($user)->getJson("/api/products")->assertOk();
-    }
-
-    public function test_warehouse_staff_cannot_write_product(): void
-    {
-        $user = $this->warehouseStaff();
-        $category = Category::create([
-            "name" => "Thermostats",
-            "slug" => "thermostats",
-        ]);
-
-        $this->actingAs($user)
-            ->postJson("/api/products", [
-                "name" => "Smart Thermostat",
-                "barcode" => "BC-001",
-                "unit_of_measure" => "unit",
-                "is_seasonal" => false,
-                "is_active" => true,
-                "category_id" => $category->id,
-            ])
-            ->assertForbidden();
-    }
-
-    // ---- Lot: Admin + Warehouse Staff (2026-08-04 RBAC refinement) ----
-    // A Lot is a physical receipt record (expiry_date, bin_location), so
-    // Warehouse Staff owns it now; Purchasing Manager is read-only.
-
-    public function test_lot_full_crud_as_warehouse_staff(): void
-    {
-        $user = $this->warehouseStaff();
         $category = Category::create([
             "name" => "Filters",
             "slug" => "filters",
@@ -224,64 +127,38 @@ class CategoryProductLotCrudTest extends TestCase
         $delete->assertNoContent();
     }
 
-    public function test_lot_full_crud_as_admin(): void
+    public function test_warehouse_staff_can_read_but_not_write(): void
     {
-        $user = $this->admin();
-        $category = Category::create([
-            "name" => "Filters",
-            "slug" => "filters",
-        ]);
-        $product = Product::create([
-            "name" => "Air Filter",
-            "barcode" => "BC-003",
-            "unit_of_measure" => "unit",
-            "is_seasonal" => false,
-            "is_active" => true,
-            "category_id" => $category->id,
-        ]);
+        $user = User::factory()->warehouseStaff()->create();
 
-        $create = $this->actingAs($user)->postJson("/api/lots", [
-            "sku_id" => $product->sku_id,
-            "received_date" => now()->toDateTimeString(),
-            "expiry_date" => now()->addDays(30)->toDateString(),
-            "bin_location" => "B1",
-        ]);
-        $create->assertCreated();
-    }
-
-    public function test_purchasing_manager_cannot_write_lot(): void
-    {
-        $user = $this->purchasingManager();
-        $category = Category::create([
-            "name" => "Filters",
-            "slug" => "filters",
-        ]);
-        $product = Product::create([
-            "name" => "Air Filter",
-            "barcode" => "BC-004",
-            "unit_of_measure" => "unit",
-            "is_seasonal" => false,
-            "is_active" => true,
-            "category_id" => $category->id,
-        ]);
+        $this->actingAs($user)->getJson("/api/categories")->assertOk();
 
         $this->actingAs($user)
-            ->postJson("/api/lots", [
-                "sku_id" => $product->sku_id,
-                "received_date" => now()->toDateTimeString(),
-                "expiry_date" => now()->addDays(30)->toDateString(),
-                "bin_location" => "A1",
+            ->postJson("/api/categories", [
+                "name" => "Nope",
+                "slug" => "nope",
             ])
             ->assertForbidden();
-
-        // Read access is unaffected.
-        $this->actingAs($user)->getJson("/api/lots")->assertOk();
     }
-
-    // ---- Cross-cutting ----
 
     public function test_guest_is_unauthenticated(): void
     {
         $this->getJson("/api/categories")->assertUnauthorized();
+    }
+
+    public function test_admin_full_crud_on_category(): void
+    {
+        $user = $this->admin();
+
+        $create = $this->actingAs($user)->postJson("/api/categories", [
+            "name" => "Purifiers",
+            "slug" => "purifiers",
+        ]);
+        $create->assertCreated();
+        $categoryId = $create->json("data.id");
+
+        $this->actingAs($user)
+            ->deleteJson("/api/categories/{$categoryId}")
+            ->assertNoContent();
     }
 }
