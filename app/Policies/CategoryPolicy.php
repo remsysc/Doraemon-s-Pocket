@@ -57,7 +57,7 @@ class CategoryPolicy
      */
     public function delete(User $user, Category $category): bool
     {
-        return $user->role === "purchasing_manager";
+        return false;
     }
 
     /**

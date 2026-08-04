@@ -56,7 +56,7 @@ class ProductPolicy
      */
     public function delete(User $user, Product $product): bool
     {
-        return $user->role === "purchasing_manager";
+        return false;
     }
 
     /**

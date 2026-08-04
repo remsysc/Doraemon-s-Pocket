@@ -37,7 +37,7 @@ class IndexProductRequest extends FormRequest
             "filter.category_id" => [
                 "sometimes",
                 "uuid",
-                "exists:categories,id",
+                "exists:categories,category_id",
             ],
             "filter.is_active" => ["sometimes", "boolean"],
 
