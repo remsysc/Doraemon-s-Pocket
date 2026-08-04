@@ -37,10 +37,14 @@ class ProductPolicy
 
     /**
      * Determine whether the user can create models.
+     *
+     * Product is catalog/master data, Admin-governed only as of the
+     * 2026-08-04 RBAC refinement (PRD §4/§6, SPEC FR-11) — Purchasing
+     * Manager no longer writes it. Admin is granted via before().
      */
     public function create(User $user): bool
     {
-        return $user->role === "purchasing_manager";
+        return false;
     }
 
     /**
@@ -48,7 +52,7 @@ class ProductPolicy
      */
     public function update(User $user, Product $product): bool
     {
-        return $user->role === "purchasing_manager";
+        return false;
     }
 
     /**
@@ -56,7 +60,7 @@ class ProductPolicy
      */
     public function delete(User $user, Product $product): bool
     {
-        return $user->role === "purchasing_manager";
+        return false;
     }
 
     /**
