@@ -10,10 +10,14 @@ class LotResource extends JsonResource
     public function toArray(Request $request)
     {
         return [
+            "lot_id" => $this->lot_id,
             "sku_id" => $this->sku_id,
             "received_date" => $this->received_date,
             "expiry_date" => $this->expiry_date,
             "bin_location" => $this->bin_location,
+            "product" => new ProductResource($this->whenLoaded("product")),
+            "created_at" => $this->created_at?->toISOString(),
+            "updated_at" => $this->updated_at?->toISOString(),
         ];
     }
 }
