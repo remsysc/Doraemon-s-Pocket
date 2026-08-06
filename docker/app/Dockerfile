@@ -1,6 +1,6 @@
-FROM composer:2 AS composer
+FROM docker.io/library/composer:2 AS composer
 
-FROM php:8.4-cli-alpine
+FROM docker.io/library/php:8.4-cli-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
