@@ -2,26 +2,51 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexInventoryTransactionRequest;
 use App\Http\Requests\StoreInventoryTransactionRequest;
-use App\Http\Requests\UpdateInventoryTransactionRequest;
 use App\Models\InventoryTransaction;
+use App\Http\Requests\ShowInventoryTransactionRequest;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
+use App\Resources\InventoryTransactionResource;
 
 class InventoryTransactionController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(IndexInventoryTransactionRequest $request)
     {
-        //
-    }
+        $inventory_txn = QueryBuilder::for(InventoryTransaction::class)
+            ->with("lot.product", "actor")
+            ->allowedIncludes("lot", "lot.product", "actor")
+            ->allowedFilters(
+                AllowedFilter::exact("lot_id"),
+                AllowedFilter::exact("user_id"),
+                AllowedFilter::exact("txn_type"),
+                AllowedFilter::callback(
+                    "from_date",
+                    fn($query, $value) => $query->where(
+                        "occured_at",
+                        ">=",
+                        $value,
+                    ),
+                ),
+                AllowedFilter::callback(
+                    "to_date",
+                    fn($query, $value) => $query->where(
+                        "occured_at",
+                        "<=",
+                        $value,
+                    ),
+                ),
+            )
+            ->allowedSorts("created_at", "occured_at", "qty_delta")
+            ->defaultSort("-occured_at")
+            ->paginate($request->input("per_page", 15))
+            ->withQueryString();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return InventoryTransactionResource::collection($inventory_txn);
     }
 
     /**
@@ -29,38 +54,19 @@ class InventoryTransactionController extends Controller
      */
     public function store(StoreInventoryTransactionRequest $request)
     {
-        //
+        $inventory_txn = InventoryTransaction::create($request->validated());
+
+        return new InventoryTransactionResource($inventory_txn);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(InventoryTransaction $inventoryTransaction)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(InventoryTransaction $inventoryTransaction)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateInventoryTransactionRequest $request, InventoryTransaction $inventoryTransaction)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(InventoryTransaction $inventoryTransaction)
-    {
-        //
+    public function show(
+        ShowInventoryTransactionRequest $request,
+        InventoryTransaction $inventoryTransaction,
+    ) {
+        $inventoryTransaction->loadMissing("lot.product", "actor");
+        return new InventoryTransactionResource($inventoryTransaction);
     }
 }

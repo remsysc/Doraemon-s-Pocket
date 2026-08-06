@@ -12,8 +12,11 @@ return new class extends Migration {
     {
         Schema::create("inventory_transactions", function (Blueprint $table) {
             $table->uuid("txn_id")->primary();
-            $table->foreignUuid("lot_id")->constrained("lots");
-            $table->foreignUuid("user_id")->constrained("users");
+            $table->foreignUuid("lot_id")->constrained("lots", "lot_id");
+            $table->foreignId("actor_id")->constrained("users");
+            $table->enum("txn_type", ["in", "out"]);
+            $table->integer("qty_delta");
+            $table->dateTime("occured_at");
             $table->timestamps();
         });
     }

@@ -4,6 +4,10 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\InventoryTransaction;
+use App\Models\Lot;
+use Illuminate\Validation\Rule;
+use App\Models\User;
 
 class StoreInventoryTransactionRequest extends FormRequest
 {
@@ -12,7 +16,7 @@ class StoreInventoryTransactionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()->can("create", InventoryTransaction::class);
     }
 
     /**
@@ -23,7 +27,11 @@ class StoreInventoryTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            "tx_type" => ["required", "string", Rule::in(["in", "out"])], // Tightened enum validation
+            "qty_delta" => ["required", "integer"],
+            "occured_at" => ["required", "date"],
+            "lot_id" => ["required", Rule::exists(Lot::class, "lot_id")],
+            "actor_id" => ["required", Rule::exists(User::class, "id")],
         ];
     }
 }

@@ -99,16 +99,16 @@ Full schema with ERD diagram: **[docs/erd/erd.md](../erd/erd.md)**
 
 Quick reference — tables and their implementation status:
 
-| Table                    | Status              | PK                     | Notes                                       |
-| ------------------------ | ------------------- | ---------------------- | ------------------------------------------- |
-| `users`                  | impl.               | `id` bigint ⚠️*¹       | role enum: admin/purchasing_manager/warehouse_staff |
-| `categories`             | impl.               | `id` uuid              | soft deletes                                |
-| `products`               | impl.               | `sku_id` uuid ⚠️       | non-standard PK — `$primaryKey` required    |
-| `lots`                   | impl.               | `lot_id` uuid ⚠️       | non-standard PK — `$primaryKey` required    |
-| `inventory_transactions` | planned (Sprint 2)  | `txn_id` uuid          | append-only, signed qty_delta               |
-| `inventory_snapshots`    | planned (Sprint 3)  | `sku_id` uuid          | derived, row-locked updates only            |
-| `reorder_configs`        | planned (Sprint 4)  | `sku_id` uuid          | PM + admin write; WS no access              |
-| `audit_logs`             | planned (Sprint 2/5)| `audit_id` uuid        | append-only, admin read only                |
+| Table                    | Status               | PK               | Notes                                               |
+| ------------------------ | -------------------- | ---------------- | --------------------------------------------------- |
+| `users`                  | impl.                | `id` bigint ⚠️*¹ | role enum: admin/purchasing_manager/warehouse_staff |
+| `categories`             | impl.                | `id` uuid        | soft deletes                                        |
+| `products`               | impl.                | `sku_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
+| `lots`                   | impl.                | `lot_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
+| `inventory_transactions` | planned (Sprint 2)   | `txn_id` uuid    | append-only, signed qty_delta                       |
+| `inventory_snapshots`    | planned (Sprint 3)   | `sku_id` uuid    | derived, row-locked updates only                    |
+| `reorder_configs`        | planned (Sprint 4)   | `sku_id` uuid    | PM + admin write; WS no access                      |
+| `audit_logs`             | planned (Sprint 2/5) | `audit_id` uuid  | append-only, admin read only                        |
 
 *¹ Blueprint specified UUID — accepted deviation, needs team sign-off (OQ-9).
 
@@ -170,9 +170,9 @@ All list endpoints: standard Laravel pagination (`?page=`), Resource-wrapped res
 ### Not yet routed (Sprints 2–5, requirement-level only — do not implement against this table alone)
 
 ```
-POST /api/inventory-transactions             role:warehouse_staff,admin                          FR-20, FR-34
-GET  /api/inventory-transactions             role: any (all authenticated roles read; admin is a superuser everywhere, not called out per-line below)
-GET  /api/inventory-transactions/{transaction} role: any
+POST /api/inventory-transactions               role:warehouse_staff,admin                          FR-20, FR-34
+GET  /api/inventory-transactions               role: any authenticated (all three roles)            FR-20
+GET  /api/inventory-transactions/{transaction} role: any authenticated (all three roles)            FR-20
 GET  /api/audit-logs                         role:admin                                          FR-31, FR-37
 GET  /api/inventory-snapshots                role: any
 GET  /api/inventory-snapshots/{product}      role: any
@@ -254,6 +254,36 @@ FR-22: WHEN a SALE transaction is inserted THE SYSTEM SHALL decrement qty_availa
   And qty_available is 0, not negative
 ```
 
+```
+FR-20 / FR-34: InventoryTransaction Permissions
+  create  — warehouse_staff (and admin as superuser)
+  view    — all authenticated roles (admin, purchasing_manager, warehouse_staff)
+  index   — all authenticated roles
+
+  Rationale: The ledger is append-only; Warehouse Staff controls writes
+  because they perform physical stock movements. All roles can read because
+  Purchasing Managers use transaction history for analytics and variance
+  analysis, and Admin needs it for audit/reconciliation.
+
+  Given a user with role purchasing_manager, authenticated
+  When they GET /api/inventory-transactions
+  Then the response is 200 with a paginated list
+
+  Given a user with role warehouse_staff, authenticated
+  When they GET /api/inventory-transactions
+  Then the response is 200 with a paginated list
+
+  Given a user with role purchasing_manager, authenticated
+  When they POST /api/inventory-transactions with a valid PICK payload
+  Then the response is 403
+  And no inventory_transactions row is created
+
+  Given a user with role warehouse_staff, authenticated
+  When they POST /api/inventory-transactions with a valid RECEIPT payload
+  Then the response is 201
+  And an inventory_transactions row is created with actor_id = auth user's id
+```
+
 Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is implemented, not batched in advance — writing acceptance criteria for unbuilt Sprint 4/5 endpoints now would itself be guessing at their final shape.
 
 ---
@@ -284,4 +314,5 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 - 2026-08-01 — Initial spec drafted from Blueprint doc, existing migrations/models, routes/api.php, and AGENTS.md conventions.
 - 2026-08-04 — RBAC refinement per perms team's role-brief submission (Warehouse Staff / Purchasing Manager / Admin can/can't-do + UI expectations). Category/Product write narrowed from `admin,purchasing_manager` to `admin` only (FR-7, FR-11). Lot write reassigned from `admin,purchasing_manager` to `admin,warehouse_staff` (FR-16, FR-33 — inferred, Lot not named explicitly in the brief). `inventory_transactions` POST restricted to `warehouse_staff` + `admin` (FR-20, FR-34); `purchasing_manager` read-only. Added FR-32–FR-38 covering `reorder_configs` write (purchasing_manager + admin), alert visibility (purchasing_manager+admin, not warehouse_staff), cycle-count submit-vs-view split (warehouse_staff submits, admin views report), `audit_logs` read (admin only), and user management (admin only).
 - 2026-08-04 — Simplified Admin's permission model from a documented "escalation-only, not primary UI" access tier to a plain backend superuser: `admin` passes every role check unconditionally. Removed the escalation-path language from FR-7/FR-11/FR-16/FR-20/FR-32/FR-34 and the API contract table.
+- 2026-08-06 — Added §7.x InventoryTransaction Permissions acceptance criteria: `create` restricted to `warehouse_staff` + `admin`; `view`/`index` open to all authenticated roles. Rationale: append-only audit ledger — Warehouse Staff controls writes, all roles read for analytics and variance analysis. Updated §4 API contracts table to match (GET routes now explicitly note all-role access).
 - 2026-08-04 — **Implemented in code:** `app/Http/Middleware/RoleMiddleware.php` now short-circuits to allow `role === 'admin'` before checking the route's role list. `routes/api.php` split the old `role:admin,purchasing_manager` write group into `role:admin` (Category/Product) and `role:admin,warehouse_staff` (Lot). `App\Policies\CategoryPolicy`, `ProductPolicy`, and `LotPolicy` updated to match (Category/Product `create`/`update`/`delete` now `false` for non-admin; Lot now checks `warehouse_staff` instead of `purchasing_manager`), since those Policies are a second, independent authorization layer invoked from each `FormRequest::authorize()` and had been overlooked in the first pass of this change. Added `tests/Feature/RoleMiddlewareTest.php` (admin-bypass-when-not-listed, non-admin-outside-list-forbidden, non-admin-inside-list-allowed, guest-401) and rewrote `tests/Feature/CategoryProductLotCrudTest.php` for the new role assignments. Full suite: 16 tests, 38 assertions, passing.
