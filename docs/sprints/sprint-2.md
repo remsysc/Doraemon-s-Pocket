@@ -9,7 +9,7 @@
 | CATEGORY table + CRUD endpoints                          | Rem   | 🟡 WIP                                                       |
 | PRODUCT table + CRUD endpoints                           | Rem   | ✅ DONE _(migration + model done; see discrepancy note below)_ |
 | LOT table + CRUD endpoints                               | Rem   | 🟡 WIP                                                       |
-| INVENTORY_TRANSACTION table + append-only write endpoint | —     | ⬜ not started                                               |
+| INVENTORY_TRANSACTION table + append-only write endpoint | Rem   | ✅ DONE (2026-08-07)                                         |
 | AUDIT_LOG table                                          | —     | ⬜ not started                                               |
 | Automatic audit logging middleware/service               | —     | ⬜ not started                                               |
 | Frontend: Category Management                            | —     | ⬜ not started                                               |
@@ -17,7 +17,7 @@
 | Frontend: Product Form                                   | —     | ⬜ not started                                               |
 | Frontend: Lot Management                                 | —     | ⬜ not started                                               |
 | Seed realistic inventory data                            | —     | ⬜ not started                                               |
-| Test: transaction writes are immutable                   | —     | ⬜ not started                                               |
+| Test: transaction writes are immutable (no PUT/PATCH/DELETE) | Rem | ✅ DONE — `InventoryTransactionTest` (24 tests, 67 assertions) |
 | Test: audit logs are generated for CRUD operations       | —     | ⬜ not started                                               |
 
 ---

@@ -78,10 +78,10 @@ class CategoryProductLotCrudTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->putJson("/api/categories/{$category->id}", ["name" => "Nope"])
+            ->putJson("/api/categories/{$category->category_id}", ["name" => "Nope"])
             ->assertForbidden();
         $this->actingAs($user)
-            ->deleteJson("/api/categories/{$category->id}")
+            ->deleteJson("/api/categories/{$category->category_id}")
             ->assertForbidden();
 
         // Read access is unaffected.
@@ -119,7 +119,7 @@ class CategoryProductLotCrudTest extends TestCase
             "is_seasonal" => false,
             "shelf_life_days" => 1,
             "is_active" => true,
-            "category_id" => $category->id,
+            "category_id" => $category->getKey(),
         ]);
         $create->assertCreated();
         $skuId = $create->json("data.id");
@@ -130,7 +130,7 @@ class CategoryProductLotCrudTest extends TestCase
             ->assertOk();
 
         $update = $this->actingAs($user)->putJson("/api/products/{$skuId}", [
-            "category_id" => $category->id,
+            "category_id" => $category->category_id,
         ]);
         $update->assertOk();
 
@@ -153,7 +153,7 @@ class CategoryProductLotCrudTest extends TestCase
                 "unit_of_measure" => "unit",
                 "is_seasonal" => false,
                 "is_active" => true,
-                "category_id" => $category->id,
+                "category_id" => $category->category_id,
             ])
             ->assertForbidden();
 
@@ -176,7 +176,7 @@ class CategoryProductLotCrudTest extends TestCase
                 "unit_of_measure" => "unit",
                 "is_seasonal" => false,
                 "is_active" => true,
-                "category_id" => $category->id,
+                "category_id" => $category->category_id,
             ])
             ->assertForbidden();
     }
@@ -198,7 +198,7 @@ class CategoryProductLotCrudTest extends TestCase
             "unit_of_measure" => "unit",
             "is_seasonal" => false,
             "is_active" => true,
-            "category_id" => $category->id,
+            "category_id" => $category->category_id,
         ]);
 
         $create = $this->actingAs($user)->postJson("/api/lots", [
@@ -237,7 +237,7 @@ class CategoryProductLotCrudTest extends TestCase
             "unit_of_measure" => "unit",
             "is_seasonal" => false,
             "is_active" => true,
-            "category_id" => $category->id,
+            "category_id" => $category->category_id,
         ]);
 
         $create = $this->actingAs($user)->postJson("/api/lots", [
@@ -262,7 +262,7 @@ class CategoryProductLotCrudTest extends TestCase
             "unit_of_measure" => "unit",
             "is_seasonal" => false,
             "is_active" => true,
-            "category_id" => $category->id,
+            "category_id" => $category->category_id,
         ]);
 
         $this->actingAs($user)

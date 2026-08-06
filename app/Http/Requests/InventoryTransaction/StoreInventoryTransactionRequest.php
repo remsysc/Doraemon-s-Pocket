@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\InventoryTransaction;
 
-use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Foundation\Http\FormRequest;
 use App\Models\InventoryTransaction;
 use App\Models\Lot;
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\User;
 
 class StoreInventoryTransactionRequest extends FormRequest
 {
@@ -16,7 +15,7 @@ class StoreInventoryTransactionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can("create", InventoryTransaction::class);
+        return $this->user()->can('create', InventoryTransaction::class);
     }
 
     /**
@@ -27,11 +26,12 @@ class StoreInventoryTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "tx_type" => ["required", "string", Rule::in(["in", "out"])], // Tightened enum validation
-            "qty_delta" => ["required", "integer"],
-            "occured_at" => ["required", "date"],
-            "lot_id" => ["required", Rule::exists(Lot::class, "lot_id")],
-            "actor_id" => ["required", Rule::exists(User::class, "id")],
+            'lot_id'     => ['required', Rule::exists(Lot::class, 'lot_id')],
+            'txn_type'   => ['required', 'string', Rule::in(['in', 'out'])],
+            'qty_delta'  => ['required', 'integer', 'not_in:0'],
+            'occured_at' => ['required', 'date'],
+            // actor_id is intentionally excluded — set server-side from
+            // auth()->id() in the controller (SPEC FR-20, FR-34).
         ];
     }
 }

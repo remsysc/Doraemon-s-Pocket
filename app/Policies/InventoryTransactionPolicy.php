@@ -42,13 +42,13 @@ class InventoryTransactionPolicy
     /**
      * Determine whether the user can create models.
      *
-     * InventoryTransaction is catalog/master data, Admin-governed only as of the
-     * 2026-08-04 RBAC refinement (PRD §4/§6, SPEC FR-11) — Purchasing
-     * Manager no longer writes it. Admin is granted via before().
+     * Warehouse Staff logs physical stock movements (RECEIPT, PICK, etc.).
+     * Admin is granted unconditionally via before().
+     * Purchasing Manager performs no physical stock movements — FR-34.
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->role === 'warehouse_staff';
     }
 
     /**

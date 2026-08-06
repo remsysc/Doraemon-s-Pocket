@@ -3,29 +3,30 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryTransaction extends Model
 {
     use HasUuids;
-    protected $primaryKey = "txn_id";
+
+    protected $primaryKey = 'txn_id';
 
     protected $fillable = [
-        "lot_id",
-        "user_id",
-        "txn_type",
-        "qty_delta",
-        "occured_at",
+        'lot_id',
+        'actor_id',
+        'txn_type',
+        'qty_delta',
+        'occured_at',
     ];
 
-    public function lot()
+    public function lot(): BelongsTo
     {
-        return $this->belongsTo(Lot::class, "lot_id");
+        return $this->belongsTo(Lot::class, 'lot_id', 'lot_id');
     }
 
-    public function user()
+    public function actor(): BelongsTo
     {
-        return $this->belongsTo(User::class, "actor_id");
+        return $this->belongsTo(User::class, 'actor_id');
     }
 }
