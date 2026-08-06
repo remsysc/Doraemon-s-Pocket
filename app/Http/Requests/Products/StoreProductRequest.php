@@ -38,11 +38,15 @@ class StoreProductRequest extends FormRequest
             "is_seasonal" => ["required", "boolean"],
             "shelf_life_days" => [
                 "required_if:is_seasonal,true",
+                "nullable",
                 "integer",
                 "min:1",
             ],
             "is_active" => ["required", "boolean"],
-            "category_id" => ["required", Rule::exists(Category::class, "id")],
+            "category_id" => [
+                "required",
+                Rule::exists(Category::class, "category_id"),
+            ],
         ];
     }
 }
