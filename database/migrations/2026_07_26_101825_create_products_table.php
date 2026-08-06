@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create("products", function (Blueprint $table) {
             $table->uuid("sku_id")->primary();
-            $table->foreignUuid("category_id")->constrained();
+            $table->foreignUuid("category_id")->references("category_id")->on("categories");
             $table->index("category_id");
             $table->string("name");
             $table->string("description")->nullable();

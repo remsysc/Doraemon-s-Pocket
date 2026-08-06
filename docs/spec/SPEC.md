@@ -12,45 +12,13 @@ Covers Sprint 1 (done) through Sprint 2 (in progress) in full detail, and Sprint
 
 ### 1.1 Sprint status source of truth
 
-Per-item status below tracks the **live Excalidraw checklist** (`.excalidraw`), not the static Sprint 7.4 table in the Blueprint doc — the Excalidraw file has per-person WIP/DONE tags that postdate the Blueprint and reflect actual current state:
+Sprint checklists are tracked in dedicated files — keep status updates there, not here:
 
-**Sprint 1 — Foundation & auth**
+- **[Sprint 1 — Foundation & Auth](../sprints/sprint-1.md)** ✅ DONE
+- **[Sprint 2 — Core Ledger](../sprints/sprint-2.md)** 🟡 In Progress (current)
+- **[Sprints 3–6 — Roadmap](../sprints/sprints-3-6.md)** ⬜ Not started
 
-| Item                                                    | Owner        | Status                                                                                                                               |
-| ------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Repo setup, CI, project skeleton                        | Rem          | ✅ DONE                                                                                                                              |
-| USER table (id, email, password_hash, role)             | Rem          | ✅ DONE                                                                                                                              |
-| Register/login endpoints, session auth                  | Rem          | ✅ DONE                                                                                                                              |
-| Role-based route-guarding middleware                    | Rem          | ✅ DONE                                                                                                                              |
-| Purchasing Manager / Warehouse Staff / Admin personas   | Cindy & Vane | ✅ DONE (submitted 2026-08-04)                                                                                                       |
-| User can/can't-do, UI expectations                      | Cindy & Vane | ✅ DONE (submitted 2026-08-04) — see §2 RBAC subsection below; not yet reflected in `routes/api.php`/`RoleMiddleware`, tracked in §9 |
-| Wireframes                                              | Lyll & Larce | ✅ DONE                                                                                                                              |
-| Frontend: login/register pages, protected-route wrapper | Lyll & Larce | 🟡 WIP                                                                                                                               |
-| Initial DB seeders (users, roles, sample products)      | Rem          | ✅ DONE                                                                                                                              |
-| List all endpoints (API contract doc)                   | Rem          | ✅ DONE                                                                                                                              |
-| Test: can't hit inventory endpoint unauthenticated      | —            | ⬜ not started                                                                                                                       |
-
-**Sprint 2 — Core ledger** (current sprint)
-
-| Item                                                     | Owner | Status                                                    |
-| -------------------------------------------------------- | ----- | --------------------------------------------------------- |
-| CATEGORY table + CRUD endpoints                          | Rem   | 🟡 WIP                                                    |
-| PRODUCT table + CRUD endpoints                           | Rem   | ✅ DONE _(per checklist — see 🚧 discrepancy note below)_ |
-| LOT table + CRUD endpoints                               | Rem   | 🟡 WIP                                                    |
-| INVENTORY_TRANSACTION table + append-only write endpoint | —     | ⬜ not started                                            |
-| AUDIT_LOG table                                          | —     | ⬜ not started                                            |
-| Automatic audit logging middleware/service               | —     | ⬜ not started                                            |
-| Frontend: Category Management                            | —     | ⬜ not started                                            |
-| Frontend: Product List                                   | —     | ⬜ not started                                            |
-| Frontend: Product Form                                   | —     | ⬜ not started                                            |
-| Frontend: Lot Management                                 | —     | ⬜ not started                                            |
-| Seed realistic inventory data                            | —     | ⬜ not started                                            |
-| Test: transaction writes are immutable                   | —     | ⬜ not started                                            |
-| Test: audit logs are generated for CRUD operations       | —     | ⬜ not started                                            |
-
-**Sprints 3–6** — every item in the Excalidraw checklist is currently unchecked (`[]`). Nothing in Snapshot derivation, reservation workflow, ABC/XYZ classification, ROP/EOQ, cycle-count reconciliation, or hardening has been started. Treat §§4–7 of this spec for those sprints as **forward-looking requirements only**, not in-progress work.
-
-🚧 **DISCREPANCY:** The checklist marks Product CRUD `[/]` (DONE), but `routes/api.php` has every Product/Category/Lot route commented out, and no `ProductController` create/store/update/destroy logic is visible in the reviewed files. Likely reading: the **migration + model** for Product is done, but the **CRUD endpoints** are not — the checklist item bundles both under one checkbox. Recommend splitting this checklist item in the Excalidraw board (e.g. separate "Product migration/model" from "Product CRUD endpoints") so status doesn't overstate completion. Until confirmed, this spec treats Product CRUD as WIP, not done, for planning purposes.
+**Sprints 3–6** — nothing in Snapshot derivation, reservation workflow, ABC/XYZ classification, ROP/EOQ, cycle-count reconciliation, or hardening has been started. Treat §§4–7 of this spec for those sprints as **forward-looking requirements only**, not in-progress work.
 
 ---
 
@@ -87,7 +55,7 @@ Per-item status below tracks the **live Excalidraw checklist** (`.excalidraw`), 
 - **FR-18** 🚧 OPEN QUESTION: `onDelete` behavior when a Lot's parent Product is deleted — no default currently specified in the migration (`constrained()` defaults to `restrict` under Laravel unless overridden). Confirm with the team whether deleting a Product with active Lots should be blocked (restrict — current implicit behavior) or cascade. Do not change migration behavior without this confirmation.
 - **FR-19** 🚧 OPEN QUESTION: `received_date` type mismatch — migration defines `dateTime`, Blueprint §4.1 ERD text says `date`. Resolve before Sprint 2 sign-off; this spec currently treats the migration (`dateTime`) as authoritative since it's the implemented artifact, but flags it for review.
 
-### Inventory Transaction Ledger (Sprint 2, not yet started)
+### Inventory Transaction Ledger (Sprint 2 — ✅ implemented 2026-08-07)
 
 - **FR-20** THE SYSTEM SHALL record every stock movement as an append-only row in `inventory_transactions` with `txn_type` in (`RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, `WRITE_OFF`), a signed `qty_delta`, `occurred_at`, and `actor_id` set from the authenticated session — never a client-supplied actor_id. THE SYSTEM SHALL restrict `POST` access to `warehouse_staff` and `admin` (superuser — same permission, not a separate tier); `purchasing_manager` has read-only access to the ledger. 🔄 CHANGED 2026-08-04 — see FR-34/§9.
 - **FR-21** THE SYSTEM SHALL NOT expose any UPDATE or DELETE route for `inventory_transactions`. Only `POST` (create) and `GET` (read) are permitted.
@@ -127,123 +95,22 @@ This subsection is the single source of truth for role checks going forward; whe
 
 ## 3. Data Models
 
-Fields marked `(impl.)` reflect the actual current migration; fields marked `(planned)` are not yet migrated.
+Full schema with ERD diagram: **[docs/erd/erd.md](../erd/erd.md)**
 
-### users (impl.)
+Quick reference — tables and their implementation status:
 
-```
-id: bigint, pk, auto-increment          -- NOTE: not UUID, despite blueprint calling for UUID PK.
-                                         -- 🚧 OPEN QUESTION: blueprint §4.1 specifies user_id UUID PK;
-                                         -- actual users table uses Laravel's default bigint id.
-                                         -- Confirm whether this is an accepted deviation or needs
-                                         -- a migration to UUID before Sprint 2 sign-off.
-name: string, not null
-email: string, unique, not null
-email_verified_at: timestamp, nullable
-password: string, not null (hashed cast)
-remember_token: string, nullable
-role: string, not null, default 'warehouse_staff'  -- enum in (admin, purchasing_manager, warehouse_staff)
-created_at, updated_at: timestamp
-```
+| Table                    | Status               | PK               | Notes                                               |
+| ------------------------ | -------------------- | ---------------- | --------------------------------------------------- |
+| `users`                  | impl.                | `id` bigint ⚠️*¹ | role enum: admin/purchasing_manager/warehouse_staff |
+| `categories`             | impl.                | `id` uuid        | soft deletes                                        |
+| `products`               | impl.                | `sku_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
+| `lots`                   | impl.                | `lot_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
+| `inventory_transactions` | impl. (Sprint 2)     | `txn_id` uuid    | append-only, signed qty_delta; write: WS+admin, read: all roles |
+| `inventory_snapshots`    | planned (Sprint 3)   | `sku_id` uuid    | derived, row-locked updates only                    |
+| `reorder_configs`        | planned (Sprint 4)   | `sku_id` uuid    | PM + admin write; WS no access                      |
+| `audit_logs`             | planned (Sprint 2/5) | `audit_id` uuid  | append-only, admin read only                        |
 
-Write access (create/update/delete): `admin` only (FR-7). `purchasing_manager`/`warehouse_staff` read-only. 🔄 CHANGED 2026-08-04.
-
-### categories (impl.)
-
-```
-id: uuid, pk
-name: string, not null
-slug: string, unique, not null
-created_at, updated_at: timestamp
-deleted_at: timestamp, nullable (soft deletes)
-```
-
-### products (impl.)
-
-```
-sku_id: uuid, pk                        -- non-standard PK name; requires explicit
-                                         -- protected $primaryKey = 'sku_id' in Model.
-category_id: uuid, fk -> categories.id, indexed
-name: string, not null
-description: string, nullable
-barcode: string, nullable
-unit_of_measure: string, not null
-is_seasonal: boolean, default false
-shelf_life_days: integer, nullable
-is_active: boolean, default true
-created_at, updated_at: timestamp
-```
-
-Write access (create/update/delete): `admin` only (FR-11). `purchasing_manager`/`warehouse_staff` read-only. 🔄 CHANGED 2026-08-04.
-
-No price/cost/valuation field — deliberate (PRD non-goal, FR-14).
-
-### lots (impl.)
-
-```
-lot_id: uuid, pk                        -- non-standard PK name; requires explicit
-                                         -- protected $primaryKey = 'lot_id' in Model.
-sku_id: uuid, fk -> products.sku_id, indexed
-received_date: dateTime, not null       -- 🚧 see FR-19
-expiry_date: date, nullable             -- drives FEFO ordering (FR-24)
-bin_location: string, not null
-created_at, updated_at: timestamp
-```
-
-Write access (create/update): `admin` + `warehouse_staff` (FR-16, FR-33). `purchasing_manager` read-only. 🔄 CHANGED 2026-08-04, 🚧 inferred — see §9.
-
-### inventory_transactions (planned — Sprint 2)
-
-```
-txn_id: uuid, pk
-lot_id: uuid, fk -> lots.lot_id
-txn_type: enum(RECEIPT, RESERVE, PICK, SALE, ADJUSTMENT, WRITE_OFF), not null
-qty_delta: integer, not null            -- signed; positive for RECEIPT, negative for SALE/PICK/WRITE_OFF
-occurred_at: timestamp, not null, default now()
-actor_id: fk -> users.id, not null      -- set server-side from auth()->id(), never client-supplied
-```
-
-Append-only: no update/delete route exposed (FR-21). Write (POST) access: `warehouse_staff` and `admin` (superuser, same permission — not a separate escalation tier) (FR-20, FR-34); `purchasing_manager` read-only. 🔄 CHANGED 2026-08-04.
-
-### inventory_snapshots (planned — Sprint 3)
-
-```
-sku_id: uuid, pk, fk -> products.sku_id
-qty_on_hand: integer, not null, default 0
-qty_reserved: integer, not null, default 0
-qty_available: integer, not null, default 0   -- derived: qty_on_hand - qty_reserved
-last_updated: timestamp, not null
-```
-
-Derived/cached — updated only via the transaction-insert trigger path (FR-22), never directly.
-
-### reorder_configs (planned — Sprint 4)
-
-```
-sku_id: uuid, pk, fk -> products.sku_id
-reorder_point: integer, not null
-safety_stock: integer, not null
-lead_time_days: integer, not null
-```
-
-Write access: `purchasing_manager` and `admin` (superuser) (FR-32); `warehouse_staff` has no access at all (read or write). 🔄 CHANGED 2026-08-04.
-
-### audit_logs (planned — Sprint 2/5)
-
-```
-audit_id: uuid, pk
-actor_id: fk -> users.id, not null
-action: string, not null                -- e.g. CREATE_PRODUCT, UPDATE_LOT
-entity_type: string, not null
-entity_id: uuid, not null
-old_values: json, nullable
-new_values: json, nullable
-ip_address: string, nullable
-user_agent: string, nullable
-occurred_at: timestamp, not null
-```
-
-Read access: `admin` only (FR-31, FR-37). `purchasing_manager`/`warehouse_staff` cannot view. 🔄 CHANGED 2026-08-04.
+*¹ Blueprint specified UUID — accepted deviation, needs team sign-off (OQ-9).
 
 ---
 
@@ -303,9 +170,9 @@ All list endpoints: standard Laravel pagination (`?page=`), Resource-wrapped res
 ### Not yet routed (Sprints 2–5, requirement-level only — do not implement against this table alone)
 
 ```
-POST /api/inventory-transactions             role:warehouse_staff,admin                          FR-20, FR-34
-GET  /api/inventory-transactions             role: any (all authenticated roles read; admin is a superuser everywhere, not called out per-line below)
-GET  /api/inventory-transactions/{transaction} role: any
+POST /api/inventory-transactions               role:warehouse_staff,admin                          FR-20, FR-34  ✅ impl. 2026-08-07
+GET  /api/inventory-transactions               role: any authenticated (all three roles)            FR-20         ✅ impl. 2026-08-07
+GET  /api/inventory-transactions/{transaction} role: any authenticated (all three roles)            FR-20         ✅ impl. 2026-08-07
 GET  /api/audit-logs                         role:admin                                          FR-31, FR-37
 GET  /api/inventory-snapshots                role: any
 GET  /api/inventory-snapshots/{product}      role: any
@@ -387,6 +254,36 @@ FR-22: WHEN a SALE transaction is inserted THE SYSTEM SHALL decrement qty_availa
   And qty_available is 0, not negative
 ```
 
+```
+FR-20 / FR-34: InventoryTransaction Permissions
+  create  — warehouse_staff (and admin as superuser)
+  view    — all authenticated roles (admin, purchasing_manager, warehouse_staff)
+  index   — all authenticated roles
+
+  Rationale: The ledger is append-only; Warehouse Staff controls writes
+  because they perform physical stock movements. All roles can read because
+  Purchasing Managers use transaction history for analytics and variance
+  analysis, and Admin needs it for audit/reconciliation.
+
+  Given a user with role purchasing_manager, authenticated
+  When they GET /api/inventory-transactions
+  Then the response is 200 with a paginated list
+
+  Given a user with role warehouse_staff, authenticated
+  When they GET /api/inventory-transactions
+  Then the response is 200 with a paginated list
+
+  Given a user with role purchasing_manager, authenticated
+  When they POST /api/inventory-transactions with a valid PICK payload
+  Then the response is 403
+  And no inventory_transactions row is created
+
+  Given a user with role warehouse_staff, authenticated
+  When they POST /api/inventory-transactions with a valid RECEIPT payload
+  Then the response is 201
+  And an inventory_transactions row is created with actor_id = auth user's id
+```
+
 Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is implemented, not batched in advance — writing acceptance criteria for unbuilt Sprint 4/5 endpoints now would itself be guessing at their final shape.
 
 ---
@@ -417,4 +314,6 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 - 2026-08-01 — Initial spec drafted from Blueprint doc, existing migrations/models, routes/api.php, and AGENTS.md conventions.
 - 2026-08-04 — RBAC refinement per perms team's role-brief submission (Warehouse Staff / Purchasing Manager / Admin can/can't-do + UI expectations). Category/Product write narrowed from `admin,purchasing_manager` to `admin` only (FR-7, FR-11). Lot write reassigned from `admin,purchasing_manager` to `admin,warehouse_staff` (FR-16, FR-33 — inferred, Lot not named explicitly in the brief). `inventory_transactions` POST restricted to `warehouse_staff` + `admin` (FR-20, FR-34); `purchasing_manager` read-only. Added FR-32–FR-38 covering `reorder_configs` write (purchasing_manager + admin), alert visibility (purchasing_manager+admin, not warehouse_staff), cycle-count submit-vs-view split (warehouse_staff submits, admin views report), `audit_logs` read (admin only), and user management (admin only).
 - 2026-08-04 — Simplified Admin's permission model from a documented "escalation-only, not primary UI" access tier to a plain backend superuser: `admin` passes every role check unconditionally. Removed the escalation-path language from FR-7/FR-11/FR-16/FR-20/FR-32/FR-34 and the API contract table.
+- 2026-08-07 — **Implemented in code:** `inventory_transactions` CRUD endpoints live. Routes registered in `routes/api.php` (`index`/`show` open to all authenticated roles; `store` behind `role:admin,warehouse_staff`). `InventoryTransactionController` fixed: correct resource namespace (`App\Http\Resources`), `actor_id` now set server-side from `auth()->id()` — never from request body (FR-20). `StoreInventoryTransactionRequest` fixed: `actor_id` removed from validation rules, `not_in:0` added to `qty_delta`. `InventoryTransactionPolicy::create()` fixed: now returns `warehouse_staff` check (was hardcoded `false`, blocking WS). `IndexInventoryTransanctionRequest` + `ShowInventoryTransactionRequest` fixed: missing `namespace` declarations added. `InventoryTransactionResource` fixed: missing `namespace` added, `quantity_delta` mapped from `qty_delta` (was `quantity_delta` typo). `InventoryTransaction` model fixed: `actor_id` added to `$fillable` (was `user_id`), `actor()` relation added (was `user()`), `lot()` relation fixed with correct FK args and `BelongsTo` import. `tests/Feature/InventoryTransactionTest.php` added: 24 tests, 67 assertions, all passing.
+- 2026-08-06 — Added §7.x InventoryTransaction Permissions acceptance criteria: `create` restricted to `warehouse_staff` + `admin`; `view`/`index` open to all authenticated roles. Rationale: append-only audit ledger — Warehouse Staff controls writes, all roles read for analytics and variance analysis. Updated §4 API contracts table to match (GET routes now explicitly note all-role access).
 - 2026-08-04 — **Implemented in code:** `app/Http/Middleware/RoleMiddleware.php` now short-circuits to allow `role === 'admin'` before checking the route's role list. `routes/api.php` split the old `role:admin,purchasing_manager` write group into `role:admin` (Category/Product) and `role:admin,warehouse_staff` (Lot). `App\Policies\CategoryPolicy`, `ProductPolicy`, and `LotPolicy` updated to match (Category/Product `create`/`update`/`delete` now `false` for non-admin; Lot now checks `warehouse_staff` instead of `purchasing_manager`), since those Policies are a second, independent authorization layer invoked from each `FormRequest::authorize()` and had been overlooked in the first pass of this change. Added `tests/Feature/RoleMiddlewareTest.php` (admin-bypass-when-not-listed, non-admin-outside-list-forbidden, non-admin-inside-list-allowed, guest-401) and rewrote `tests/Feature/CategoryProductLotCrudTest.php` for the new role assignments. Full suite: 16 tests, 38 assertions, passing.

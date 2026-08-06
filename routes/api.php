@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\InventoryTransactionController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
@@ -47,5 +48,18 @@ Route::middleware("auth:sanctum")->group(function () {
             "index",
             "show",
         ]);
+    });
+
+    // ---- Inventory Transactions ----
+    // Read (index, show): all authenticated roles — used for analytics and
+    // variance analysis by all three roles (SPEC FR-20, §7.x).
+    // Write (store): Warehouse Staff + Admin only — append-only ledger of
+    // physical stock movements; Purchasing Manager is read-only (SPEC FR-34).
+    Route::apiResource("inventory-transactions", InventoryTransactionController::class)
+        ->only(["index", "show"]);
+
+    Route::middleware("role:admin,warehouse_staff")->group(function () {
+        Route::apiResource("inventory-transactions", InventoryTransactionController::class)
+            ->only(["store"]);
     });
 });
