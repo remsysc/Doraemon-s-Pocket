@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\InventoryTransactionController;
 use App\Http\Controllers\LotController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::post("/register", [RegisteredUserController::class, "store"]);
 Route::post("/login", [AuthenticatedSessionController::class, "store"]);
 Route::middleware("auth:sanctum")->group(function () {
     Route::post("/logout", [AuthenticatedSessionController::class, "destroy"]);
@@ -29,6 +31,10 @@ Route::middleware("auth:sanctum")->group(function () {
     // RBAC refinement (PRD §4/§6, SPEC FR-7/FR-11) — catalog structure is
     // Admin-governed; Purchasing Manager works within the existing catalog.
     Route::middleware("role:admin")->group(function () {
+        Route::post("categories/{category}/restore", [
+            CategoryController::class,
+            "restore",
+        ]);
         Route::apiResource("categories", CategoryController::class)->except([
             "index",
             "show",

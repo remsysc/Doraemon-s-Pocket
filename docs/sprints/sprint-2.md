@@ -4,47 +4,49 @@
 
 ---
 
-| Item                                                     | Owner | Status                                                       |
-| -------------------------------------------------------- | ----- | ------------------------------------------------------------ |
-| CATEGORY table + CRUD endpoints                          | Rem   | 🟡 WIP                                                       |
-| PRODUCT table + CRUD endpoints                           | Rem   | ✅ DONE _(migration + model done; see discrepancy note below)_ |
-| LOT table + CRUD endpoints                               | Rem   | 🟡 WIP                                                       |
-| INVENTORY_TRANSACTION table + append-only write endpoint | Rem   | ✅ DONE (2026-08-07)                                         |
-| AUDIT_LOG table                                          | —     | ⬜ not started                                               |
-| Automatic audit logging middleware/service               | —     | ⬜ not started                                               |
-| Frontend: Category Management                            | —     | ⬜ not started                                               |
-| Frontend: Product List                                   | —     | ⬜ not started                                               |
-| Frontend: Product Form                                   | —     | ⬜ not started                                               |
-| Frontend: Lot Management                                 | —     | ⬜ not started                                               |
-| Seed realistic inventory data                            | —     | ⬜ not started                                               |
-| Test: transaction writes are immutable (no PUT/PATCH/DELETE) | Rem | ✅ DONE — `InventoryTransactionTest` (24 tests, 67 assertions) |
-| Test: audit logs are generated for CRUD operations       | —     | ⬜ not started                                               |
+| Item                                                        | Owner | Status                                                               |
+| ----------------------------------------------------------- | ----- | -------------------------------------------------------------------- |
+| CATEGORY table + CRUD endpoints                            | Rem   | ✅ DONE — `CategoryProductLotCrudTest`                              |
+| CATEGORY restore endpoint                                   | Rem   | ✅ DONE — Admin-only explicit restore required by `SPEC.md` FR-9  |
+| PRODUCT table + CRUD endpoints                             | Rem   | ✅ DONE — `CategoryProductLotCrudTest`                              |
+| LOT table + CRUD endpoints                                 | Rem   | ✅ DONE — `CategoryProductLotCrudTest`                              |
+| LOT validation decisions and regression coverage           | Rem   | 🟡 WIP — expiry-date behavior remains open                          |
+| INVENTORY_TRANSACTION table + append-only write endpoint   | Rem   | ✅ DONE (2026-08-07)                                                 |
+| AUDIT_LOG table                                             | —     | ⬜ not started                                                       |
+| Automatic audit logging middleware/service                  | —     | ⬜ not started                                                       |
+| Frontend: Category Management                              | —     | ⬜ not started                                                       |
+| Frontend: Product List                                     | —     | ⬜ not started                                                       |
+| Frontend: Product Form                                     | —     | ⬜ not started                                                       |
+| Frontend: Lot Management                                   | —     | ⬜ not started                                                       |
+| Seed realistic inventory data                              | —     | ⬜ not started                                                       |
+| Test: transaction writes are immutable (no PUT/PATCH/DELETE) | Rem | ✅ DONE — `InventoryTransactionTest` (25 tests, 80 assertions)       |
+| Test: audit logs are generated for CRUD operations         | —     | ⬜ not started                                                       |
 
 ---
 
-## Discrepancy Note — Product CRUD
+## Review Corrections
 
-The checklist marks Product CRUD `[/]` (DONE), but `routes/api.php` has
-every Product/Category/Lot route commented out, and no
-`ProductController` create/store/update/destroy logic was visible in
-reviewed files. Likely reading: the **migration + model** for Product is
-done, but the **CRUD endpoints** are not — the checklist bundles both
-under one checkbox.
+The previous Product CRUD discrepancy note was stale. `routes/api.php` exposes
+live Category, Product, and Lot resource routes; the corresponding controllers
+implement CRUD methods; and `CategoryProductLotCrudTest` passes 10 tests with
+31 assertions. Category and Lot CRUD are therefore complete at the endpoint
+and test-coverage level. Remaining gaps are tracked separately above rather
+than being represented as generic CRUD WIP.
 
-Recommendation: treat Product CRUD as **WIP** for planning purposes
-until endpoints are confirmed live and tested.
+`InventoryTransactionTest` passes 24 tests with 67 assertions. The test suite
+confirms authenticated read access, Admin/Warehouse Staff append access,
+Purchasing Manager write denial, and the absence of PUT/PATCH/DELETE routes.
 
 ---
 
-## Open Questions Blocking Sprint 2 Sign-Off
+## OQ-7 and OQ-8 Resolution
 
-| ID   | Question                                                                                       |
-| ---- | ---------------------------------------------------------------------------------------------- |
-| OQ-1 | Lot write ownership (admin + warehouse_staff) — inferred, not confirmed by perms team.         |
-| OQ-4 | Lot `onDelete` when parent Product deleted — restrict vs. cascade.                             |
-| OQ-5 | `received_date` type: migration `dateTime` vs. Blueprint `date`.                               |
-| OQ-7 | Can a new Product reference a soft-deleted Category?                                           |
-| OQ-8 | Past-dated `expiry_date` on Lot creation — reject (422) or allow?                              |
-| OQ-9 | `users.id` UUID vs. bigint deviation — needs explicit team sign-off.                           |
+OQ-7 and OQ-8 are resolved and no longer block Sprint 2:
 
-Full open questions list: `docs/prd/PRD.md` §9.
+- OQ-7: Soft-deleted Categories cannot be assigned to new or updated Products; existing relationships remain readable; explicit Admin restoration is required before reuse.
+- OQ-8: Normal Lot create/update flows reject `expiry_date` before today with 422 and retain nullable expiry dates. Historical expired Lots require a future explicit backfill/import workflow.
+
+`inventory_transactions` now uses the six explicit specification types:
+`RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, and `WRITE_OFF`.
+`InventoryTransactionTest` covers acceptance of all six types while preserving
+append-only behavior. Snapshot-side effects remain deferred to Sprint 3.

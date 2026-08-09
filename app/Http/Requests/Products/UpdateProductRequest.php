@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Products;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,7 +30,11 @@ class UpdateProductRequest extends FormRequest
         $product = $this->route("product");
 
         return [
-            "category_id" => ["sometimes", "uuid", "exists:categories,category_id"],
+            "category_id" => [
+                "sometimes",
+                "uuid",
+                Rule::exists(Category::class, "category_id")->withoutTrashed(),
+            ],
             "name" => [
                 "sometimes",
                 "string",

@@ -27,7 +27,7 @@ class StoreInventoryTransactionRequest extends FormRequest
     {
         return [
             'lot_id'     => ['required', Rule::exists(Lot::class, 'lot_id')],
-            'txn_type'   => ['required', 'string', Rule::in(['in', 'out'])],
+            'txn_type'   => ['required', 'string', Rule::in(InventoryTransaction::TYPES)],
             'qty_delta'  => ['required', 'integer', 'not_in:0'],
             'occured_at' => ['required', 'date'],
             // actor_id is intentionally excluded — set server-side from

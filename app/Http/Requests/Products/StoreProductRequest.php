@@ -45,7 +45,7 @@ class StoreProductRequest extends FormRequest
             "is_active" => ["required", "boolean"],
             "category_id" => [
                 "required",
-                Rule::exists(Category::class, "category_id"),
+                Rule::exists(Category::class, "category_id")->withoutTrashed(),
             ],
         ];
     }

@@ -26,6 +26,7 @@ class StoreLotRequest extends FormRequest
                 "nullable",
                 "date",
                 "after_or_equal:received_date",
+                "after_or_equal:today",
             ],
 
             // Required string representation of the warehouse location
