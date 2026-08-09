@@ -26,7 +26,7 @@ class StoreInventoryTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lot_id'     => ['required', Rule::exists(Lot::class, 'lot_id')],
+            'lot_id'     => ['required', 'uuid', Rule::exists(Lot::class, 'lot_id')],
             'txn_type'   => ['required', 'string', Rule::in(InventoryTransaction::TYPES)],
             'qty_delta'  => ['required', 'integer', 'not_in:0'],
             'occured_at' => ['required', 'date'],
