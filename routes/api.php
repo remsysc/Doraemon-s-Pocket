@@ -8,6 +8,7 @@ use App\Http\Controllers\LotController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuditLogController;
 
 Route::post("/register", [RegisteredUserController::class, "store"]);
 Route::post("/login", [AuthenticatedSessionController::class, "store"]);
@@ -61,11 +62,24 @@ Route::middleware("auth:sanctum")->group(function () {
     // variance analysis by all three roles (SPEC FR-20, §7.x).
     // Write (store): Warehouse Staff + Admin only — append-only ledger of
     // physical stock movements; Purchasing Manager is read-only (SPEC FR-34).
-    Route::apiResource("inventory-transactions", InventoryTransactionController::class)
-        ->only(["index", "show"]);
+    Route::apiResource(
+        "inventory-transactions",
+        InventoryTransactionController::class,
+    )->only(["index", "show"]);
 
     Route::middleware("role:admin,warehouse_staff")->group(function () {
-        Route::apiResource("inventory-transactions", InventoryTransactionController::class)
-            ->only(["store"]);
+        Route::apiResource(
+            "inventory-transactions",
+            InventoryTransactionController::class,
+        )->only(["store"]);
+    });
+
+    // ---- Audit Logs ----
+    // Read (index, show): Admin only — view all audit logs
+    Route::middleware("role:admin")->group(function () {
+        Route::apiResource("audit-logs", AuditLogController::class)->only([
+            "index",
+            "show",
+        ]);
     });
 });

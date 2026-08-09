@@ -38,7 +38,7 @@
 
 | Item                                                              | Owner | Status         |
 | ----------------------------------------------------------------- | ----- | -------------- |
-| AUDIT_LOG table + append-only write path                          | —     | ⬜ not started |
+| Automatic AUDIT_LOG write path for Product/Lot/Category/User writes | —     | ⬜ not started |
 | Automatic audit logging service/middleware                        | —     | ⬜ not started |
 | Cycle-count submission endpoint (warehouse_staff)                 | —     | ⬜ not started |
 | Variance/shrinkage reconciliation report (admin)                  | —     | ⬜ not started |
