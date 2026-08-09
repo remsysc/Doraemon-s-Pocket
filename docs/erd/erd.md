@@ -53,17 +53,15 @@
 
 ┌──────────────────────────┐    ┌──────────────────────────┐
 │     reorder_configs      │    │        audit_logs        │
-│  (planned — Sprint 4)    │    │  (planned — Sprint 2/5)  │
-│──────────────────────────│    │──────────────────────────│
+│  (planned — Sprint 4)    │    │ (impl. schema/read API;  │
+│──────────────────────────│    │ automatic logging pending)│
 │ sku_id UUID (PK, FK)     │    │ audit_id UUID (PK)       │
 │ reorder_point integer    │    │ actor_id FK → users.id   │
 │ safety_stock integer     │    │ action string            │
 │ lead_time_days integer   │    │ entity_type string       │
-└──────────────────────────┘    │ entity_id uuid           │
-                                │ old_values json          │
-                                │ new_values json          │
-                                │ ip_address string        │
-                                │ user_agent string        │
+└──────────────────────────┘    │ entity_id string         │
+                                │ old_values jsonb         │
+                                │ new_values jsonb         │
                                 │ occurred_at timestamp    │
                                 └──────────────────────────┘
 ```
@@ -165,19 +163,19 @@ Updated only via the transaction-insert path with `lockForUpdate()` — never wr
 
 Write: `purchasing_manager` + `admin`. `warehouse_staff` has no access at all (read or write).
 
-### audit_logs (planned — Sprint 2/5)
+### audit_logs (implemented schema and admin read API; automatic logging pending)
 
-| Column      | Type      | Notes                               |
-| ----------- | --------- | ----------------------------------- |
-| audit_id    | uuid PK   |                                     |
-| actor_id    | FK        | → users.id, not null                |
-| action      | string    | e.g. `CREATE_PRODUCT`, `UPDATE_LOT` |
-| entity_type | string    | not null                            |
-| entity_id   | uuid      | not null                            |
-| old_values  | json      | nullable                            |
-| new_values  | json      | nullable                            |
-| ip_address  | string    | nullable                            |
-| user_agent  | string    | nullable                            |
-| occurred_at | timestamp | not null                            |
+| Column      | Type                  | Notes                                      |
+| ----------- | --------------------- | ------------------------------------------ |
+| audit_id    | uuid PK               | generated server-side; immutable event ID  |
+| actor_id    | bigint FK → users.id  | server-side actor; not client-supplied     |
+| action      | string                | e.g. `CREATE_PRODUCT`, `UPDATE_LOT`        |
+| entity_type | string                | affected resource type                     |
+| entity_id   | string                | supports UUID and bigint entity identifiers |
+| old_values  | jsonb                 | nullable; state before change              |
+| new_values  | jsonb                 | nullable; state after change               |
+| occurred_at | timestamp             | event timestamp                            |
 
-Read: `admin` only. Append-only.
+Indexes: `(entity_type, entity_id)` and `occurred_at`.
+
+Read: `GET /api/audit-logs` and `GET /api/audit-logs/{audit_log}`, `admin` only. No public create, update, or delete routes. Records are append-only and system-generated; automatic logging of Product, Lot, Category, and User writes remains pending.
