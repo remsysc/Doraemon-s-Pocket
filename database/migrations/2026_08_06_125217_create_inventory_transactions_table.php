@@ -14,7 +14,14 @@ return new class extends Migration {
             $table->uuid("txn_id")->primary();
             $table->foreignUuid("lot_id")->constrained("lots", "lot_id");
             $table->foreignId("actor_id")->constrained("users");
-            $table->enum("txn_type", ["in", "out"]);
+            $table->enum("txn_type", [
+                "RECEIPT",
+                "RESERVE",
+                "PICK",
+                "SALE",
+                "ADJUSTMENT",
+                "WRITE_OFF",
+            ]);
             $table->integer("qty_delta");
             $table->dateTime("occured_at");
             $table->timestamps();

@@ -70,7 +70,7 @@ class InventoryTransactionTest extends TestCase
         return InventoryTransaction::create(array_merge([
             'lot_id'     => $lot->lot_id,
             'actor_id'   => $actor->id,
-            'txn_type'   => 'in',
+            'txn_type'   => 'RECEIPT',
             'qty_delta'  => 5,
             'occured_at' => now(),
         ], $overrides));
@@ -80,7 +80,7 @@ class InventoryTransactionTest extends TestCase
     {
         return [
             'lot_id'     => $lot->lot_id,
-            'txn_type'   => 'in',
+            'txn_type'   => 'RECEIPT',
             'qty_delta'  => 10,
             'occured_at' => now()->toDateTimeString(),
         ];
@@ -142,7 +142,7 @@ class InventoryTransactionTest extends TestCase
     {
         $lot   = $this->makeLot();
         $actor = $this->warehouseStaff();
-        $txn   = $this->makeTransaction($lot, $actor, ['txn_type' => 'out', 'qty_delta' => -3]);
+        $txn   = $this->makeTransaction($lot, $actor, ['txn_type' => 'SALE', 'qty_delta' => -3]);
 
         $this->actingAs($this->purchasingManager())
             ->getJson("/api/inventory-transactions/{$txn->txn_id}")
@@ -176,12 +176,12 @@ class InventoryTransactionTest extends TestCase
             ->postJson('/api/inventory-transactions', $this->validPayload($lot));
 
         $response->assertCreated()
-            ->assertJsonPath('data.type', 'in')
+            ->assertJsonPath('data.type', 'RECEIPT')
             ->assertJsonPath('data.quantity_delta', 10);
 
         $this->assertDatabaseHas('inventory_transactions', [
             'lot_id'    => $lot->lot_id,
-            'txn_type'  => 'in',
+            'txn_type'  => 'RECEIPT',
             'qty_delta' => 10,
             'actor_id'  => $user->id,
         ]);
@@ -289,13 +289,33 @@ class InventoryTransactionTest extends TestCase
     public function test_store_rejects_invalid_txn_type(): void
     {
         $payload = array_merge($this->validPayload($this->makeLot()), [
-            'txn_type' => 'PICK',  // old enum value from spec; migration only has in/out
+            'txn_type' => 'INVALID',
         ]);
 
         $this->actingAs($this->warehouseStaff())
             ->postJson('/api/inventory-transactions', $payload)
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['txn_type']);
+    }
+
+    public function test_store_accepts_all_specification_transaction_types(): void
+    {
+        $lot = $this->makeLot();
+        $user = $this->warehouseStaff();
+
+        foreach (InventoryTransaction::TYPES as $type) {
+            $this->actingAs($user)
+                ->postJson('/api/inventory-transactions', [
+                    'lot_id' => $lot->lot_id,
+                    'txn_type' => $type,
+                    'qty_delta' => $type === 'RECEIPT' ? 10 : -1,
+                    'occured_at' => now()->toDateTimeString(),
+                ])
+                ->assertCreated()
+                ->assertJsonPath('data.type', $type);
+        }
+
+        $this->assertDatabaseCount('inventory_transactions', count(InventoryTransaction::TYPES));
     }
 
     public function test_store_requires_qty_delta(): void
@@ -403,7 +423,7 @@ class InventoryTransactionTest extends TestCase
         $user = $this->warehouseStaff();
 
         $this->makeTransaction($lot, $user, ['qty_delta' => 5]);
-        $this->makeTransaction($lot, $user, ['txn_type' => 'out', 'qty_delta' => -2]);
+        $this->makeTransaction($lot, $user, ['txn_type' => 'SALE', 'qty_delta' => -2]);
 
         $this->actingAs($user)
             ->getJson('/api/inventory-transactions')

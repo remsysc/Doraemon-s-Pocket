@@ -37,7 +37,7 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 - **FR-6** THE SYSTEM SHALL support full CRUD on Category via `/api/categories` and `/api/categories/{category}`.
 - **FR-7** THE SYSTEM SHALL restrict Category write operations (create/update/delete) to the `admin` role only. 🔄 CHANGED 2026-08-04: `purchasing_manager` write access to Category is removed (perms brief: Purchasing Manager can't edit product/category structure) — see FR-32/§9.
 - **FR-8** THE SYSTEM SHALL allow any authenticated role to read Category (list/show).
-- **FR-9** WHEN a Category is soft-deleted and a new Category is created with a slug matching the soft-deleted one THE SYSTEM SHALL create a new record, NOT auto-revive the soft-deleted one. Reviving a soft-deleted Category requires an explicit `POST /api/categories/{category}/restore` endpoint. 🚧 OPEN QUESTION: this restore endpoint is not yet built — confirm it's in Sprint 2 scope before Sprint 2 is marked done.
+- **FR-9** WHEN a Category is soft-deleted and a new Category is created with a slug matching the soft-deleted one THE SYSTEM SHALL create a new record, NOT auto-revive the soft-deleted one. Reviving a soft-deleted Category requires the Admin-only `POST /api/categories/{category}/restore` endpoint. Existing Product relationships to the soft-deleted Category remain readable, but new Product creation and Category reassignment SHALL reject that Category with 422. ✅ DECIDED 2026-08-09; implemented and covered by `CategoryProductLotCrudTest`.
 
 ### Product (Sprint 2 — in progress)
 
@@ -50,14 +50,14 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 ### Lot (Sprint 2 — in progress)
 
 - **FR-15** THE SYSTEM SHALL support full CRUD on Lot via `/api/lots` and `/api/lots/{lot}`.
-- **FR-16** THE SYSTEM SHALL restrict Lot write operations to `admin` and `warehouse_staff` roles — a Lot record represents a physical receipt event owned by Warehouse Staff, with Admin retaining correction/oversight access. `purchasing_manager` is read-only on Lot, consistent with not performing physical stock movements. 🔄 CHANGED 2026-08-04. 🚧 Inferred: the perms brief never names `Lot` directly — see FR-33/§9.
+- **FR-16** THE SYSTEM SHALL restrict Lot write operations to `admin` and `warehouse_staff` roles — a Lot record represents a physical receipt event owned by Warehouse Staff, with Admin retaining correction/oversight access. `purchasing_manager` is read-only on Lot, consistent with not performing physical stock movements. ✅ DECIDED 2026-08-09 under the physical-receipt interpretation; see FR-33/§9.
 - **FR-17** THE SYSTEM SHALL allow any authenticated role to read Lot.
-- **FR-18** 🚧 OPEN QUESTION: `onDelete` behavior when a Lot's parent Product is deleted — no default currently specified in the migration (`constrained()` defaults to `restrict` under Laravel unless overridden). Confirm with the team whether deleting a Product with active Lots should be blocked (restrict — current implicit behavior) or cascade. Do not change migration behavior without this confirmation.
-- **FR-19** 🚧 OPEN QUESTION: `received_date` type mismatch — migration defines `dateTime`, Blueprint §4.1 ERD text says `date`. Resolve before Sprint 2 sign-off; this spec currently treats the migration (`dateTime`) as authoritative since it's the implemented artifact, but flags it for review.
+- **FR-18** THE SYSTEM SHALL restrict deletion of a Product while Lots reference it. The Lot foreign key uses the default restrictive behavior because Lots preserve physical receipt and inventory traceability; cascading Product deletion to Lots is not allowed. ✅ DECIDED 2026-08-09.
+- **FR-19** THE SYSTEM SHALL store `received_date` as a required `dateTime`, including the physical receipt time for ordering and reconciliation. `expiry_date` SHALL remain a nullable calendar `date`. Normal Lot create/update flows SHALL reject an `expiry_date` before today with 422 while retaining nullable expiry dates. Historical expired Lots require a separate explicitly authorized backfill/import workflow. ✅ DECIDED 2026-08-09; the migration is authoritative over the older Blueprint ERD type.
 
 ### Inventory Transaction Ledger (Sprint 2 — ✅ implemented 2026-08-07)
 
-- **FR-20** THE SYSTEM SHALL record every stock movement as an append-only row in `inventory_transactions` with `txn_type` in (`RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, `WRITE_OFF`), a signed `qty_delta`, `occurred_at`, and `actor_id` set from the authenticated session — never a client-supplied actor_id. THE SYSTEM SHALL restrict `POST` access to `warehouse_staff` and `admin` (superuser — same permission, not a separate tier); `purchasing_manager` has read-only access to the ledger. 🔄 CHANGED 2026-08-04 — see FR-34/§9.
+- **FR-20** THE SYSTEM SHALL record every stock movement as an append-only row in `inventory_transactions` with `txn_type` in (`RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, `WRITE_OFF`), a signed `qty_delta`, `occurred_at`, and `actor_id` set from the authenticated session — never a client-supplied actor_id. THE SYSTEM SHALL restrict `POST` access to `warehouse_staff` and `admin` (superuser — same permission, not a separate tier); `purchasing_manager` has read-only access to the ledger. ✅ IMPLEMENTED 2026-08-09; all six types are accepted by validation and covered by `InventoryTransactionTest`. Snapshot-side effects remain deferred to FR-22/FR-23 implementation.
 - **FR-21** THE SYSTEM SHALL NOT expose any UPDATE or DELETE route for `inventory_transactions`. Only `POST` (create) and `GET` (read) are permitted.
 - **FR-22** WHEN an `inventory_transactions` row of type `SALE` or `PICK` is inserted THE SYSTEM SHALL, within the same database transaction, decrement `qty_available` on the corresponding `inventory_snapshots` row using row-level locking (`SELECT ... FOR UPDATE` or Eloquent's `lockForUpdate()`).
 - **FR-23** IF a decrement would take `qty_available` below zero THEN THE SYSTEM SHALL reject the transaction (422) and roll back, rather than allowing negative available stock.
@@ -84,8 +84,8 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 This subsection is the single source of truth for role checks going forward; where it and a per-entity FR above ever drift, this subsection wins.
 
 - **FR-32** THE SYSTEM SHALL restrict write access to `reorder_configs` (reorder_point, safety_stock, lead_time_days) to `purchasing_manager` and `admin` (superuser); `warehouse_staff` SHALL have no access (read or write) to `reorder_configs` or any reorder/EOQ/purchasing-alert endpoint. Admin's reorder-config screen is not part of its default UI, but that's a navigation choice, not a separate permission tier.
-- **FR-33** 🚧 PROPOSED, pending team confirmation (the perms brief never names `Lot` directly): Lot write access is `admin` + `warehouse_staff`, per FR-16.
-- **FR-34** THE SYSTEM SHALL restrict `POST /api/inventory-transactions` (all txn_types) to `warehouse_staff` and `admin` (superuser); `purchasing_manager` SHALL receive 403 on any write to this endpoint. 🚧 Adopts the stricter reading that "no physical stock movements" blocks all txn_types, not only PICK/RECEIPT — confirm before Sprint 2/4 sign-off.
+- **FR-33** THE SYSTEM SHALL grant Lot write access to `admin` + `warehouse_staff`, under the physical-receipt interpretation. `purchasing_manager` SHALL be read-only on Lot.
+- **FR-34** THE SYSTEM SHALL restrict `POST /api/inventory-transactions` (all txn_types) to `warehouse_staff` and `admin` (superuser); `purchasing_manager` SHALL receive 403 on any write to this endpoint and SHALL retain read-only access through the GET endpoints. ✅ DECIDED 2026-08-09: no physical stock movement writes for Purchasing Manager.
 - **FR-35** THE SYSTEM SHALL restrict read access to `/api/alerts/reorder` and `/api/alerts/expiry` to `purchasing_manager` and `admin`; `warehouse_staff` SHALL NOT see these alerts.
 - **FR-36** THE SYSTEM SHALL restrict cycle-count _submission_ (`POST /api/cycle-counts`) to `warehouse_staff`; THE SYSTEM SHALL restrict variance/shrinkage _report_ viewing to `admin`.
 - **FR-37** THE SYSTEM SHALL restrict read access to `GET /api/audit-logs` to `admin` only.
@@ -110,7 +110,7 @@ Quick reference — tables and their implementation status:
 | `reorder_configs`        | planned (Sprint 4)   | `sku_id` uuid    | PM + admin write; WS no access                      |
 | `audit_logs`             | planned (Sprint 2/5) | `audit_id` uuid  | append-only, admin read only                        |
 
-*¹ Blueprint specified UUID — accepted deviation, needs team sign-off (OQ-9).
+*¹ `users.id` is intentionally an auto-incrementing `bigint` primary key. The Blueprint's UUID choice is an accepted project deviation for this single-warehouse application; Laravel's default is appropriate for internal user and actor references.
 
 ---
 
@@ -150,6 +150,10 @@ POST /api/categories                 Auth: sanctum + role:admin                 
 PUT  /api/categories/{category}      Auth: sanctum + role:admin                    🔄 CHANGED 2026-08-04
 DELETE /api/categories/{category}    Auth: sanctum + role:admin                    🔄 CHANGED 2026-08-04
 
+POST /api/categories/{category}/restore  Auth: sanctum + role:admin
+  Restores a soft-deleted Category for explicit reuse. Existing Product
+  relationships remain readable while the Category is soft-deleted.
+
 GET  /api/products                   Auth: sanctum (any role)
 GET  /api/products/{product}         Auth: sanctum (any role)
 POST /api/products                   Auth: sanctum + role:admin                    🔄 CHANGED 2026-08-04 (was admin,purchasing_manager)
@@ -158,12 +162,12 @@ DELETE /api/products/{product}       Auth: sanctum + role:admin                 
 
 GET  /api/lots                       Auth: sanctum (any role)
 GET  /api/lots/{lot}                 Auth: sanctum (any role)
-POST /api/lots                       Auth: sanctum + role:admin,warehouse_staff     🔄 CHANGED 2026-08-04 (was admin,purchasing_manager), 🚧 inferred
-PUT  /api/lots/{lot}                 Auth: sanctum + role:admin,warehouse_staff     🔄 CHANGED 2026-08-04, 🚧 inferred
-DELETE /api/lots/{lot}               Auth: sanctum + role:admin,warehouse_staff     🔄 CHANGED 2026-08-04, 🚧 inferred
+POST /api/lots                       Auth: sanctum + role:admin,warehouse_staff     🔄 CHANGED 2026-08-04; DECIDED 2026-08-09 (physical-receipt interpretation)
+PUT  /api/lots/{lot}                 Auth: sanctum + role:admin,warehouse_staff     🔄 CHANGED 2026-08-04; DECIDED 2026-08-09
+DELETE /api/lots/{lot}               Auth: sanctum + role:admin,warehouse_staff     🔄 CHANGED 2026-08-04; DECIDED 2026-08-09
 ```
 
-⚠️ `routes/api.php` and `RoleMiddleware` groups still implement the OLD rule (`role:admin,purchasing_manager` on all three resources) as of this spec update — code has not yet been changed to match. Do not treat this table as reflecting current running behavior until that follow-up lands; see §9.
+✅ `routes/api.php`, `RoleMiddleware`, and the resource policies implement the ownership rules in this contract: Category/Product writes are Admin-only, Lot writes are Admin + Warehouse Staff, and all roles can read these resources.
 
 All list endpoints: standard Laravel pagination (`?page=`), Resource-wrapped response `{ data: [...], meta: {...} }` per AGENTS.md API convention. 🚧 OPEN QUESTION: exact per-field validation rules for Product/Lot (e.g. max lengths, barcode format) not yet specified — define in FormRequest classes and backfill into this spec once written, don't invent them ad hoc in the controller.
 
@@ -202,8 +206,8 @@ Full request/response shapes for these are 🚧 OPEN — write them into this sp
 | Two simultaneous SALE transactions on the last unit of a lot                                      | Row-level lock on `inventory_snapshots` ensures only one succeeds; the other gets 422 `INSUFFICIENT_STOCK`. (FR-22, FR-23)                          |
 | Registration with an already-registered email                                                     | 422, field-level error on `email` (`unique:users,email` — already implemented).                                                                     |
 | Category slug collision after soft-delete                                                         | New record created, not auto-revived (FR-9). Explicit restore endpoint required to reuse.                                                           |
-| Product created with `category_id` pointing to a soft-deleted Category                            | 🚧 OPEN QUESTION: not yet decided whether this should be allowed (category still valid as an FK target) or rejected. Flag before Sprint 2 sign-off. |
-| Lot created with `expiry_date` in the past                                                        | 🚧 OPEN QUESTION: not yet decided whether this is rejected (422) or allowed (e.g. backfilling historical data).                                     |
+| Product created with `category_id` pointing to a soft-deleted Category            | 422 validation error. Existing Product → Category relationships remain readable via `withTrashed()`; explicit Admin restore is required before reuse. (FR-9) |
+| Lot created with `expiry_date` in the past                                                        | 422 validation error in normal create/update flows. `expiry_date` remains nullable; historical expired Lots require a separate explicitly authorized backfill/import workflow. (FR-19) |
 | Non-admin attempts write on Category/Product                                                      | 403 via `role` middleware (🔄 CHANGED 2026-08-04 — previously admin+purchasing_manager, now admin only; FR-7, FR-11).                               |
 | Purchasing Manager or non-admin/non-warehouse_staff attempts write on Lot                         | 403 via `role` middleware (🔄 CHANGED 2026-08-04; FR-16, FR-33).                                                                                    |
 | Purchasing Manager attempts `POST /api/inventory-transactions`                                    | 403 via `role` middleware — Purchasing Manager performs no physical stock movements (FR-20, FR-34).                                                 |
@@ -290,21 +294,21 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 
 ## 8. Assumptions
 
-- `users.id` staying `bigint` (not UUID as blueprint specifies) is treated as an accepted, already-shipped deviation from the blueprint, not a bug to fix — flagged in §3 for team sign-off rather than silently accepted.
+- `users.id` is intentionally an auto-incrementing `bigint` rather than a UUID. This accepted Blueprint deviation fits the single-warehouse project scope and keeps internal actor references simple.
 - ✅ RESOLVED 2026-08-04 (was: `admin` and `purchasing_manager` share identical write permissions on Category/Product/Lot): they no longer do. `admin` alone writes Category/Product; `admin` + `warehouse_staff` write Lot; `purchasing_manager` writes `reorder_configs` and reads everything else. See §2 RBAC refinement (FR-32–FR-38) and §4.
 - Pagination and Resource-wrapped JSON shape follow the AGENTS.md convention (`{ data, message, meta }`) for all new list/show endpoints.
 
 ## 9. Open Questions
 
-- 🚧 `onDelete` behavior for Lot when parent Product is deleted (FR-18).
-- 🚧 `received_date` type: `dateTime` (migration) vs `date` (blueprint) (FR-19).
+- ✅ **Lot/Product deletion behavior (FR-18), resolved 2026-08-09:** Product deletion is restricted while related Lots exist. The current constrained foreign key intentionally preserves Lot and inventory traceability; no cascade is used.
+- ✅ **`received_date` type (FR-19), resolved 2026-08-09:** `received_date` is required `dateTime`; `expiry_date` is a nullable `date`. The time component is intentional for precise receipt ordering and reconciliation.
 - 🚧 `order_cost` / `holding_cost_per_unit` sourcing for EOQ, given pricing is out-of-scope (FR-29).
-- 🚧 Whether a soft-deleted Category can still be referenced by new Products (§5).
-- 🚧 Whether past-dated `expiry_date` on Lot creation is rejected or allowed (§5).
-- 🚧 Category restore endpoint (FR-9) — confirm it's in Sprint 2 scope.
-- 🚧 Users table UUID vs bigint deviation from blueprint (§3, §8) — needs explicit team sign-off, not silent acceptance.
-- 🚧 **Lot write ownership (FR-16, FR-33):** the perms team's role brief never names the `Lot` entity directly. This spec infers `admin` + `warehouse_staff` write access from "Warehouse logs receipts in real time" + "Purchasing Manager can't perform physical stock movements." Confirm with the perms team before implementing.
-- 🚧 **Scope of Purchasing Manager's "no physical stock movements" (FR-20, FR-34):** does it block all `inventory_transactions` txn_types (RECEIPT/PICK/SALE/ADJUSTMENT/WRITE_OFF), or only the two named as examples (PICK/RECEIPT)? This spec adopts the stricter all-txn-types reading. Confirm before Sprint 2/4 sign-off.
+- ✅ **Soft-deleted Category assignment (FR-9), resolved 2026-08-09:** New Product creation and Category reassignment reject soft-deleted Categories with 422; existing Product relationships remain readable via `withTrashed()`; explicit Admin restoration is required before reuse.
+- ✅ **Past-dated Lot expiry (FR-19), resolved 2026-08-09:** Normal Lot create/update flows reject `expiry_date` before today with 422 while retaining nullable expiry dates. Historical expired Lots require a separate explicitly authorized backfill/import workflow.
+- ✅ **Category restore endpoint (FR-9), resolved 2026-08-09:** Admin can explicitly restore a soft-deleted Category through `POST /api/categories/{category}/restore` before reusing it.
+- ✅ **`users.id` type (resolved 2026-08-09):** Keep `users.id` as an auto-incrementing `bigint` primary key. This is appropriate for the project's single-warehouse scope and internal user/actor references; Product, Lot, and transaction domain identifiers may continue using UUIDs.
+- ✅ **Lot write ownership (FR-16, FR-33), resolved 2026-08-09:** under the physical-receipt interpretation, `admin` + `warehouse_staff` can create/update Lots and `purchasing_manager` is read-only. This is now the implementation decision.
+- ✅ **Purchasing Manager inventory-transaction access (FR-20, FR-34), resolved 2026-08-09:** Purchasing Manager is read-only for the ledger. `GET /api/inventory-transactions` and `GET /api/inventory-transactions/{transaction}` are allowed for analysis; `POST` for every transaction type is restricted to Warehouse Staff and Admin.
 - 🚧 **Cycle-count submit-vs-view split (FR-30, FR-36):** inferred by combining "Warehouse flags discrepancies at the moment they're found" with "Admin gets variance/shrinkage reports" — not stated explicitly as two separate steps. Confirm before Sprint 5.
 - ✅ RESOLVED 2026-08-04: Admin's exclusion from daily picking/reorder-config is UI-only, not a backend permission distinction. `RoleMiddleware` grants `admin` an unconditional pass regardless of a route's role list, and `CategoryPolicy`/`ProductPolicy`/`LotPolicy` each grant `admin` via a `before()` hook. Admin is a plain superuser — there is no separate "escalation" access tier anywhere in the implementation. "Admin doesn't do daily picking/reorder config" is purely which screen the frontend defaults Admin to.
 - ✅ RESOLVED 2026-08-04: `routes/api.php`, `RoleMiddleware`, and the Category/Product/Lot Policies have been updated to match — Category/Product writes are `role:admin`, Lot writes are `role:admin,warehouse_staff`, and the corresponding Policy `create`/`update`/`delete` methods were updated to match (Category/Product: admin-only via `before()`, non-admin always `false`; Lot: `warehouse_staff`, with admin via `before()`). Covered by `tests/Feature/CategoryProductLotCrudTest.php` and `tests/Feature/RoleMiddlewareTest.php` (14 tests, all passing). FR-32–FR-38's ledger/reorder_configs/audit_logs/user-management endpoints remain unbuilt (Sprint 4/5), so those routes/policies don't exist yet to update — tracked as before, just no longer blocked on this RBAC decision.
@@ -317,3 +321,9 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 - 2026-08-07 — **Implemented in code:** `inventory_transactions` CRUD endpoints live. Routes registered in `routes/api.php` (`index`/`show` open to all authenticated roles; `store` behind `role:admin,warehouse_staff`). `InventoryTransactionController` fixed: correct resource namespace (`App\Http\Resources`), `actor_id` now set server-side from `auth()->id()` — never from request body (FR-20). `StoreInventoryTransactionRequest` fixed: `actor_id` removed from validation rules, `not_in:0` added to `qty_delta`. `InventoryTransactionPolicy::create()` fixed: now returns `warehouse_staff` check (was hardcoded `false`, blocking WS). `IndexInventoryTransanctionRequest` + `ShowInventoryTransactionRequest` fixed: missing `namespace` declarations added. `InventoryTransactionResource` fixed: missing `namespace` added, `quantity_delta` mapped from `qty_delta` (was `quantity_delta` typo). `InventoryTransaction` model fixed: `actor_id` added to `$fillable` (was `user_id`), `actor()` relation added (was `user()`), `lot()` relation fixed with correct FK args and `BelongsTo` import. `tests/Feature/InventoryTransactionTest.php` added: 24 tests, 67 assertions, all passing.
 - 2026-08-06 — Added §7.x InventoryTransaction Permissions acceptance criteria: `create` restricted to `warehouse_staff` + `admin`; `view`/`index` open to all authenticated roles. Rationale: append-only audit ledger — Warehouse Staff controls writes, all roles read for analytics and variance analysis. Updated §4 API contracts table to match (GET routes now explicitly note all-role access).
 - 2026-08-04 — **Implemented in code:** `app/Http/Middleware/RoleMiddleware.php` now short-circuits to allow `role === 'admin'` before checking the route's role list. `routes/api.php` split the old `role:admin,purchasing_manager` write group into `role:admin` (Category/Product) and `role:admin,warehouse_staff` (Lot). `App\Policies\CategoryPolicy`, `ProductPolicy`, and `LotPolicy` updated to match (Category/Product `create`/`update`/`delete` now `false` for non-admin; Lot now checks `warehouse_staff` instead of `purchasing_manager`), since those Policies are a second, independent authorization layer invoked from each `FormRequest::authorize()` and had been overlooked in the first pass of this change. Added `tests/Feature/RoleMiddlewareTest.php` (admin-bypass-when-not-listed, non-admin-outside-list-forbidden, non-admin-inside-list-allowed, guest-401) and rewrote `tests/Feature/CategoryProductLotCrudTest.php` for the new role assignments. Full suite: 16 tests, 38 assertions, passing.
+- 2026-08-09 — **Decision recorded:** Lot write ownership follows the physical-receipt interpretation. Admin and Warehouse Staff can create/update Lots; Purchasing Manager is read-only. Updated FR-16, FR-33, the Lot API contract, §9 open questions, and Sprint 1/Sprint 2 tracking.
+- 2026-08-09 — **Decision recorded:** Purchasing Manager has read-only inventory-transaction access. Warehouse Staff and Admin can append all transaction types; all authenticated roles can read the ledger. Updated FR-20/FR-34 open-question wording and Sprint 1 tracking.
+- 2026-08-09 — **Decision recorded:** Product deletion is restricted while related Lots exist. The Lot foreign key's default restrictive behavior is intentional; cascading deletion would remove physical receipt and inventory traceability. Updated FR-18 and §9 open questions.
+- 2026-08-09 — **Decision recorded:** `received_date` is a required `dateTime`; `expiry_date` remains a nullable `date`. The time component supports precise physical receipt ordering and reconciliation. Updated FR-19, §9 open questions, ERD, and sprint tracking.
+- 2026-08-09 — **Decision recorded:** Keep `users.id` as an auto-incrementing `bigint` primary key. The UUID-vs-bigint Blueprint difference is an accepted deviation for this single-warehouse project. Updated §3, §8, §9, ERD, and sprint tracking.
+- 2026-08-09 — **Decision recorded:** Replaced the temporary `in`/`out` transaction contract with the six explicit FR-20 types: `RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, and `WRITE_OFF`. Updated migration constraints, request validation, fixtures, tests, and Sprint 2 documentation; snapshot-side effects remain deferred to Sprint 3.

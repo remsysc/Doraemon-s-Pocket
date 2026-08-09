@@ -1,0 +1,13 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Create Test for New Feature",
+      "trigger": "PostTaskExec",
+      "action": {
+        "type": "agent",
+        "prompt": "If the completed task involves adding a new significant feature to the app, suggest creating a new test file for it before running the full test suite. Ask the user if they'd like me to scaffold a test for the feature they just implemented."
+      }
+    }
+  ]
+}
