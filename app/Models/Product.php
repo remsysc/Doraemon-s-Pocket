@@ -29,6 +29,7 @@ class Product extends Model
      */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class, "category_id");
+        // Preserve historical Product → Category relationships after a soft delete.
+        return $this->belongsTo(Category::class, "category_id")->withTrashed();
     }
 }

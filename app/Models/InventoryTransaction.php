@@ -10,6 +10,15 @@ class InventoryTransaction extends Model
 {
     use HasUuids;
 
+    public const TYPES = [
+        'RECEIPT',
+        'RESERVE',
+        'PICK',
+        'SALE',
+        'ADJUSTMENT',
+        'WRITE_OFF',
+    ];
+
     protected $primaryKey = 'txn_id';
 
     protected $fillable = [

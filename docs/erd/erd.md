@@ -76,7 +76,7 @@
 
 | Column            | Type      | Notes                                                                                 |
 | ----------------- | --------- | ------------------------------------------------------------------------------------- |
-| id                | bigint PK | *¹ Blueprint specified UUID — accepted deviation (OQ-9)                               |
+| id                | bigint PK | auto-incrementing; intentional choice for internal user/actor references in this single-warehouse project |
 | name              | string    | not null                                                                              |
 | email             | string    | unique, not null                                                                      |
 | email_verified_at | timestamp | nullable                                                                              |
@@ -121,15 +121,15 @@ No price/cost/valuation field — deliberate non-goal.
 | ------------- | --------- | -------------------------------------------------------------------- |
 | lot_id        | uuid PK   | ⚠️ Non-standard — `$primaryKey = 'lot_id'` required on Model         |
 | sku_id        | uuid FK   | → products.sku_id, indexed                                           |
-| received_date | dateTime  | not null — *² OQ-5: Blueprint says `date`; migration uses `dateTime` |
+| received_date | dateTime  | not null — precise physical receipt time; intentional dateTime decision (resolved 2026-08-09) |
 | expiry_date   | date      | nullable — drives FEFO ordering                                      |
 | bin_location  | string    | not null                                                             |
 | created_at    | timestamp |                                                                      |
 | updated_at    | timestamp |                                                                      |
 
-OQ-4: `onDelete` behavior when parent Product is deleted — restrict (current implicit) vs. cascade — unresolved.
+Deletion behavior: restrict Product deletion while Lots reference it (intentional; preserves inventory traceability).
 
-### inventory_transactions (planned — Sprint 2)
+### inventory_transactions (implemented — Sprint 2)
 
 | Column      | Type      | Notes                                                           |
 | ----------- | --------- | --------------------------------------------------------------- |

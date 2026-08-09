@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Run Tests with Docker Setup",
+      "trigger": "UserPromptSubmit",
+      "action": {
+        "type": "command",
+        "command": "cat << 'EOF' | php\n<?php\n$message = json_decode(file_get_contents('php://stdin'), true)['userMessage'] ?? '';\n$testKeywords = ['test', 'testing', 'new feature', 'significant feature'];\n$shouldTest = false;\n\nforeach ($testKeywords as $keyword) {\n    if (stripos($message, $keyword) !== false) {\n        $shouldTest = true;\n        break;\n    }\n}\n\nif ($shouldTest) {\n    echo json_encode([\n        'hookSpecificOutput' => [\n            'permissionDecision' => 'ask',\n            'permissionDecisionReason' => 'Testing workflow detected. Ready to: 1) Set DB_HOST to postgres in .env, 2) Run podman-compose up --build -d, 3) Run docker exec <app-container> php artisan test'\n        ]\n    ]);\n    exit(0);\n} else {\n    exit(1);\n}\nEOF\n",
+        "timeout": 5
+      }
+    }
+  ]
+}

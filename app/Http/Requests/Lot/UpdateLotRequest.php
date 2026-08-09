@@ -22,6 +22,7 @@ class UpdateLotRequest extends FormRequest
                 "nullable",
                 "date",
                 "after_or_equal:received_date",
+                "after_or_equal:today",
             ],
             "bin_location" => ["sometimes", "string", "max:255"],
         ];

@@ -7,6 +7,7 @@ use App\Http\Requests\Categories\IndexCategoryRequest;
 use App\Http\Requests\Categories\ShowCategoryRequest;
 use App\Http\Requests\Categories\StoreCategoryRequest;
 use App\Http\Requests\Categories\UpdateCategoryRequest;
+use App\Http\Requests\Categories\RestoreCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -63,6 +64,19 @@ class CategoryController extends Controller
             "message" => "Category updated successfully",
         ]);
     }
+    /**
+     * Restore a soft-deleted Category for explicit reuse.
+     */
+    public function restore(RestoreCategoryRequest $request, string $category)
+    {
+        $category = Category::withTrashed()->findOrFail($category);
+        $category->restore();
+
+        return new CategoryResource($category)->additional([
+            "message" => "Category restored successfully",
+        ]);
+    }
+
     /**
      * @return Response
      */
