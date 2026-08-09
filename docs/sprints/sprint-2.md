@@ -10,9 +10,9 @@
 | CATEGORY restore endpoint                                   | Rem   | ✅ DONE — Admin-only explicit restore required by `SPEC.md` FR-9  |
 | PRODUCT table + CRUD endpoints                             | Rem   | ✅ DONE — `CategoryProductLotCrudTest`                              |
 | LOT table + CRUD endpoints                                 | Rem   | ✅ DONE — `CategoryProductLotCrudTest`                              |
-| LOT validation decisions and regression coverage           | Rem   | 🟡 WIP — expiry-date behavior remains open                          |
+| LOT validation decisions and regression coverage           | Rem   | ✅ DONE (2026-08-09) — `CategoryProductLotCrudTest`                 |
 | INVENTORY_TRANSACTION table + append-only write endpoint   | Rem   | ✅ DONE (2026-08-07)                                                 |
-| AUDIT_LOG table                                             | —     | ⬜ not started                                                       |
+| AUDIT_LOG schema + admin-only read API                      | Rem   | ✅ DONE (2026-08-09) — `AuditLogTest` (5 tests, 28 assertions)       |
 | Automatic audit logging middleware/service                  | —     | ⬜ not started                                                       |
 | Frontend: Category Management                              | —     | ⬜ not started                                                       |
 | Frontend: Product List                                     | —     | ⬜ not started                                                       |

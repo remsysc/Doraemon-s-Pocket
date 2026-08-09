@@ -108,7 +108,7 @@ Quick reference — tables and their implementation status:
 | `inventory_transactions` | impl. (Sprint 2)     | `txn_id` uuid    | append-only, signed qty_delta; write: WS+admin, read: all roles |
 | `inventory_snapshots`    | planned (Sprint 3)   | `sku_id` uuid    | derived, row-locked updates only                    |
 | `reorder_configs`        | planned (Sprint 4)   | `sku_id` uuid    | PM + admin write; WS no access                      |
-| `audit_logs`             | planned (Sprint 2/5) | `audit_id` uuid  | append-only, admin read only                        |
+| `audit_logs`             | impl. schema/read API; automatic logging pending | `audit_id` uuid | system-generated, append-only, admin read only |
 
 *¹ `users.id` is intentionally an auto-incrementing `bigint` primary key. The Blueprint's UUID choice is an accepted project deviation for this single-warehouse application; Laravel's default is appropriate for internal user and actor references.
 
@@ -171,13 +171,21 @@ DELETE /api/lots/{lot}               Auth: sanctum + role:admin,warehouse_staff 
 
 All list endpoints: standard Laravel pagination (`?page=`), Resource-wrapped response `{ data: [...], meta: {...} }` per AGENTS.md API convention. 🚧 OPEN QUESTION: exact per-field validation rules for Product/Lot (e.g. max lengths, barcode format) not yet specified — define in FormRequest classes and backfill into this spec once written, don't invent them ad hoc in the controller.
 
-### Not yet routed (Sprints 2–5, requirement-level only — do not implement against this table alone)
+Implemented audit-log reads:
+
+```
+GET  /api/audit-logs                         role:admin                                          FR-31, FR-37  ✅ impl. 2026-08-09
+GET  /api/audit-logs/{audit_log}             role:admin                                          FR-31, FR-37  ✅ impl. 2026-08-09
+```
+
+Automatic audit creation for Product, Lot, Category, and User writes remains pending.
+
+### Not yet routed (Sprints 3–5, requirement-level only — do not implement against this table alone)
 
 ```
 POST /api/inventory-transactions               role:warehouse_staff,admin                          FR-20, FR-34  ✅ impl. 2026-08-07
 GET  /api/inventory-transactions               role: any authenticated (all three roles)            FR-20         ✅ impl. 2026-08-07
 GET  /api/inventory-transactions/{transaction} role: any authenticated (all three roles)            FR-20         ✅ impl. 2026-08-07
-GET  /api/audit-logs                         role:admin                                          FR-31, FR-37
 GET  /api/inventory-snapshots                role: any
 GET  /api/inventory-snapshots/{product}      role: any
 POST /api/products/{product}/reserve         role:warehouse_staff,admin
