@@ -14,6 +14,7 @@ done
 echo "Database is ready."
 
 php artisan migrate --force
+php artisan db:seed --force
 
 php artisan config:clear
 php artisan route:clear

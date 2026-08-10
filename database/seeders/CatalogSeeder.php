@@ -19,6 +19,7 @@ class CatalogSeeder extends Seeder
                 'products' => [
                     [
                         'name' => 'Portable AC 1.0 HP',
+                        'description' => 'Compact portable air conditioner for small rooms and home offices.',
                         'barcode' => 'WB-AC-1000',
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => true,
@@ -30,6 +31,7 @@ class CatalogSeeder extends Seeder
                     ],
                     [
                         'name' => 'Window AC 1.5 HP',
+                        'description' => 'Energy-efficient window air conditioner for medium-sized rooms.',
                         'barcode' => 'WB-AC-1500',
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => true,
@@ -48,6 +50,7 @@ class CatalogSeeder extends Seeder
                 'products' => [
                     [
                         'name' => 'HEPA Air Purifier Small',
+                        'description' => 'Compact HEPA purifier designed for bedrooms and small living spaces.',
                         'barcode' => 'WB-AP-0100',
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => false,
@@ -59,6 +62,7 @@ class CatalogSeeder extends Seeder
                     ],
                     [
                         'name' => 'HEPA Air Purifier Large',
+                        'description' => 'High-capacity HEPA purifier for large rooms and shared work areas.',
                         'barcode' => 'WB-AP-0200',
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => false,
@@ -77,6 +81,7 @@ class CatalogSeeder extends Seeder
                 'products' => [
                     [
                         'name' => 'HEPA Replacement Filter Small',
+                        'description' => 'Replacement HEPA filter for small air purifier units.',
                         'barcode' => 'WB-FL-0100',
                         'unit_of_measure' => 'piece',
                         'is_seasonal' => false,
@@ -88,6 +93,7 @@ class CatalogSeeder extends Seeder
                     ],
                     [
                         'name' => 'HEPA Replacement Filter Large',
+                        'description' => 'Replacement HEPA filter for large air purifier units.',
                         'barcode' => 'WB-FL-0200',
                         'unit_of_measure' => 'piece',
                         'is_seasonal' => false,
@@ -106,6 +112,7 @@ class CatalogSeeder extends Seeder
                 'products' => [
                     [
                         'name' => 'Digital Smart Thermostat',
+                        'description' => 'Connected thermostat with programmable temperature controls.',
                         'barcode' => 'WB-TH-0100',
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => false,
@@ -117,6 +124,7 @@ class CatalogSeeder extends Seeder
                     ],
                     [
                         'name' => 'Programmable Thermostat',
+                        'description' => 'Programmable thermostat for scheduled residential temperature control.',
                         'barcode' => 'WB-TH-0200',
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => false,
@@ -134,10 +142,16 @@ class CatalogSeeder extends Seeder
             $products = $categoryData['products'];
             unset($categoryData['products']);
 
-            $category = Category::updateOrCreate(
+            $category = Category::withTrashed()->updateOrCreate(
                 ['slug' => $categoryData['slug']],
                 $categoryData,
             );
+
+            // Seeded categories are part of the active demo catalog. Restore one
+            // if a previous demo run soft-deleted it so frontend reads stay complete.
+            if ($category->trashed()) {
+                $category->restore();
+            }
 
             foreach ($products as $productData) {
                 $lots = $productData['lots'];
