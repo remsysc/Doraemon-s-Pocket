@@ -6,7 +6,7 @@ if [ "$#" -gt 0 ]; then
     exec "$@"
 fi
 
-echo "Waiting for database..."
+echo "Waiting for database at ${DB_HOST}:${DB_PORT}..."
 until php -r "new PDO('pgsql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');" 2>/dev/null; do
     sleep 1
 done
