@@ -237,3 +237,27 @@ export async function createTransaction(payload: StoreTransactionPayload) {
         payload,
     );
 }
+
+// ─── Audit Logs ────────────────────────────────────────────────────────────
+
+export interface AuditLog {
+    id: string;
+    user_id: number;
+    action: string;
+    auditable_type: string;
+    auditable_id: string;
+    old_values: Record<string, unknown> | null;
+    new_values: Record<string, unknown> | null;
+    created_at: string;
+    user?: { id: number; name: string; email: string };
+}
+
+export function getAuditLogs(page = 1, perPage = 15) {
+    return api.get<PaginatedResponse<AuditLog>>("/api/audit-logs", {
+        params: { page, per_page: perPage },
+    });
+}
+
+export function getAuditLog(id: string) {
+    return api.get<{ data: AuditLog }>(`/api/audit-logs/${id}`);
+}

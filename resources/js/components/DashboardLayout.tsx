@@ -32,6 +32,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         { to: "/products", icon: "📦", label: "Products" },
         { to: "/lots", icon: "🏷️", label: "Lots" },
         { to: "/transactions", icon: "📋", label: "Transactions" },
+        ...(user?.role === "admin"
+            ? [{ to: "/audit-logs", icon: "📜", label: "Audit Logs" }]
+            : []),
     ];
 
     return (
