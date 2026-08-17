@@ -1,3 +1,12 @@
+# ---- Frontend build stage ----
+FROM docker.io/library/node:22-alpine AS frontend-build
+WORKDIR /app
+COPY package.json package-lock.json .npmrc ./
+RUN npm ci
+COPY resources/ resources/
+COPY vite.config.js tsconfig.json ./
+RUN npm run build
+
 FROM docker.io/library/composer:2 AS composer
 
 FROM docker.io/library/php:8.4-cli-alpine
@@ -34,6 +43,9 @@ COPY . .
 
 # Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+
+# Pull in the production frontend build produced by the frontend-build stage
+COPY --from=frontend-build /app/public/build ./public/build
 
 # Set correct permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
