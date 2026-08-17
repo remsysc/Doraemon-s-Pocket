@@ -5,6 +5,6 @@ dockerfilePath = "Dockerfile"
 [deploy]
 # Railway injects $PORT; the entrypoint uses it
 healthcheckPath = "/up"
-healthcheckTimeout = 30
+healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
