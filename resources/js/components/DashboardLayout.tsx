@@ -7,6 +7,11 @@ interface DashboardLayoutProps {
     children: ReactNode;
 }
 
+interface NavSection {
+    label?: string;
+    items: { to: string; label: string }[];
+}
+
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const navigate = useNavigate();
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -26,14 +31,26 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         }
     };
 
-    const navItems = [
-        { to: "/dashboard", icon: "📊", label: "Dashboard" },
-        { to: "/categories", icon: "📁", label: "Categories" },
-        { to: "/products", icon: "📦", label: "Products" },
-        { to: "/lots", icon: "🏷️", label: "Lots" },
-        { to: "/transactions", icon: "📋", label: "Transactions" },
+    const navSections: NavSection[] = [
+        {
+            items: [{ to: "/dashboard", label: "Dashboard" }],
+        },
+        {
+            label: "INVENTORY",
+            items: [
+                { to: "/categories", label: "Categories" },
+                { to: "/products", label: "Products" },
+                { to: "/lots", label: "Lots" },
+                { to: "/transactions", label: "Transactions" },
+            ],
+        },
         ...(user?.role === "admin"
-            ? [{ to: "/audit-logs", icon: "📜", label: "Audit Logs" }]
+            ? [
+                  {
+                      label: "ADMINISTRATION",
+                      items: [{ to: "/audit-logs", label: "Audit Logs" }],
+                  },
+              ]
             : []),
     ];
 
@@ -41,29 +58,35 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="layout">
             <aside className={`sidebar ${sidebarOpen ? "" : "sidebar--collapsed"}`}>
                 <div className="sidebar__header">
-                    <span className="sidebar__logo">⚡</span>
-                    {sidebarOpen && <h1 className="sidebar__title">WalangBrownout</h1>}
+                    <div className="sidebar__logo">&#9889; WalangBrownout</div>
+                    <div className="sidebar__title">Inventory Management</div>
                 </div>
 
                 <nav className="sidebar__nav">
-                    {navItems.map((item) => (
-                        <NavLink
-                            key={item.to}
-                            to={item.to}
-                            className={({ isActive }) =>
-                                `sidebar__link ${isActive ? "sidebar__link--active" : ""}`
-                            }
-                        >
-                            <span className="sidebar__link-icon">{item.icon}</span>
-                            {sidebarOpen && (
-                                <span className="sidebar__link-label">{item.label}</span>
+                    {navSections.map((section, idx) => (
+                        <div key={idx}>
+                            {section.label && (
+                                <div className="sidebar__section-label">
+                                    {section.label}
+                                </div>
                             )}
-                        </NavLink>
+                            {section.items.map((item) => (
+                                <NavLink
+                                    key={item.to}
+                                    to={item.to}
+                                    className={({ isActive }) =>
+                                        `sidebar__link ${isActive ? "sidebar__link--active" : ""}`
+                                    }
+                                >
+                                    <span className="sidebar__link-label">{item.label}</span>
+                                </NavLink>
+                            ))}
+                        </div>
                     ))}
                 </nav>
 
                 <div className="sidebar__footer">
-                    {user && sidebarOpen && (
+                    {user && (
                         <div className="sidebar__user">
                             <span className="sidebar__user-name">{user.name}</span>
                             <span className="sidebar__user-role">
@@ -72,7 +95,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         </div>
                     )}
                     <button className="sidebar__logout" onClick={handleLogout}>
-                        {sidebarOpen ? "Logout" : "🚪"}
+                        Sign out
                     </button>
                 </div>
             </aside>
@@ -84,13 +107,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                         aria-label="Toggle sidebar"
                     >
-                        ☰
+                        &#9776;
                     </button>
                     <div className="topbar__right">
                         {user && (
-                            <span className="topbar__greeting">
-                                Hello, {user.name}
-                            </span>
+                            <div>
+                                <span className="topbar__user-name">{user.name}</span>
+                                {" "}
+                                <span className="topbar__user-role">
+                                    {user.role.replace("_", " ")}
+                                </span>
+                            </div>
                         )}
                     </div>
                 </header>
