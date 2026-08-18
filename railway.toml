@@ -1,0 +1,10 @@
+[build]
+# Use the production Dockerfile at repository root (not docker/app/Dockerfile)
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Railway injects $PORT; the entrypoint uses it
+healthcheckPath = "/up"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

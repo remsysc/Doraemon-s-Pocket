@@ -23,6 +23,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('api', [
             \Illuminate\Session\Middleware\StartSession::class,
         ]);
+
+        // Trust Railway's (and other PaaS) reverse proxies for HTTPS termination.
+        // TRUSTED_PROXIES=* tells Laravel to trust all proxies (safe behind Railway's LB).
+        $middleware->trustProxies(
+            at: env('TRUSTED_PROXIES', null) === '*' ? '*' : [],
+            headers: Request::HEADER_X_FORWARDED_FOR |
+                     Request::HEADER_X_FORWARDED_HOST |
+                     Request::HEADER_X_FORWARDED_PORT |
+                     Request::HEADER_X_FORWARDED_PROTO,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
