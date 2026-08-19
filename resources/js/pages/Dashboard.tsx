@@ -63,7 +63,7 @@ export default function Dashboard() {
                     }
                 }
             } catch {
-                // Stats stay at 0 if the API is unreachable
+                // Stats stay at 0
             } finally {
                 setLoading(false);
             }
@@ -75,12 +75,13 @@ export default function Dashboard() {
     if (loading) {
         return (
             <DashboardLayout>
-                <div className="page-loading">Loading dashboard...</div>
+                <div className="page-loading">Loading...</div>
             </DashboardLayout>
         );
     }
 
     const role = user?.role ?? "warehouse_staff";
+    const canWrite = role === "admin" || role === "warehouse_staff";
 
     return (
         <DashboardLayout>
@@ -95,13 +96,13 @@ export default function Dashboard() {
             <section className="stats-grid">
                 {(role === "admin" || role === "purchasing_manager") && (
                     <>
-                        <div className="stat-card">
+                        <div className="stat-card stat-card--blue">
                             <div className="stat-card__info">
                                 <span className="stat-card__value">{stats.categories}</span>
                                 <span className="stat-card__label">Categories</span>
                             </div>
                         </div>
-                        <div className="stat-card">
+                        <div className="stat-card stat-card--green">
                             <div className="stat-card__info">
                                 <span className="stat-card__value">{stats.products}</span>
                                 <span className="stat-card__label">Products</span>
@@ -109,13 +110,13 @@ export default function Dashboard() {
                         </div>
                     </>
                 )}
-                <div className="stat-card">
+                <div className="stat-card stat-card--amber">
                     <div className="stat-card__info">
                         <span className="stat-card__value">{stats.lots}</span>
                         <span className="stat-card__label">Lots</span>
                     </div>
                 </div>
-                <div className="stat-card">
+                <div className="stat-card stat-card--purple">
                     <div className="stat-card__info">
                         <span className="stat-card__value">{stats.transactions}</span>
                         <span className="stat-card__label">Transactions</span>
@@ -124,10 +125,10 @@ export default function Dashboard() {
             </section>
 
             {/* Quick Action */}
-            {(role === "admin" || role === "warehouse_staff") && (
+            {canWrite && (
                 <div className="quick-action">
                     <div className="quick-action__info">
-                        <span className="quick-action__title">Record a new transaction</span>
+                        <span className="quick-action__title">Record a transaction</span>
                         <span className="quick-action__subtitle">
                             Log stock receipts, picks, sales, or adjustments
                         </span>
@@ -147,16 +148,18 @@ export default function Dashboard() {
                     </Link>
                 </div>
                 {recentTxns.length === 0 ? (
-                    <p className="empty-state">No transactions recorded yet.</p>
+                    <p className="empty-state">
+                        No transactions recorded yet. Activity will appear here.
+                    </p>
                 ) : (
                     <div className="table-wrapper">
                         <table className="data-table">
                             <thead>
                                 <tr>
                                     <th>Type</th>
-                                    <th>Quantity</th>
+                                    <th>Qty</th>
                                     <th>Product</th>
-                                    <th>Actor</th>
+                                    <th>User</th>
                                     <th>Date</th>
                                 </tr>
                             </thead>
@@ -195,7 +198,7 @@ export default function Dashboard() {
                         </Link>
                     </div>
                     {recentAuditLogs.length === 0 ? (
-                        <p className="empty-state">No audit logs yet.</p>
+                        <p className="empty-state">No audit activity yet.</p>
                     ) : (
                         <div className="table-wrapper">
                             <table className="data-table">
@@ -227,7 +230,7 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* Planned features */}
+            {/* Planned */}
             {role === "admin" && (
                 <p className="coming-soon">Planned: Alerts, Reorder Configuration, Cycle Counts</p>
             )}

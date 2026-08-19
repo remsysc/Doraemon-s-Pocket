@@ -58,7 +58,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="layout">
             <aside className={`sidebar ${sidebarOpen ? "" : "sidebar--collapsed"}`}>
                 <div className="sidebar__header">
-                    <div className="sidebar__logo">&#9889; WalangBrownout</div>
+                    <div className="sidebar__logo">
+                        <span className="sidebar__brand--light">Walang</span>
+                        <span className="sidebar__brand--bold">Brownout</span>
+                    </div>
                     <div className="sidebar__title">Inventory Management</div>
                 </div>
 
@@ -90,7 +93,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         <div className="sidebar__user">
                             <span className="sidebar__user-name">{user.name}</span>
                             <span className="sidebar__user-role">
-                                {user.role.replace("_", " ")}
+                                {user.role.replace(/_/g, " ")}
                             </span>
                         </div>
                     )}
@@ -111,12 +114,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </button>
                     <div className="topbar__right">
                         {user && (
-                            <div>
-                                <span className="topbar__user-name">{user.name}</span>
-                                {" "}
-                                <span className="topbar__user-role">
-                                    {user.role.replace("_", " ")}
+                            <div className="topbar__profile">
+                                <span className="topbar__avatar">
+                                    {user.name.charAt(0).toUpperCase()}
                                 </span>
+                                <div className="topbar__user-info">
+                                    <span className="topbar__user-name">{user.name}</span>
+                                    <span className="topbar__user-role">
+                                        {user.role.replace(/_/g, " ")}
+                                    </span>
+                                </div>
                             </div>
                         )}
                     </div>
