@@ -1,0 +1,279 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   WalangBrownout — AnimatedCityscape Styles
+   Nighttime cityscape with animated building windows, tower, horizon glow
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+
+@keyframes window-flicker {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.1; }
+}
+
+@keyframes aviation-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1.0; }
+}
+
+@keyframes waveform-drift {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}
+
+/* ── Base Cityscape Container ──────────────────────────────────────────── */
+
+.cityscape {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* ── Horizon Glow ──────────────────────────────────────────────────────── */
+
+.cityscape__horizon-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(
+    to top,
+    var(--wb-bright-blue),
+    var(--wb-cyan-accent)
+  );
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+/* ── Building Layers ───────────────────────────────────────────────────── */
+
+.cityscape__buildings {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.cityscape__buildings--far {
+  position: absolute;
+  bottom: 10%;
+  left: 0;
+  right: 0;
+  height: 45%;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  opacity: 0.6;
+}
+
+.cityscape__buildings--mid {
+  position: absolute;
+  bottom: 5%;
+  left: 0;
+  right: 0;
+  height: 55%;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  opacity: 0.8;
+}
+
+.cityscape__buildings--near {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65%;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+/* ── Building blocks ───────────────────────────────────────────────────── */
+
+.cityscape__building {
+  flex: 1;
+  min-width: 18px;
+  max-width: 48px;
+  border-radius: 2px 2px 0 0;
+}
+
+.cityscape__buildings--far .cityscape__building {
+  background: var(--wb-building-far);
+}
+
+.cityscape__buildings--mid .cityscape__building {
+  background: var(--wb-building-mid);
+}
+
+.cityscape__buildings--near .cityscape__building {
+  background: var(--wb-building-near);
+}
+
+/* ── Windows ───────────────────────────────────────────────────────────── */
+
+.cityscape__window {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  background: var(--wb-window-warm);
+  border-radius: 1px;
+  position: absolute;
+  will-change: opacity;
+  animation: window-flicker 10s ease-in-out infinite;
+}
+
+/* Staggered delays — ensure minimum 1s difference between adjacent */
+.cityscape__window:nth-child(1) { animation-delay: 0s; animation-duration: 10s; }
+.cityscape__window:nth-child(2) { animation-delay: 2.3s; animation-duration: 12s; }
+.cityscape__window:nth-child(3) { animation-delay: 4.7s; animation-duration: 9s; }
+.cityscape__window:nth-child(4) { animation-delay: 1.2s; animation-duration: 14s; }
+.cityscape__window:nth-child(5) { animation-delay: 6.1s; animation-duration: 11s; }
+.cityscape__window:nth-child(6) { animation-delay: 3.4s; animation-duration: 8s; }
+.cityscape__window:nth-child(7) { animation-delay: 8.5s; animation-duration: 13s; }
+.cityscape__window:nth-child(8) { animation-delay: 5.0s; animation-duration: 10s; }
+.cityscape__window:nth-child(9) { animation-delay: 7.2s; animation-duration: 15s; }
+.cityscape__window:nth-child(10) { animation-delay: 9.8s; animation-duration: 9s; }
+.cityscape__window:nth-child(11) { animation-delay: 11.1s; animation-duration: 12s; }
+.cityscape__window:nth-child(12) { animation-delay: 0.8s; animation-duration: 14s; }
+.cityscape__window:nth-child(13) { animation-delay: 3.1s; animation-duration: 10s; }
+.cityscape__window:nth-child(14) { animation-delay: 5.9s; animation-duration: 11s; }
+.cityscape__window:nth-child(15) { animation-delay: 7.7s; animation-duration: 8s; }
+.cityscape__window:nth-child(16) { animation-delay: 10.3s; animation-duration: 13s; }
+.cityscape__window:nth-child(17) { animation-delay: 2.0s; animation-duration: 9s; }
+.cityscape__window:nth-child(18) { animation-delay: 4.4s; animation-duration: 15s; }
+.cityscape__window:nth-child(19) { animation-delay: 6.8s; animation-duration: 12s; }
+.cityscape__window:nth-child(20) { animation-delay: 9.2s; animation-duration: 10s; }
+.cityscape__window:nth-child(21) { animation-delay: 1.5s; animation-duration: 14s; }
+.cityscape__window:nth-child(22) { animation-delay: 3.8s; animation-duration: 11s; }
+.cityscape__window:nth-child(23) { animation-delay: 5.5s; animation-duration: 8s; }
+.cityscape__window:nth-child(24) { animation-delay: 8.0s; animation-duration: 13s; }
+.cityscape__window:nth-child(25) { animation-delay: 10.7s; animation-duration: 9s; }
+.cityscape__window:nth-child(26) { animation-delay: 0.3s; animation-duration: 15s; }
+.cityscape__window:nth-child(27) { animation-delay: 2.7s; animation-duration: 12s; }
+.cityscape__window:nth-child(28) { animation-delay: 4.1s; animation-duration: 10s; }
+.cityscape__window:nth-child(29) { animation-delay: 6.5s; animation-duration: 14s; }
+.cityscape__window:nth-child(30) { animation-delay: 8.9s; animation-duration: 11s; }
+.cityscape__window:nth-child(31) { animation-delay: 11.5s; animation-duration: 9s; }
+.cityscape__window:nth-child(32) { animation-delay: 1.8s; animation-duration: 13s; }
+.cityscape__window:nth-child(33) { animation-delay: 3.6s; animation-duration: 8s; }
+.cityscape__window:nth-child(34) { animation-delay: 5.3s; animation-duration: 15s; }
+.cityscape__window:nth-child(35) { animation-delay: 7.4s; animation-duration: 10s; }
+.cityscape__window:nth-child(36) { animation-delay: 9.6s; animation-duration: 12s; }
+
+/* Dim variant windows */
+.cityscape__window--dim {
+  background: var(--wb-window-dim);
+  opacity: 0.6;
+}
+
+/* ── Transmission Tower ────────────────────────────────────────────────── */
+
+.cityscape__tower {
+  position: absolute;
+  right: 12%;
+  bottom: 0;
+  width: 60px;
+  height: 70%;
+  z-index: 2;
+}
+
+.cityscape__aviation-light {
+  animation: aviation-pulse 4s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* ── Power Lines ───────────────────────────────────────────────────────── */
+
+.cityscape__power-lines {
+  position: absolute;
+  bottom: 30%;
+  left: 0;
+  right: 0;
+  height: 40px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Waveform Accent ───────────────────────────────────────────────────── */
+
+.cityscape__waveform {
+  position: absolute;
+  bottom: 2%;
+  left: 5%;
+  right: 5%;
+  height: 30px;
+  opacity: 0.3;
+  z-index: 3;
+  animation: waveform-drift 20s ease-in-out infinite;
+}
+
+/* ── Reduced Motion ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .cityscape__window {
+    animation: none;
+    transition: none;
+    opacity: 0.7;
+  }
+
+  .cityscape__aviation-light {
+    animation: none;
+    transition: none;
+    opacity: 0.7;
+  }
+
+  .cityscape__waveform {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ── Responsive: Tablet (768px - 1024px) ───────────────────────────────── */
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .cityscape__tower {
+    height: 42%;
+  }
+
+  .cityscape__window:nth-child(n+16) {
+    display: none;
+  }
+}
+
+/* ── Responsive: Mobile (below 768px) ──────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .cityscape__tower {
+    display: none;
+  }
+
+  .cityscape__buildings--far {
+    display: none;
+  }
+
+  .cityscape__waveform {
+    display: none;
+  }
+
+  .cityscape__power-lines {
+    display: none;
+  }
+
+  .cityscape__window:nth-child(n+6) {
+    display: none;
+  }
+}
+
+/* ── Responsive: Small Mobile (below 480px) ────────────────────────────── */
+
+@media (max-width: 480px) {
+  .cityscape {
+    display: none;
+  }
+}

@@ -129,7 +129,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                 </header>
 
-                <main className="content">{children}</main>
+                <main className="content content--grid-bg">{children}</main>
             </div>
         </div>
     );
