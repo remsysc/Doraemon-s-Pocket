@@ -1,5 +1,6 @@
 /* ──────────────────────────────────────────────────────────────────────────
    WalangBrownout — Design Tokens & Auth Page Styles
+   Desktop-focused — no mobile/tablet breakpoints
    ────────────────────────────────────────────────────────────────────────── */
 
 /* ── Design Tokens ─────────────────────────────────────────────────────── */
@@ -75,6 +76,7 @@ body {
   overflow: hidden;
   display: flex;
   align-items: flex-end;
+  min-height: 100vh;
 }
 
 .auth-page__form-panel {
@@ -82,6 +84,85 @@ body {
   align-items: center;
   justify-content: center;
   padding: 48px 32px;
+}
+
+/* ── Scene Content Overlay (Left Panel Text) ───────────────────────────── */
+
+.auth-scene-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  pointer-events: none;
+}
+
+.auth-scene-content__brand {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--wb-electric-blue), var(--wb-cyan-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.auth-scene-content__tagline {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--wb-text-primary);
+}
+
+.auth-scene-content__tagline .text-dark-blue {
+  color: #60A5FA;
+}
+
+.auth-scene-content__tagline .text-light-blue {
+  color: #93C5FD;
+}
+
+.auth-scene-content__tagline .text-gradient {
+  background: linear-gradient(135deg, var(--wb-electric-blue), var(--wb-cyan-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-scene-content__description {
+  font-size: 14px;
+  color: var(--wb-text-secondary);
+  line-height: 1.6;
+  max-width: 320px;
+}
+
+.auth-scene-content__features {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.auth-scene-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.auth-scene-feature__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wb-text-primary);
+}
+
+.auth-scene-feature__desc {
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.4;
 }
 
 /* ── Card ──────────────────────────────────────────────────────────────── */
@@ -342,75 +423,4 @@ body {
 
 .auth-footer a:hover {
   text-decoration: underline;
-}
-
-/* ── Responsive ────────────────────────────────────────────────────────── */
-
-/* Tablet: 768px - 1024px — single column, cityscape behind form */
-@media (max-width: 1024px) {
-  .auth-page {
-    grid-template-columns: 1fr;
-    position: relative;
-  }
-
-  .auth-page__scene {
-    position: absolute;
-    inset: 0;
-    opacity: 0.3;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .auth-page__form-panel {
-    position: relative;
-    z-index: 1;
-    padding: 48px 24px;
-  }
-}
-
-/* Mobile: below 768px — simplified cityscape, form fills width */
-@media (max-width: 768px) {
-  .auth-page__form-panel {
-    padding: 32px 16px;
-  }
-
-  .auth-card {
-    padding: 28px 24px;
-    max-width: 100%;
-  }
-
-  .form-group input,
-  .form-group select,
-  .auth-button,
-  .toggle-password {
-    min-height: 44px;
-  }
-}
-
-/* Small mobile: below 480px — cityscape hidden, solid background */
-@media (max-width: 480px) {
-  .auth-page__scene {
-    display: none;
-  }
-
-  .auth-page {
-    background: var(--wb-deep-navy, #0F172A);
-  }
-
-  .auth-card {
-    max-width: 100%;
-    padding: 24px 16px;
-  }
-}
-
-/* Narrow viewport — scale form padding */
-@media (max-width: 412px) {
-  .auth-page__form-panel {
-    padding: 24px 16px;
-  }
-
-  .auth-card {
-    max-width: 100%;
-    padding: 24px 16px;
-  }
 }

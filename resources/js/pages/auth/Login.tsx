@@ -59,6 +59,35 @@ export default function Login() {
     return (
         <div className="auth-page">
             <div className="auth-page__scene">
+                {/* Left panel text overlay */}
+                <div className="auth-scene-content">
+                    <div className="auth-scene-content__brand">Walang Brownout</div>
+
+                    <div className="auth-scene-content__tagline">
+                        Powering <span className="text-dark-blue">Comfort</span>.<br />
+                        Elevating <span className="text-light-blue">Homes</span>.
+                    </div>
+
+                    <p className="auth-scene-content__description">
+                        Your trusted destination for quality appliances, parts, and everything your home needs.
+                    </p>
+
+                    <div className="auth-scene-content__features">
+                        <div className="auth-scene-feature">
+                            <span className="auth-scene-feature__title">Wide Selection</span>
+                            <span className="auth-scene-feature__desc">Aircons, filters, parts and home appliances</span>
+                        </div>
+                        <div className="auth-scene-feature">
+                            <span className="auth-scene-feature__title">Trusted Quality</span>
+                            <span className="auth-scene-feature__desc">Genuine products from reliable brands.</span>
+                        </div>
+                        <div className="auth-scene-feature">
+                            <span className="auth-scene-feature__title">Always Ready</span>
+                            <span className="auth-scene-feature__desc">Fast service, secure shopping every time.</span>
+                        </div>
+                    </div>
+                </div>
+
                 <AnimatedCityscape />
             </div>
             <div className="auth-page__form-panel">
