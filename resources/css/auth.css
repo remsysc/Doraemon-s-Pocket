@@ -68,7 +68,17 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   min-height: 100vh;
-  background: var(--wb-deep-navy, #0F172A);
+
+  /* Keep the original gradient — now it spans the entire page */
+  background: linear-gradient(
+    to top,
+    rgba(37, 99, 235, 0.12) 0%,
+    rgba(34, 211, 238, 0.04) 35%,
+    var(--wb-deep-navy) 65%
+  );
+
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 .auth-page__scene {
@@ -77,6 +87,11 @@ body {
   display: flex;
   align-items: flex-end;
   min-height: 100vh;
+}
+.auth-page__scene,
+.auth-page__scene::before,
+.auth-page__scene::after {
+  pointer-events: none;
 }
 
 .auth-page__form-panel {
@@ -94,15 +109,15 @@ body {
   left: 0;
   right: 0;
   z-index: 10;
-  padding: 48px 40px;
+  padding: 56px 48px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
   pointer-events: none;
 }
 
 .auth-scene-content__brand {
-  font-size: 28px;
+  font-size: 36px;
   font-weight: 700;
   background: linear-gradient(135deg, var(--wb-electric-blue), var(--wb-cyan-accent));
   -webkit-background-clip: text;
@@ -112,7 +127,7 @@ body {
 }
 
 .auth-scene-content__tagline {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 600;
   line-height: 1.4;
   color: var(--wb-text-primary);
@@ -134,16 +149,16 @@ body {
 }
 
 .auth-scene-content__description {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--wb-text-secondary);
   line-height: 1.6;
-  max-width: 320px;
+  max-width: 380px;
 }
 
 .auth-scene-content__features {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
   margin-top: 8px;
 }
 
@@ -154,13 +169,13 @@ body {
 }
 
 .auth-scene-feature__title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--wb-text-primary);
 }
 
 .auth-scene-feature__desc {
-  font-size: 13px;
+  font-size: 15px;
   color: #94A3B8;
   line-height: 1.4;
 }
