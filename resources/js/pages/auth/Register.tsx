@@ -112,7 +112,7 @@ export default function Register() {
                 <div className="auth-card">
                     <div className="auth-header">
                         <h2 className="auth-header__brand">WalangBrownout</h2>
-                        <p className="auth-header__system">Absolute comfort, perfectly preserved.</p>
+                        <p className="auth-header__system">Powering Comfort. Elevating Homes.</p>
                         <h1>Create account</h1>
                         <p>Set up your credentials to get started</p>
                     </div>
@@ -128,7 +128,7 @@ export default function Register() {
                                 id="reg-name"
                                 type="text"
                                 name="name"
-                                placeholder="Juan Dela Cruz"
+                                placeholder="Full Name"
                                 value={form.name}
                                 onChange={handleChange}
                                 autoComplete="name"
