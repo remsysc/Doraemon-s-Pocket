@@ -26,6 +26,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  background: linear-gradient(to top, rgba(37, 99, 235, 0.15) 0%, rgba(34, 211, 238, 0.05) 40%, transparent 70%);
 }
 
 /* ── Horizon Glow ──────────────────────────────────────────────────────── */
@@ -35,13 +36,14 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 40%;
+  height: 100%;
   background: linear-gradient(
     to top,
-    var(--wb-bright-blue),
-    var(--wb-cyan-accent)
+    rgba(37, 99, 235, 0.18) 0%,
+    rgba(34, 211, 238, 0.08) 30%,
+    transparent 60%
   );
-  opacity: 0.12;
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -59,19 +61,19 @@
 }
 
 .cityscape__houses--far {
-  height: 50%;
+  height: 30%;
   opacity: 0.5;
   z-index: 1;
 }
 
 .cityscape__houses--mid {
-  height: 55%;
+  height: 35%;
   opacity: 0.7;
   z-index: 2;
 }
 
 .cityscape__houses--near {
-  height: 60%;
+  height: 40%;
   z-index: 3;
 }
 
@@ -90,19 +92,19 @@
 /* House sizes */
 .cityscape__house--sm {
   min-width: 80px;
-  height: 50%;
+  height: 20%;
   clip-path: polygon(50% 0%, 100% 35%, 100% 100%, 0% 100%, 0% 35%);
 }
 
 .cityscape__house--md {
   min-width: 100px;
-  height: 65%;
+  height: 28%;
   clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%);
 }
 
 .cityscape__house--lg {
   min-width: 120px;
-  height: 80%;
+  height: 35%;
   clip-path: polygon(50% 0%, 100% 28%, 100% 100%, 0% 100%, 0% 28%);
 }
 
@@ -189,22 +191,6 @@
 .cityscape__houses--near .cityscape__house:nth-child(7) .cityscape__window:nth-child(1) { animation-delay: 2.5s; animation-duration: 12s; }
 .cityscape__houses--near .cityscape__house:nth-child(7) .cityscape__window:nth-child(2) { animation-delay: 4.9s; animation-duration: 15s; }
 .cityscape__houses--near .cityscape__house:nth-child(7) .cityscape__window:nth-child(3) { animation-delay: 9.3s; animation-duration: 9s; }
-
-/* ── Radio Tower ───────────────────────────────────────────────────────── */
-
-.cityscape__tower {
-  position: absolute;
-  right: 10%;
-  bottom: 0;
-  width: 70px;
-  height: 75%;
-  z-index: 4;
-}
-
-/* Static red light — no animation */
-.cityscape__tower-light {
-  opacity: 1;
-}
 
 /* ── Waveform Accent ───────────────────────────────────────────────────── */
 
