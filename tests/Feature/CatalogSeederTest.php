@@ -43,4 +43,12 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseCount('products', 8);
         $this->assertDatabaseCount('lots', 16);
     }
+
+    public function test_database_seeding_does_not_create_audit_logs(): void
+    {
+        $this->seed();
+
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
 }
