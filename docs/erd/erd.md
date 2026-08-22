@@ -53,8 +53,8 @@
 
 ┌──────────────────────────┐    ┌──────────────────────────┐
 │     reorder_configs      │    │        audit_logs        │
-│  (planned — Sprint 4)    │    │ (impl. schema/read API;  │
-│──────────────────────────│    │ automatic logging pending)│
+│  (planned — Sprint 4)    │    │ (implemented schema/read  │
+│──────────────────────────│    │ API + automatic observers)│
 │ sku_id UUID (PK, FK)     │    │ audit_id UUID (PK)       │
 │ reorder_point integer    │    │ actor_id FK → users.id   │
 │ safety_stock integer     │    │ action string            │
@@ -163,7 +163,7 @@ Updated only via the transaction-insert path with `lockForUpdate()` — never wr
 
 Write: `purchasing_manager` + `admin`. `warehouse_staff` has no access at all (read or write).
 
-### audit_logs (implemented schema and admin read API; automatic logging pending)
+### audit_logs (implemented schema, admin read API, and automatic observer generation)
 
 | Column      | Type                  | Notes                                      |
 | ----------- | --------------------- | ------------------------------------------ |
@@ -178,4 +178,4 @@ Write: `purchasing_manager` + `admin`. `warehouse_staff` has no access at all (r
 
 Indexes: `(entity_type, entity_id)` and `occurred_at`.
 
-Read: `GET /api/audit-logs` and `GET /api/audit-logs/{audit_log}`, `admin` only. No public create, update, or delete routes. Records are append-only and system-generated; automatic logging of Product, Lot, Category, and User writes remains pending.
+Read: `GET /api/audit-logs` and `GET /api/audit-logs/{audit_log}`, `admin` only. No public create, update, or delete routes. Records are append-only and system-generated. `AuditObserver` delegates authenticated Product, Lot, Category, and User lifecycle writes to `AuditLogService`; bootstrap seed writes and temporary unauthenticated registration are intentionally excluded.

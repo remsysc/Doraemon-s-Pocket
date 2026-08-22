@@ -1,52 +1,37 @@
 # Sprint 2 — Core Ledger
 
-> Status: 🟡 In Progress | Current sprint
+> Status: ✅ Complete | Completed: 2026-08-23
 
----
+Sprint 2 delivers the catalog, lot, append-only inventory ledger, audit read path, automatic model-write auditing, frontend ledger/catalog screens, and repeatable demo inventory data.
 
-| Item                                                        | Owner | Status                                                               |
-| ----------------------------------------------------------- | ----- | -------------------------------------------------------------------- |
-| CATEGORY table + CRUD endpoints                            | Rem   | ✅ DONE — `CategoryProductLotCrudTest`                              |
-| CATEGORY restore endpoint                                   | Rem   | ✅ DONE — Admin-only explicit restore required by `SPEC.md` FR-9  |
-| PRODUCT table + CRUD endpoints                             | Rem   | ✅ DONE — `CategoryProductLotCrudTest`                              |
-| LOT table + CRUD endpoints                                 | Rem   | ✅ DONE — `CategoryProductLotCrudTest`                              |
-| LOT validation decisions and regression coverage           | Rem   | ✅ DONE (2026-08-09) — `CategoryProductLotCrudTest`                 |
-| INVENTORY_TRANSACTION table + append-only write endpoint   | Rem   | ✅ DONE (2026-08-07)                                                 |
-| AUDIT_LOG schema + admin-only read API                      | Rem   | ✅ DONE (2026-08-09) — `AuditLogTest` (5 tests, 28 assertions)       |
-| Automatic audit logging middleware/service                  | —     | ⬜ not started                                                       |
-| Frontend: Category Management                              | Lyll & Larce | ✅ DONE — list, admin CRUD actions, pagination, validation/error handling |
-| Frontend: Product List                                     | Lyll & Larce | ✅ DONE — list, category display, status, admin-only actions             |
-| Frontend: Product Form                                     | Lyll & Larce | ✅ DONE — create/update form with category and metadata fields           |
-| Frontend: Lot Management                                   | Lyll & Larce | ✅ DONE — list, admin/warehouse CRUD actions, receipt/expiry fields      |
-| Seed realistic inventory data                              | —     | ⬜ not started                                                       |
-| Test: transaction writes are immutable (no PUT/PATCH/DELETE) | Rem | ✅ DONE — `InventoryTransactionTest` (25 tests, 80 assertions)       |
-| Test: audit logs are generated for CRUD operations         | —     | ⬜ not started                                                       |
+| Item | Owner | Status |
+| --- | --- | --- |
+| Category table + CRUD endpoints | Rem | ✅ Done — `CategoryProductLotCrudTest` |
+| Category restore endpoint | Rem | ✅ Done — Admin-only restore |
+| Product table + CRUD endpoints | Rem | ✅ Done — `CategoryProductLotCrudTest` |
+| Lot table + CRUD endpoints | Rem | ✅ Done — `CategoryProductLotCrudTest` |
+| Lot validation decisions and regression coverage | Rem | ✅ Done — OQ-7/OQ-8 resolved |
+| Inventory transaction table + append-only write endpoint | Rem | ✅ Done — all six transaction types |
+| Audit-log schema + Admin-only read API | Rem | ✅ Done — `AuditLogTest` |
+| Automatic audit logging | Rem | ✅ Done — `AuditObserver` + `AuditLogService` for Product, Lot, Category, and User |
+| Frontend Category/Product/Lot screens | Lyll & Larce | ✅ Done |
+| Frontend transaction ledger UI | Lyll & Larce | ✅ Done |
+| Repeatable realistic inventory seed data | Rem | ✅ Done — 24 deterministic transactions across 8 products |
+| Transaction append-only regression coverage | Rem | ✅ Done — no PUT/PATCH/DELETE routes |
+| Audit generation and redaction regression coverage | Rem | ✅ Done — authenticated writes audited; sensitive User fields excluded |
 
----
+## Seed data
 
-## Review Corrections
+`DatabaseSeeder` creates the three demo users, the complete 4-category/8-product/16-lot catalog, and 24 deterministic inventory transactions. The transaction seed covers `RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, and `WRITE_OFF`, uses the existing `occured_at` schema spelling, and is repeatable through fixed transaction UUIDs.
 
-The previous Product CRUD discrepancy note was stale. `routes/api.php` exposes
-live Category, Product, and Lot resource routes; the corresponding controllers
-implement CRUD methods; and `CategoryProductLotCrudTest` passes 10 tests with
-31 assertions. Category and Lot CRUD are therefore complete at the endpoint
-and test-coverage level. Remaining gaps are tracked separately above rather
-than being represented as generic CRUD WIP.
+Bootstrap seed writes are intentionally not audited. Authenticated business writes are audited with the server-side actor; temporary unauthenticated registration is not audited until registration is replaced by Admin-only user management.
 
-`InventoryTransactionTest` passes 24 tests with 67 assertions. The test suite
-confirms authenticated read access, Admin/Warehouse Staff append access,
-Purchasing Manager write denial, and the absence of PUT/PATCH/DELETE routes.
+## Completion evidence
 
----
+- `tests/Feature/CategoryProductLotCrudTest.php`
+- `tests/Feature/InventoryTransactionTest.php`
+- `tests/Feature/AuditLogTest.php`
+- `tests/Feature/CatalogSeederTest.php`
+- `tests/Feature/AuthRegistrationTest.php`
 
-## OQ-7 and OQ-8 Resolution
-
-OQ-7 and OQ-8 are resolved and no longer block Sprint 2:
-
-- OQ-7: Soft-deleted Categories cannot be assigned to new or updated Products; existing relationships remain readable; explicit Admin restoration is required before reuse.
-- OQ-8: Normal Lot create/update flows reject `expiry_date` before today with 422 and retain nullable expiry dates. Historical expired Lots require a future explicit backfill/import workflow.
-
-`inventory_transactions` now uses the six explicit specification types:
-`RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, and `WRITE_OFF`.
-`InventoryTransactionTest` covers acceptance of all six types while preserving
-append-only behavior. Snapshot-side effects remain deferred to Sprint 3.
+Sprint 3 is planned next. Inventory snapshot side effects, row-level locking, reservation semantics, and oversell prevention were deliberately deferred and are not part of Sprint 2 completion.
