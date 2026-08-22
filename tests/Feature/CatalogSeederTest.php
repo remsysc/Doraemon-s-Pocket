@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\InventoryTransaction;
 use App\Models\Lot;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,6 +20,8 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseCount('categories', 4);
         $this->assertDatabaseCount('products', 8);
         $this->assertDatabaseCount('lots', 16);
+        $this->assertDatabaseCount('inventory_transactions', 24);
+        $this->assertSame(24, InventoryTransaction::query()->count());
         $this->assertSame(4, Category::query()->count());
         $this->assertSame(8, Product::query()->count());
         $this->assertSame(16, Lot::query()->count());
@@ -42,5 +45,15 @@ class CatalogSeederTest extends TestCase
         $this->assertDatabaseCount('categories', 4);
         $this->assertDatabaseCount('products', 8);
         $this->assertDatabaseCount('lots', 16);
+        $this->assertDatabaseCount('inventory_transactions', 24);
+        $this->assertSame(24, InventoryTransaction::query()->count());
     }
+
+    public function test_database_seeding_does_not_create_audit_logs(): void
+    {
+        $this->seed();
+
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
 }

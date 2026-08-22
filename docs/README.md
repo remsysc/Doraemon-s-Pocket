@@ -22,7 +22,8 @@ Navigation index for all project documentation.
 | File | Purpose |
 | ---- | ------- |
 | [sprints/sprint-1.md](sprints/sprint-1.md) | Sprint 1 — Foundation & Auth ✅ DONE |
-| [sprints/sprint-2.md](sprints/sprint-2.md) | Sprint 2 — Core Ledger 🟡 In Progress |
+| [sprints/sprint-2.md](sprints/sprint-2.md) | Sprint 2 — Core Ledger ✅ DONE |
+| [sprints/sprint-3.md](sprints/sprint-3.md) | Sprint 3 — Inventory Snapshots & Concurrency ⬜ PLANNED |
 | [sprints/sprints-3-6.md](sprints/sprints-3-6.md) | Sprints 3–6 — Roadmap ⬜ Not started |
 
 ## AI / Agent Context

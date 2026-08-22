@@ -8,15 +8,16 @@ This spec is the source of truth for implementation. Where code and spec disagre
 
 ## 1. Scope of This Spec
 
-Covers Sprint 1 (done) through Sprint 2 (in progress) in full detail, and Sprints 3–6 at requirement-level (to be expanded into their own spec sections as those sprints start). Do not implement Sprint 3+ behavior against this document alone — flag it as unspecified first.
+Covers Sprint 1 (done) and Sprint 2 (complete) in full detail, and Sprint 3–6 at requirement-level (with a dedicated Sprint 3 plan now created). Do not implement Sprint 4+ behavior against this document alone — flag it as unspecified first.
 
 ### 1.1 Sprint status source of truth
 
 Sprint checklists are tracked in dedicated files — keep status updates there, not here:
 
 - **[Sprint 1 — Foundation & Auth](../sprints/sprint-1.md)** ✅ DONE
-- **[Sprint 2 — Core Ledger](../sprints/sprint-2.md)** 🟡 In Progress (current)
-- **[Sprints 3–6 — Roadmap](../sprints/sprints-3-6.md)** ⬜ Not started
+- **[Sprint 2 — Core Ledger](../sprints/sprint-2.md)** ✅ Complete
+- **[Sprint 3 — Inventory Snapshots & Concurrency](../sprints/sprint-3.md)** ⬜ Planned (next)
+- **[Sprints 3–6 — Roadmap](../sprints/sprints-3-6.md)** ⬜ Future roadmap
 
 **Sprints 3–6** — nothing in Snapshot derivation, reservation workflow, ABC/XYZ classification, ROP/EOQ, cycle-count reconciliation, or hardening has been started. Treat §§4–7 of this spec for those sprints as **forward-looking requirements only**, not in-progress work.
 
@@ -32,14 +33,14 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 - **FR-4** IF a request to `/sanctum/csrf-cookie` has not preceded a state-changing request THEN THE SYSTEM SHALL reject that request per Sanctum's CSRF middleware (419).
 - **FR-5** WHILE a route is guarded by `role:` middleware THE SYSTEM SHALL return 403 if the authenticated user's role is not in the allowed list, and 401 if unauthenticated.
 
-### Category (Sprint 2 — in progress)
+### Category (Sprint 2 — complete)
 
 - **FR-6** THE SYSTEM SHALL support full CRUD on Category via `/api/categories` and `/api/categories/{category}`.
 - **FR-7** THE SYSTEM SHALL restrict Category write operations (create/update/delete) to the `admin` role only. 🔄 CHANGED 2026-08-04: `purchasing_manager` write access to Category is removed (perms brief: Purchasing Manager can't edit product/category structure) — see FR-32/§9.
 - **FR-8** THE SYSTEM SHALL allow any authenticated role to read Category (list/show).
 - **FR-9** WHEN a Category is soft-deleted and a new Category is created with a slug matching the soft-deleted one THE SYSTEM SHALL create a new record, NOT auto-revive the soft-deleted one. Reviving a soft-deleted Category requires the Admin-only `POST /api/categories/{category}/restore` endpoint. Existing Product relationships to the soft-deleted Category remain readable, but new Product creation and Category reassignment SHALL reject that Category with 422. ✅ DECIDED 2026-08-09; implemented and covered by `CategoryProductLotCrudTest`.
 
-### Product (Sprint 2 — in progress)
+### Product (Sprint 2 — complete)
 
 - **FR-10** THE SYSTEM SHALL support full CRUD on Product via `/api/products` and `/api/products/{product}`.
 - **FR-11** THE SYSTEM SHALL restrict Product write operations to the `admin` role only. 🔄 CHANGED 2026-08-04: `purchasing_manager` write access to Product is removed, same rationale as FR-7 — see FR-32/§9.
@@ -47,7 +48,7 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 - **FR-13** IF a Product's `category_id` does not reference an existing Category THEN THE SYSTEM SHALL return 422.
 - **FR-14** THE SYSTEM SHALL NOT expose any price, cost, or valuation field on Product (non-goal, Blueprint §4.1).
 
-### Lot (Sprint 2 — in progress)
+### Lot (Sprint 2 — complete)
 
 - **FR-15** THE SYSTEM SHALL support full CRUD on Lot via `/api/lots` and `/api/lots/{lot}`.
 - **FR-16** THE SYSTEM SHALL restrict Lot write operations to `admin` and `warehouse_staff` roles — a Lot record represents a physical receipt event owned by Warehouse Staff, with Admin retaining correction/oversight access. `purchasing_manager` is read-only on Lot, consistent with not performing physical stock movements. ✅ DECIDED 2026-08-09 under the physical-receipt interpretation; see FR-33/§9.
@@ -108,7 +109,7 @@ Quick reference — tables and their implementation status:
 | `inventory_transactions` | impl. (Sprint 2)     | `txn_id` uuid    | append-only, signed qty_delta; write: WS+admin, read: all roles |
 | `inventory_snapshots`    | planned (Sprint 3)   | `sku_id` uuid    | derived, row-locked updates only                    |
 | `reorder_configs`        | planned (Sprint 4)   | `sku_id` uuid    | PM + admin write; WS no access                      |
-| `audit_logs`             | impl. schema/read API; automatic logging pending | `audit_id` uuid | system-generated, append-only, admin read only |
+| `audit_logs`             | impl. schema/read API/automatic logging | `audit_id` uuid | system-generated, append-only, admin read only |
 
 *¹ `users.id` is intentionally an auto-incrementing `bigint` primary key. The Blueprint's UUID choice is an accepted project deviation for this single-warehouse application; Laravel's default is appropriate for internal user and actor references.
 
@@ -178,7 +179,7 @@ GET  /api/audit-logs                         role:admin                         
 GET  /api/audit-logs/{audit_log}             role:admin                                          FR-31, FR-37  ✅ impl. 2026-08-09
 ```
 
-Automatic audit creation for Product, Lot, Category, and User writes remains pending.
+Automatic audit creation for Product, Lot, Category, and User writes is implemented through centrally registered Eloquent observers and `AuditLogService`. Authenticated actors are recorded server-side; User secrets are redacted. Bootstrap seed writes and temporary unauthenticated registration are intentionally not audited.
 
 ### Not yet routed (Sprints 3–5, requirement-level only — do not implement against this table alone)
 
@@ -335,3 +336,7 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 - 2026-08-09 — **Decision recorded:** `received_date` is a required `dateTime`; `expiry_date` remains a nullable `date`. The time component supports precise physical receipt ordering and reconciliation. Updated FR-19, §9 open questions, ERD, and sprint tracking.
 - 2026-08-09 — **Decision recorded:** Keep `users.id` as an auto-incrementing `bigint` primary key. The UUID-vs-bigint Blueprint difference is an accepted deviation for this single-warehouse project. Updated §3, §8, §9, ERD, and sprint tracking.
 - 2026-08-09 — **Decision recorded:** Replaced the temporary `in`/`out` transaction contract with the six explicit FR-20 types: `RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, and `WRITE_OFF`. Updated migration constraints, request validation, fixtures, tests, and Sprint 2 documentation; snapshot-side effects remain deferred to Sprint 3.
+
+- 2026-08-23 — **Sprint 2 completed:** Added centrally registered Eloquent audit observers and `AuditLogService` for Product, Lot, Category, and User writes, with authenticated actor attribution and sensitive User-field redaction. Bootstrap seed writes are intentionally excluded from audit generation and temporary unauthenticated registration remains supported.
+- 2026-08-23 — **Realistic demo ledger seeded:** `InventoryTransactionSeeder` now adds 24 repeatable transactions across all 8 catalog products and all six FR-20 transaction types. `DatabaseSeeder` invokes it after `CatalogSeeder`; seed repeatability and zero bootstrap audit rows are covered by `CatalogSeederTest`.
+- 2026-08-23 — Created the dedicated Sprint 3 plan for inventory snapshots, transaction side effects, row-level locking, reservation semantics, and oversell-prevention tests. These behaviors remain unimplemented until Sprint 3 starts.

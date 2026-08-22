@@ -1,13 +1,13 @@
 # Sprints 3–6 — Forward-Looking Roadmap
 
-> Status: ⬜ Not started
-> Every item below is currently unchecked. Treat these as
-> **requirement-level only** — do not implement against this document
-> alone. Expand each sprint's items into SPEC.md as that sprint begins.
+> Status: ⬜ Roadmap
+> Sprint 2 is complete. Sprint 3 has a dedicated plan in [`sprint-3.md`](sprint-3.md); later sprint sections remain requirement-level only.
 
 ---
 
 ## Sprint 3 — Inventory Snapshots & Concurrency
+
+> Detailed plan: [`sprint-3.md`](sprint-3.md) | Status: ⬜ Planned
 
 | Item                                                              | Owner | Status         |
 | ----------------------------------------------------------------- | ----- | -------------- |
@@ -38,8 +38,8 @@
 
 | Item                                                              | Owner | Status         |
 | ----------------------------------------------------------------- | ----- | -------------- |
-| Automatic AUDIT_LOG write path for Product/Lot/Category/User writes | —     | ⬜ not started |
-| Automatic audit logging service/middleware                        | —     | ⬜ not started |
+| Automatic AUDIT_LOG write path for Product/Lot/Category/User writes | —     | ✅ DONE in Sprint 2 — `AuditObserver` + `AuditLogService` |
+| Automatic audit logging service/middleware                        | —     | ✅ DONE in Sprint 2 — observer/service path; no HTTP middleware |
 | Cycle-count submission endpoint (warehouse_staff)                 | —     | ⬜ not started |
 | Variance/shrinkage reconciliation report (admin)                  | —     | ⬜ not started |
 | Inventory turnover by category report (admin)                     | —     | ⬜ not started |
@@ -53,7 +53,7 @@
 | ----------------------------------------------------------------- | ----- | -------------- |
 | End-to-end demo flow (all three symptom mitigations demoable)     | —     | ⬜ not started |
 | Role-guard test coverage for FR-32–FR-38                          | —     | ⬜ not started |
-| Seed realistic demo data                                          | —     | ⬜ not started |
+| Seed realistic demo data                                          | —     | ✅ BASELINE DONE in Sprint 2 — 24 repeatable ledger transactions; final demo-flow expansion remains Sprint 6 |
 | Performance review (N+1 checks, eager loading audit)              | —     | ⬜ not started |
 | Auth hardening notes / tech debt doc for real deployment          | —     | ⬜ not started |
 
