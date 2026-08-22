@@ -14,10 +14,10 @@
 | INVENTORY_TRANSACTION table + append-only write endpoint   | Rem   | ✅ DONE (2026-08-07)                                                 |
 | AUDIT_LOG schema + admin-only read API                      | Rem   | ✅ DONE (2026-08-09) — `AuditLogTest` (5 tests, 28 assertions)       |
 | Automatic audit logging middleware/service                  | —     | ⬜ not started                                                       |
-| Frontend: Category Management                              | —     | ⬜ not started                                                       |
-| Frontend: Product List                                     | —     | ⬜ not started                                                       |
-| Frontend: Product Form                                     | —     | ⬜ not started                                                       |
-| Frontend: Lot Management                                   | —     | ⬜ not started                                                       |
+| Frontend: Category Management                              | Lyll & Larce | ✅ DONE — list, admin CRUD actions, pagination, validation/error handling |
+| Frontend: Product List                                     | Lyll & Larce | ✅ DONE — list, category display, status, admin-only actions             |
+| Frontend: Product Form                                     | Lyll & Larce | ✅ DONE — create/update form with category and metadata fields           |
+| Frontend: Lot Management                                   | Lyll & Larce | ✅ DONE — list, admin/warehouse CRUD actions, receipt/expiry fields      |
 | Seed realistic inventory data                              | —     | ⬜ not started                                                       |
 | Test: transaction writes are immutable (no PUT/PATCH/DELETE) | Rem | ✅ DONE — `InventoryTransactionTest` (25 tests, 80 assertions)       |
 | Test: audit logs are generated for CRUD operations         | —     | ⬜ not started                                                       |
