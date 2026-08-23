@@ -23,7 +23,7 @@ return new class extends Migration {
                 "WRITE_OFF",
             ]);
             $table->integer("qty_delta");
-            $table->dateTime("occured_at");
+            $table->dateTime("occurred_at");
             $table->timestamps();
         });
     }
