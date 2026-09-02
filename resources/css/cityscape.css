@@ -1,0 +1,221 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   WalangBrownout — AnimatedCityscape Styles
+   Nighttime scene with houses, radio tower, and animated windows
+   Desktop-focused — no mobile/tablet breakpoints
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+
+@keyframes window-flicker {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.1; }
+}
+
+@keyframes waveform-drift {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}
+
+/* ── Base Cityscape Container ──────────────────────────────────────────── */
+
+.cityscape {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: linear-gradient(to top, rgba(37, 99, 235, 0.15) 0%, rgba(34, 211, 238, 0.05) 40%, transparent 70%);
+}
+
+/* ── Horizon Glow ──────────────────────────────────────────────────────── */
+
+.cityscape__horizon-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(
+    to top,
+    rgba(37, 99, 235, 0.18) 0%,
+    rgba(34, 211, 238, 0.08) 30%,
+    transparent 60%
+  );
+  opacity: 1;
+  pointer-events: none;
+}
+
+/* ── House Layers ──────────────────────────────────────────────────────── */
+
+.cityscape__houses {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  padding: 0;
+}
+
+.cityscape__houses--far {
+  height: 30%;
+  opacity: 0.5;
+  z-index: 1;
+}
+
+.cityscape__houses--mid {
+  height: 35%;
+  opacity: 0.7;
+  z-index: 2;
+}
+
+.cityscape__houses--near {
+  height: 40%;
+  z-index: 3;
+}
+
+/* ── Individual House ──────────────────────────────────────────────────── */
+
+.cityscape__house {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 12px;
+}
+
+/* House sizes */
+.cityscape__house--sm {
+  min-width: 80px;
+  height: 20%;
+  clip-path: polygon(50% 0%, 100% 35%, 100% 100%, 0% 100%, 0% 35%);
+}
+
+.cityscape__house--md {
+  min-width: 100px;
+  height: 28%;
+  clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%);
+}
+
+.cityscape__house--lg {
+  min-width: 120px;
+  height: 35%;
+  clip-path: polygon(50% 0%, 100% 28%, 100% 100%, 0% 100%, 0% 28%);
+}
+
+/* House colors by layer */
+.cityscape__houses--far .cityscape__house {
+  background: var(--wb-building-far);
+}
+
+.cityscape__houses--mid .cityscape__house {
+  background: var(--wb-building-mid);
+}
+
+.cityscape__houses--near .cityscape__house {
+  background: var(--wb-building-near);
+}
+
+/* ── Windows inside houses ─────────────────────────────────────────────── */
+
+.cityscape__house-windows {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.cityscape__window {
+  display: inline-block;
+  width: 10px;
+  height: 8px;
+  background: var(--wb-window-warm);
+  border-radius: 1px;
+  will-change: opacity;
+  animation: window-flicker 10s ease-in-out infinite;
+}
+
+/* Staggered animation delays for windows */
+.cityscape__houses--far .cityscape__house:nth-child(1) .cityscape__window:nth-child(1) { animation-delay: 0s; animation-duration: 10s; }
+.cityscape__houses--far .cityscape__house:nth-child(1) .cityscape__window:nth-child(2) { animation-delay: 3.2s; animation-duration: 12s; }
+.cityscape__houses--far .cityscape__house:nth-child(2) .cityscape__window:nth-child(1) { animation-delay: 1.5s; animation-duration: 11s; }
+.cityscape__houses--far .cityscape__house:nth-child(2) .cityscape__window:nth-child(2) { animation-delay: 5.8s; animation-duration: 9s; }
+.cityscape__houses--far .cityscape__house:nth-child(2) .cityscape__window:nth-child(3) { animation-delay: 8.1s; animation-duration: 13s; }
+.cityscape__houses--far .cityscape__house:nth-child(3) .cityscape__window:nth-child(1) { animation-delay: 2.4s; animation-duration: 14s; }
+.cityscape__houses--far .cityscape__house:nth-child(3) .cityscape__window:nth-child(2) { animation-delay: 6.7s; animation-duration: 10s; }
+.cityscape__houses--far .cityscape__house:nth-child(4) .cityscape__window:nth-child(1) { animation-delay: 4.0s; animation-duration: 12s; }
+.cityscape__houses--far .cityscape__house:nth-child(4) .cityscape__window:nth-child(2) { animation-delay: 7.3s; animation-duration: 8s; }
+.cityscape__houses--far .cityscape__house:nth-child(4) .cityscape__window:nth-child(3) { animation-delay: 10.5s; animation-duration: 11s; }
+.cityscape__houses--far .cityscape__house:nth-child(5) .cityscape__window:nth-child(1) { animation-delay: 1.9s; animation-duration: 15s; }
+.cityscape__houses--far .cityscape__house:nth-child(5) .cityscape__window:nth-child(2) { animation-delay: 9.0s; animation-duration: 10s; }
+.cityscape__houses--far .cityscape__house:nth-child(6) .cityscape__window:nth-child(1) { animation-delay: 3.6s; animation-duration: 9s; }
+.cityscape__houses--far .cityscape__house:nth-child(6) .cityscape__window:nth-child(2) { animation-delay: 6.2s; animation-duration: 13s; }
+.cityscape__houses--far .cityscape__house:nth-child(6) .cityscape__window:nth-child(3) { animation-delay: 11.0s; animation-duration: 11s; }
+
+.cityscape__houses--mid .cityscape__house:nth-child(1) .cityscape__window:nth-child(1) { animation-delay: 0.5s; animation-duration: 11s; }
+.cityscape__houses--mid .cityscape__house:nth-child(1) .cityscape__window:nth-child(2) { animation-delay: 4.2s; animation-duration: 9s; }
+.cityscape__houses--mid .cityscape__house:nth-child(1) .cityscape__window:nth-child(3) { animation-delay: 7.8s; animation-duration: 14s; }
+.cityscape__houses--mid .cityscape__house:nth-child(2) .cityscape__window:nth-child(1) { animation-delay: 2.1s; animation-duration: 10s; }
+.cityscape__houses--mid .cityscape__house:nth-child(2) .cityscape__window:nth-child(2) { animation-delay: 5.5s; animation-duration: 12s; }
+.cityscape__houses--mid .cityscape__house:nth-child(3) .cityscape__window:nth-child(1) { animation-delay: 1.0s; animation-duration: 13s; }
+.cityscape__houses--mid .cityscape__house:nth-child(3) .cityscape__window:nth-child(2) { animation-delay: 3.8s; animation-duration: 8s; }
+.cityscape__houses--mid .cityscape__house:nth-child(3) .cityscape__window:nth-child(3) { animation-delay: 8.4s; animation-duration: 11s; }
+.cityscape__houses--mid .cityscape__house:nth-child(4) .cityscape__window:nth-child(1) { animation-delay: 6.0s; animation-duration: 10s; }
+.cityscape__houses--mid .cityscape__house:nth-child(4) .cityscape__window:nth-child(2) { animation-delay: 9.5s; animation-duration: 15s; }
+.cityscape__houses--mid .cityscape__house:nth-child(5) .cityscape__window:nth-child(1) { animation-delay: 2.7s; animation-duration: 12s; }
+.cityscape__houses--mid .cityscape__house:nth-child(5) .cityscape__window:nth-child(2) { animation-delay: 7.1s; animation-duration: 9s; }
+.cityscape__houses--mid .cityscape__house:nth-child(5) .cityscape__window:nth-child(3) { animation-delay: 10.8s; animation-duration: 11s; }
+.cityscape__houses--mid .cityscape__house:nth-child(6) .cityscape__window:nth-child(1) { animation-delay: 4.5s; animation-duration: 14s; }
+.cityscape__houses--mid .cityscape__house:nth-child(6) .cityscape__window:nth-child(2) { animation-delay: 8.9s; animation-duration: 10s; }
+
+.cityscape__houses--near .cityscape__house:nth-child(1) .cityscape__window:nth-child(1) { animation-delay: 1.3s; animation-duration: 12s; }
+.cityscape__houses--near .cityscape__house:nth-child(1) .cityscape__window:nth-child(2) { animation-delay: 4.8s; animation-duration: 9s; }
+.cityscape__houses--near .cityscape__house:nth-child(1) .cityscape__window:nth-child(3) { animation-delay: 8.2s; animation-duration: 14s; }
+.cityscape__houses--near .cityscape__house:nth-child(2) .cityscape__window:nth-child(1) { animation-delay: 0.7s; animation-duration: 11s; }
+.cityscape__houses--near .cityscape__house:nth-child(2) .cityscape__window:nth-child(2) { animation-delay: 3.5s; animation-duration: 10s; }
+.cityscape__houses--near .cityscape__house:nth-child(2) .cityscape__window:nth-child(3) { animation-delay: 6.9s; animation-duration: 13s; }
+.cityscape__houses--near .cityscape__house:nth-child(3) .cityscape__window:nth-child(1) { animation-delay: 2.0s; animation-duration: 15s; }
+.cityscape__houses--near .cityscape__house:nth-child(3) .cityscape__window:nth-child(2) { animation-delay: 5.3s; animation-duration: 8s; }
+.cityscape__houses--near .cityscape__house:nth-child(4) .cityscape__window:nth-child(1) { animation-delay: 1.6s; animation-duration: 10s; }
+.cityscape__houses--near .cityscape__house:nth-child(4) .cityscape__window:nth-child(2) { animation-delay: 4.1s; animation-duration: 12s; }
+.cityscape__houses--near .cityscape__house:nth-child(4) .cityscape__window:nth-child(3) { animation-delay: 7.5s; animation-duration: 9s; }
+.cityscape__houses--near .cityscape__house:nth-child(5) .cityscape__window:nth-child(1) { animation-delay: 3.0s; animation-duration: 14s; }
+.cityscape__houses--near .cityscape__house:nth-child(5) .cityscape__window:nth-child(2) { animation-delay: 6.4s; animation-duration: 11s; }
+.cityscape__houses--near .cityscape__house:nth-child(6) .cityscape__window:nth-child(1) { animation-delay: 0.2s; animation-duration: 13s; }
+.cityscape__houses--near .cityscape__house:nth-child(6) .cityscape__window:nth-child(2) { animation-delay: 5.7s; animation-duration: 10s; }
+.cityscape__houses--near .cityscape__house:nth-child(7) .cityscape__window:nth-child(1) { animation-delay: 2.5s; animation-duration: 12s; }
+.cityscape__houses--near .cityscape__house:nth-child(7) .cityscape__window:nth-child(2) { animation-delay: 4.9s; animation-duration: 15s; }
+.cityscape__houses--near .cityscape__house:nth-child(7) .cityscape__window:nth-child(3) { animation-delay: 9.3s; animation-duration: 9s; }
+
+/* ── Waveform Accent ───────────────────────────────────────────────────── */
+
+.cityscape__waveform {
+  position: absolute;
+  bottom: 2%;
+  left: 5%;
+  right: 5%;
+  height: 30px;
+  opacity: 0.3;
+  z-index: 5;
+  animation: waveform-drift 20s ease-in-out infinite;
+}
+
+/* ── Reduced Motion ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .cityscape__window {
+    animation: none;
+    transition: none;
+    opacity: 0.7;
+  }
+
+  .cityscape__waveform {
+    animation: none;
+    transition: none;
+  }
+}
