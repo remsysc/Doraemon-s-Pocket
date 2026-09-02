@@ -218,9 +218,9 @@ export default function Dashboard() {
                                                     {log.action}
                                                 </span>
                                             </td>
-                                            <td>{log.auditable_type.split("\\").pop()}</td>
-                                            <td>{log.user?.name ?? "System"}</td>
-                                            <td>{new Date(log.created_at).toLocaleDateString()}</td>
+                                            <td>{log.entity_type.split("\\").pop()}</td>
+                                            <td>{log.actor?.name ?? "System"}</td>
+                                            <td>{new Date(log.occurred_at).toLocaleDateString()}</td>
                                         </tr>
                                     ))}
                                 </tbody>

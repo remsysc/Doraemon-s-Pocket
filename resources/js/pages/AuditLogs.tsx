@@ -66,14 +66,14 @@ export default function AuditLogs() {
                                                     </span>
                                                 </td>
                                                 <td className="td-bold">
-                                                    {log.auditable_type.split("\\").pop()}
+                                                    {log.entity_type.split("\\").pop()}
                                                 </td>
                                                 <td>
-                                                    <code>{log.auditable_id}</code>
+                                                    <code>{log.entity_id}</code>
                                                 </td>
-                                                <td>{log.user?.name ?? "System"}</td>
+                                                <td>{log.actor?.name ?? "System"}</td>
                                                 <td>
-                                                    {new Date(log.created_at).toLocaleString()}
+                                                    {new Date(log.occurred_at).toLocaleString()}
                                                 </td>
                                             </tr>
                                         ))}
