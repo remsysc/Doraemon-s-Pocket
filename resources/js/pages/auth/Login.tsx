@@ -6,7 +6,9 @@ import {
     type LoginPayload,
     type ValidationErrorResponse,
 } from "../../lib/api";
+import AnimatedCityscape from "../../components/AnimatedCityscape";
 import "../../../css/auth.css";
+import "../../../css/cityscape.css";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -55,61 +57,103 @@ export default function Login() {
     };
 
     return (
-        
         <div className="auth-page">
-            <div className="auth-card">
-                <div className="auth-header">
-                    <div className="auth-logo">⚡</div>
-                    <h1>WalangBrownout</h1>
-                    <p>Power Outage Monitoring System</p>
-                </div>
+            <div className="auth-page__scene">
+                {/* Left panel text overlay */}
+                <div className="auth-scene-content">
+                    <div className="auth-scene-content__brand">Walang Brownout</div>
 
-                {error && <div className="auth-error">{error}</div>}
-
-                <form className="auth-form" onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Email Address</label>
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="Enter your email"
-                            value={form.email}
-                            onChange={handleChange}
-                        />
+                    <div className="auth-scene-content__tagline">
+                        Powering <span className="text-dark-blue">Comfort</span>.<br />
+                        Elevating <span className="text-light-blue">Homes</span>.
                     </div>
 
-                    <div className="form-group">
-                        <label>Password</label>
-                        <div className="password-wrapper">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                placeholder="Enter your password"
-                                value={form.password}
-                                onChange={handleChange}
-                            />
-                            <button
-                                type="button"
-                                className="toggle-password"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? "🙈" : "👁"}
-                            </button>
+                    <p className="auth-scene-content__description">
+                        Your trusted destination for quality appliances, parts, and everything your home needs.
+                    </p>
+
+                    <div className="auth-scene-content__features">
+                        <div className="auth-scene-feature">
+                            <span className="auth-scene-feature__title">Wide Selection</span>
+                            <span className="auth-scene-feature__desc">Aircons, filters, parts and home appliances</span>
+                        </div>
+                        <div className="auth-scene-feature">
+                            <span className="auth-scene-feature__title">Trusted Quality</span>
+                            <span className="auth-scene-feature__desc">Genuine products from reliable brands.</span>
+                        </div>
+                        <div className="auth-scene-feature">
+                            <span className="auth-scene-feature__title">Always Ready</span>
+                            <span className="auth-scene-feature__desc">Fast service, secure shopping every time.</span>
                         </div>
                     </div>
+                </div>
 
-                    <button
-                        type="submit"
-                        className="auth-button"
-                        disabled={loading}
-                    >
-                        {loading ? "Signing In..." : "Sign In"}
-                    </button>
-                </form>
+                <AnimatedCityscape />
+            </div>
+            <div className="auth-page__form-panel">
+                <div className="auth-card">
+                    <div className="auth-header">
+                        <h2 className="auth-header__brand">WalangBrownout</h2>
+                        <p className="auth-header__system">Supply Chain & Distribution</p>
+                        <h1>Sign in</h1>
+                        <p>Enter your credentials to continue</p>
+                    </div>
 
-                <div className="auth-footer">
-                    Don't have an account?{" "}
-                    <Link to="/register">Create one</Link>
+                    <div aria-live="polite">
+                        {error && <div className="auth-error">{error}</div>}
+                    </div>
+
+                    <form className="auth-form" onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label htmlFor="login-email">Email address</label>
+                            <input
+                                id="login-email"
+                                type="email"
+                                name="email"
+                                placeholder="you@company.com"
+                                value={form.email}
+                                onChange={handleChange}
+                                autoComplete="email"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="login-password">Password</label>
+                            <div className="password-wrapper">
+                                <input
+                                    id="login-password"
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    placeholder="Enter your password"
+                                    value={form.password}
+                                    onChange={handleChange}
+                                    autoComplete="current-password"
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                >
+                                    {showPassword ? "Hide" : "Show"}
+                                </button>
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="auth-button"
+                            disabled={loading}
+                        >
+                            {loading && <span className="spinner" />}
+                            {loading ? "Signing in..." : "Sign in"}
+                        </button>
+                    </form>
+
+                    <div className="auth-footer">
+                        Don't have an account?{" "}
+                        <Link to="/register">Create one</Link>
+                    </div>
                 </div>
             </div>
         </div>
