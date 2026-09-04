@@ -22,7 +22,7 @@ Sprint 2 delivers the catalog, lot, append-only inventory ledger, audit read pat
 
 ## Seed data
 
-`DatabaseSeeder` creates the three demo users, the complete 4-category/8-product/16-lot catalog, and 24 deterministic inventory transactions. The transaction seed covers `RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, and `WRITE_OFF`, uses the existing `occured_at` schema spelling, and is repeatable through fixed transaction UUIDs.
+`DatabaseSeeder` creates the three demo users, the complete 4-category/8-product/16-lot catalog, and 24 deterministic inventory transactions. The transaction seed covers `RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, and `WRITE_OFF`, uses the existing `occurred_at` schema spelling, and is repeatable through fixed transaction UUIDs.
 
 Bootstrap seed writes are intentionally not audited. Authenticated business writes are audited with the server-side actor; temporary unauthenticated registration is not audited until registration is replaced by Admin-only user management.
 

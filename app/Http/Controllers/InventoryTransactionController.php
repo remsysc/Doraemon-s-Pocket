@@ -7,6 +7,7 @@ use App\Http\Requests\InventoryTransaction\ShowInventoryTransactionRequest;
 use App\Http\Requests\InventoryTransaction\StoreInventoryTransactionRequest;
 use App\Http\Resources\InventoryTransactionResource;
 use App\Models\InventoryTransaction;
+use App\Services\InventoryTransactionService;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
@@ -25,15 +26,15 @@ class InventoryTransactionController extends Controller
                 AllowedFilter::exact('txn_type'),
                 AllowedFilter::callback(
                     'from_date',
-                    fn ($query, $value) => $query->where('occured_at', '>=', $value),
+                    fn ($query, $value) => $query->where('occurred_at', '>=', $value),
                 ),
                 AllowedFilter::callback(
                     'to_date',
-                    fn ($query, $value) => $query->where('occured_at', '<=', $value),
+                    fn ($query, $value) => $query->where('occurred_at', '<=', $value),
                 ),
             )
-            ->allowedSorts('created_at', 'occured_at', 'qty_delta')
-            ->defaultSort('-occured_at')
+            ->allowedSorts('created_at', 'occurred_at', 'qty_delta')
+            ->defaultSort('-occurred_at')
             ->paginate($request->integer('per_page', 15))
             ->withQueryString();
 
@@ -46,12 +47,14 @@ class InventoryTransactionController extends Controller
      * actor_id is always set from the authenticated session — never
      * from the request body (SPEC FR-20).
      */
-    public function store(StoreInventoryTransactionRequest $request)
-    {
-        $transaction = InventoryTransaction::create([
-            ...$request->validated(),
-            'actor_id' => $request->user()->id,
-        ]);
+    public function store(
+        StoreInventoryTransactionRequest $request,
+        InventoryTransactionService $transactionService,
+    ) {
+        $transaction = $transactionService->record(
+            $request->validated(),
+            $request->user()->id,
+        );
 
         $transaction->load('lot.product', 'actor');
 
