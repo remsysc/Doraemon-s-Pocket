@@ -87,7 +87,7 @@ export default function Transactions() {
                 lot_id: formLotId,
                 txn_type: formType,
                 qty_delta: qty,
-                occured_at: formOccuredAt,
+                occurred_at: formOccuredAt,
             };
             await createTransaction(payload);
             setShowForm(false);
@@ -159,7 +159,7 @@ export default function Transactions() {
                                                 <td>{txn.lot?.bin_location ?? "—"}</td>
                                                 <td>{txn.actor?.name ?? "—"}</td>
                                                 <td>
-                                                    {new Date(txn.occured_at).toLocaleString()}
+                                                    {new Date(txn.occurred_at).toLocaleString()}
                                                 </td>
                                             </tr>
                                         ))}

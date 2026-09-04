@@ -178,7 +178,7 @@ export default function Dashboard() {
                                         <td>{txn.lot?.product?.name ?? "\u2014"}</td>
                                         <td>{txn.actor?.name ?? "\u2014"}</td>
                                         <td>
-                                            {new Date(txn.occured_at).toLocaleDateString()}
+                                            {new Date(txn.occurred_at).toLocaleDateString()}
                                         </td>
                                     </tr>
                                 ))}

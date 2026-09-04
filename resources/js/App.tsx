@@ -6,6 +6,7 @@ import Categories from "./pages/Categories";
 import Products from "./pages/Products";
 import Lots from "./pages/Lots";
 import Transactions from "./pages/Transactions";
+import StockOverview from "./pages/StockOverview";
 import AuditLogs from "./pages/AuditLogs";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
@@ -56,6 +57,14 @@ export default function App() {
                     element={
                         <ProtectedRoute>
                             <Transactions />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/stock"
+                    element={
+                        <ProtectedRoute>
+                            <StockOverview />
                         </ProtectedRoute>
                     }
                 />
