@@ -17,9 +17,10 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 - **[Sprint 1 — Foundation & Auth](../sprints/sprint-1.md)** ✅ DONE
 - **[Sprint 2 — Core Ledger](../sprints/sprint-2.md)** ✅ Complete
 - **[Sprint 3 — Inventory Snapshots & Concurrency](../sprints/sprint-3.md)** ✅ Complete
+- **[Sprint 4 — Classification & Reorder Intelligence](../sprints/sprint-4.md)** ✅ Complete
 - **[Sprints 3–6 — Roadmap](../sprints/sprints-3-6.md)** ⬜ Future roadmap
 
-**Sprints 4–6** — Sprint 3 snapshot derivation and reservation workflow are complete (see FR-22/FR-23 below). Nothing in ABC/XYZ classification, ROP/EOQ, cycle-count reconciliation, or hardening has been started. Treat the §§5–7 requirements for those sprints as **forward-looking requirements only**, not in-progress work.
+**Sprints 5–6** — Sprints 3 and 4 are complete (snapshots/concurrency and classification/reorder intelligence). Nothing in cycle-count reconciliation, variance/turnover reporting, or hardening has been started. Treat the §§6–7 requirements for those sprints as **forward-looking requirements only**, not in-progress work.
 
 ---
 
@@ -70,14 +71,14 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 ### FEFO Picking (Sprint 2/4)
 
 - **FR-24** THE SYSTEM SHALL order any pick-list query for a given Product by `lots.expiry_date` ascending (nulls last), regardless of `received_date` or insertion order.
-- **FR-25** WHEN a Lot's `expiry_date` falls within the configurable expiry window (default 30 days, configurable via `REORDER_CONFIG`-adjacent config, not yet modeled) AND `qty_on_hand` for that lot > 0, THE SYSTEM SHALL surface it in an expiry-alert endpoint. THE SYSTEM SHALL restrict visibility of this endpoint to `purchasing_manager` and `admin`; `warehouse_staff` instead sees expiry risk inline via the FEFO pick list (FR-24), not a separate alert feed. 🔄 CHANGED 2026-08-04, 🚧 inferred — see FR-35/§9.
+- **FR-25** WHEN a Lot's `expiry_date` falls within the configurable expiry window (default 30 days, configurable via `REORDER_CONFIG`-adjacent config, not yet modeled) AND `qty_on_hand` for that lot > 0, THE SYSTEM SHALL surface it in an expiry-alert endpoint. THE SYSTEM SHALL restrict visibility of this endpoint to `purchasing_manager` and `admin`; `warehouse_staff` instead sees expiry risk inline via the FEFO pick list (FR-24), not a separate alert feed. 🔄 CHANGED 2026-08-04, 🚧 inferred — see FR-35/§9. ✅ Implemented Sprint 4 — `GET /api/alerts/expiry?days=` returns lots whose `expiry_date` falls within the window (default 30, `EXPIRY_ALERT_WINDOW_DAYS`) and whose SKU snapshot `qty_on_hand > 0`; restricted to `purchasing_manager` + `admin`.
 
-### Reorder / ROP / EOQ (Sprint 4 — not yet started, requirement-level only)
+### Reorder / ROP / EOQ (Sprint 4 — ✅ implemented 2026-09-11)
 
-- **FR-26** THE SYSTEM SHALL compute `ROP = (avg_daily_demand × lead_time_days) + safety_stock` per SKU, reading `lead_time_days` from `reorder_configs`.
-- **FR-27** THE SYSTEM SHALL compute `safety_stock = Z × sqrt((lead_time_avg × demand_variance) + (demand_avg^2 × lead_time_variance))` with a configurable Z (default 1.65 for ~95% service level).
-- **FR-28** WHERE a Product has `is_seasonal = true` THE SYSTEM SHALL compute its reorder trigger from the same period last year's demand (seasonal index or Holt-Winters decomposition), shifted earlier by `lead_time_days`, rather than a flat trailing average.
-- **FR-29** THE SYSTEM SHALL compute `EOQ = sqrt((2 × annual_demand × order_cost) / holding_cost_per_unit)` for non-seasonal items. 🚧 OPEN QUESTION: `order_cost` and `holding_cost_per_unit` are not yet modeled anywhere in the schema — since pricing is explicitly out of scope (PRD non-goal), confirm whether these are (a) hardcoded constants for the demo, (b) added as non-price "operational cost" fields distinct from unit price, or (c) descoped from the EOQ calculation entirely for this project. This blocks FR-29 implementation.
+- **FR-26** THE SYSTEM SHALL compute `ROP = (avg_daily_demand × lead_time_days) + safety_stock` per SKU, reading `lead_time_days` from `reorder_configs`. ✅ Implemented Sprint 4 — `ReorderService::metricsFor()`; `avg_daily_demand` is derived from `SALE`+`PICK` outflow over a trailing window (default 90 days). A `reorder_configs.reorder_point` override, when set, takes precedence over the derived value.
+- **FR-27** THE SYSTEM SHALL compute `safety_stock = Z × sqrt((lead_time_avg × demand_variance) + (demand_avg^2 × lead_time_variance))` with a configurable Z (default 1.65 for ~95% service level). ✅ Implemented Sprint 4 — lead-time variance is not modeled (single-supplier demo assumption), so the formula reduces to `Z × sqrt(lead_time_days × demand_variance)`. Z is `reorder_configs.service_level_z` (default 1.65); a `safety_stock` override takes precedence.
+- **FR-28** WHERE a Product has `is_seasonal = true` THE SYSTEM SHALL compute its reorder trigger from the same period last year's demand (seasonal index or Holt-Winters decomposition), shifted earlier by `lead_time_days`, rather than a flat trailing average. ✅ Implemented Sprint 4 (baseline) — seasonal SKUs are flagged (`seasonal: true`) and report a `seasonal_basis` (`last_year` when same-period-last-year demand exists, else `insufficient_history`); EOQ is intentionally not applied to seasonal items. Richer seasonal decomposition improves the number without an API change as history accumulates.
+- **FR-29** THE SYSTEM SHALL compute `EOQ = sqrt((2 × annual_demand × order_cost) / holding_cost_per_unit)` for non-seasonal items. ✅ Implemented Sprint 4; OQ-6 RESOLVED — `order_cost` and `holding_cost_per_unit` are modeled as **nullable, non-price operational cost fields on `reorder_configs`** (never on Product; pricing/valuation stays out of scope per FR-14). EOQ is computed only for non-seasonal SKUs when both cost inputs are present and positive; otherwise the API returns `eoq: null`.
 
 ### Reconciliation & Audit (Sprint 5 — not yet started, requirement-level only)
 
@@ -88,10 +89,10 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 
 This subsection is the single source of truth for role checks going forward; where it and a per-entity FR above ever drift, this subsection wins.
 
-- **FR-32** THE SYSTEM SHALL restrict write access to `reorder_configs` (reorder_point, safety_stock, lead_time_days) to `purchasing_manager` and `admin` (superuser); `warehouse_staff` SHALL have no access (read or write) to `reorder_configs` or any reorder/EOQ/purchasing-alert endpoint. Admin's reorder-config screen is not part of its default UI, but that's a navigation choice, not a separate permission tier.
+- **FR-32** THE SYSTEM SHALL restrict write access to `reorder_configs` (reorder_point, safety_stock, lead_time_days) to `purchasing_manager` and `admin` (superuser); `warehouse_staff` SHALL have no access (read or write) to `reorder_configs` or any reorder/EOQ/purchasing-alert endpoint. Admin's reorder-config screen is not part of its default UI, but that's a navigation choice, not a separate permission tier. ✅ Implemented Sprint 4 — `ReorderConfigPolicy` + `role:purchasing_manager,admin` route group; Warehouse Staff receives 403 on `reorder-configs`, `alerts/*`, and `inventory-classifications/recompute`.
 - **FR-33** THE SYSTEM SHALL grant Lot write access to `admin` + `warehouse_staff`, under the physical-receipt interpretation. `purchasing_manager` SHALL be read-only on Lot.
 - **FR-34** THE SYSTEM SHALL restrict `POST /api/inventory-transactions` (all txn_types) to `warehouse_staff` and `admin` (superuser); `purchasing_manager` SHALL receive 403 on any write to this endpoint and SHALL retain read-only access through the GET endpoints. ✅ DECIDED 2026-08-09: no physical stock movement writes for Purchasing Manager.
-- **FR-35** THE SYSTEM SHALL restrict read access to `/api/alerts/reorder` and `/api/alerts/expiry` to `purchasing_manager` and `admin`; `warehouse_staff` SHALL NOT see these alerts.
+- **FR-35** THE SYSTEM SHALL restrict read access to `/api/alerts/reorder` and `/api/alerts/expiry` to `purchasing_manager` and `admin`; `warehouse_staff` SHALL NOT see these alerts. ✅ Implemented Sprint 4 — both alert endpoints sit behind the `role:purchasing_manager,admin` group.
 - **FR-36** THE SYSTEM SHALL restrict cycle-count _submission_ (`POST /api/cycle-counts`) to `warehouse_staff`; THE SYSTEM SHALL restrict variance/shrinkage _report_ viewing to `admin`.
 - **FR-37** THE SYSTEM SHALL restrict read access to `GET /api/audit-logs` to `admin` only.
 - **FR-38** THE SYSTEM SHALL restrict all user-management operations (create/update/deactivate/role-change on `users`, beyond self-registration) to `admin` only.
@@ -112,7 +113,7 @@ Quick reference — tables and their implementation status:
 | `lots`                   | impl.                | `lot_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
 | `inventory_transactions` | impl. (Sprint 2)     | `txn_id` uuid    | append-only, signed qty_delta; write: WS+admin, read: all roles |
 | `inventory_snapshots`    | implemented (Sprint 3) | `sku_id` uuid    | derived, row-locked updates only                    |
-| `reorder_configs`        | planned (Sprint 4)   | `sku_id` uuid    | PM + admin write; WS no access                      |
+| `reorder_configs`        | implemented (Sprint 4) | `sku_id` uuid    | PM + admin write; WS no access; incl. non-price operational costs |
 | `audit_logs`             | impl. schema/read API/automatic logging | `audit_id` uuid | system-generated, append-only, admin read only |
 
 *¹ `users.id` is intentionally an auto-incrementing `bigint` primary key. The Blueprint's UUID choice is an accepted project deviation for this single-warehouse application; Laravel's default is appropriate for internal user and actor references.
@@ -195,20 +196,24 @@ GET  /api/inventory-snapshots                role: any
 GET  /api/inventory-snapshots/{product}      role: any
 POST /api/products/{product}/reserve         role:warehouse_staff,admin
 POST /api/products/{product}/release         role:warehouse_staff,admin
-GET  /api/inventory-classifications          role: any
-POST /api/inventory-classifications/recompute role:admin,purchasing_manager
-GET/POST /api/reorder-configs                role:purchasing_manager,admin; warehouse_staff: no access  FR-32
-GET/PUT/DELETE /api/reorder-configs/{product} role:purchasing_manager,admin; warehouse_staff: no access
-GET  /api/alerts/reorder                     role:purchasing_manager,admin                       FR-35
-GET  /api/alerts/expiry                      role:purchasing_manager,admin                       FR-25, FR-35
-GET/POST /api/cycle-counts                   role:warehouse_staff (POST/submit); admin (GET/view report)  FR-30, FR-36
+GET  /api/inventory-classifications          role: any                                            FR-15 (PRD)   ✅ impl. 2026-09-11
+POST /api/inventory-classifications/recompute role:admin,purchasing_manager                       FR-15 (PRD)   ✅ impl. 2026-09-11
+GET/POST /api/reorder-configs                role:purchasing_manager,admin; warehouse_staff: no access  FR-32   ✅ impl. 2026-09-11
+GET/PUT/DELETE /api/reorder-configs/{reorder_config} role:purchasing_manager,admin; warehouse_staff: no access  ✅ impl. 2026-09-11
+GET  /api/reorder-configs/{reorder_config}/metrics role:purchasing_manager,admin  (ROP/safety/EOQ/seasonal)  FR-26/27/28/29  ✅ impl. 2026-09-11
+GET  /api/alerts/reorder                     role:purchasing_manager,admin                       FR-35         ✅ impl. 2026-09-11
+GET  /api/alerts/expiry                      role:purchasing_manager,admin                       FR-25, FR-35  ✅ impl. 2026-09-11
+GET  /api/cycle-counts                        role:warehouse_staff (POST/submit); admin (GET/view report)  FR-30, FR-36
 GET  /api/cycle-counts/{count}                role:warehouse_staff,admin
 GET  /api/reports/turnover                    role:admin
 GET  /api/reports/variance                    role:admin                                          FR-16, FR-36
 GET  /api/alerts/history                      role:purchasing_manager,admin
 ```
 
-Full request/response shapes for these are 🚧 OPEN — write them into this spec (§4) before starting the corresponding sprint, not while coding it.
+Full request/response shapes for the implemented Sprint 4 endpoints are in
+**[docs/sprints/sprint-4.md](../sprints/sprint-4.md)** (§ "API contracts").
+The remaining (Sprint 5) shapes are 🚧 OPEN — write them into this spec (§4)
+before starting that sprint, not while coding it.
 
 ---
 
@@ -315,7 +320,7 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 
 - ✅ **Lot/Product deletion behavior (FR-18), resolved 2026-08-09:** Product deletion is restricted while related Lots exist. The current constrained foreign key intentionally preserves Lot and inventory traceability; no cascade is used.
 - ✅ **`received_date` type (FR-19), resolved 2026-08-09:** `received_date` is required `dateTime`; `expiry_date` is a nullable `date`. The time component is intentional for precise receipt ordering and reconciliation.
-- 🚧 `order_cost` / `holding_cost_per_unit` sourcing for EOQ, given pricing is out-of-scope (FR-29).
+- ✅ **`order_cost` / `holding_cost_per_unit` sourcing for EOQ (FR-29), resolved 2026-09-11 (OQ-6):** modeled as nullable, non-price operational cost fields on `reorder_configs` (option (b)) — never on Product, and explicitly not unit price/COGS/valuation. EOQ is computed only for non-seasonal SKUs when both inputs are present and positive; otherwise `eoq` is null. This unblocks FR-29 while preserving the pricing non-goal (FR-14).
 - ✅ **Soft-deleted Category assignment (FR-9), resolved 2026-08-09:** New Product creation and Category reassignment reject soft-deleted Categories with 422; existing Product relationships remain readable via `withTrashed()`; explicit Admin restoration is required before reuse.
 - ✅ **Past-dated Lot expiry (FR-19), resolved 2026-08-09:** Normal Lot create/update flows reject `expiry_date` before today with 422 while retaining nullable expiry dates. Historical expired Lots require a separate explicitly authorized backfill/import workflow.
 - ✅ **Category restore endpoint (FR-9), resolved 2026-08-09:** Admin can explicitly restore a soft-deleted Category through `POST /api/categories/{category}/restore` before reusing it.
@@ -327,6 +332,8 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 - ✅ RESOLVED 2026-08-04: `routes/api.php`, `RoleMiddleware`, and the Category/Product/Lot Policies have been updated to match — Category/Product writes are `role:admin`, Lot writes are `role:admin,warehouse_staff`, and the corresponding Policy `create`/`update`/`delete` methods were updated to match (Category/Product: admin-only via `before()`, non-admin always `false`; Lot: `warehouse_staff`, with admin via `before()`). Covered by `tests/Feature/CategoryProductLotCrudTest.php` and `tests/Feature/RoleMiddlewareTest.php` (14 tests, all passing). FR-32–FR-38's ledger/reorder_configs/audit_logs/user-management endpoints remain unbuilt (Sprint 4/5), so those routes/policies don't exist yet to update — tracked as before, just no longer blocked on this RBAC decision.
 
 ## 10. Changelog
+
+- 2026-09-11 — **Sprint 4 complete (Classification & Reorder Intelligence):** Added `reorder_configs` (SKU-keyed; `reorder_point`/`safety_stock` overrides, `lead_time_days`, `service_level_z`, and non-price operational `order_cost`/`holding_cost_per_unit`) with a PM+admin CRUD API and a `{reorder_config}/metrics` endpoint. `ReorderService` derives demand statistics from `SALE`+`PICK` ledger outflow over a trailing window and computes ROP (FR-26), statistical safety stock (FR-27, lead-time variance zeroed), EOQ for non-seasonal SKUs when cost inputs are present (FR-29), and a seasonal flag/basis (FR-28). `ClassificationService` derives ABC (cumulative Pareto by volume) and XYZ (coefficient of variation) — `GET /api/inventory-classifications` (any role) and a PM+admin recompute (PRD FR-15). Reorder and expiry alerts (`GET /api/alerts/reorder`, `GET /api/alerts/expiry`) are PM+admin only (FR-25, FR-35). **OQ-6 resolved**: cost inputs are non-price operational fields on `reorder_configs`, not on Product (FR-14 preserved). Added a PM+admin frontend Purchasing Dashboard and `ReorderConfigSeeder` (8 demo configs). Full backend suite green on PostgreSQL 17 (101 tests / 432 assertions); `npm run build` passes.
 
 - 2026-09-11 — **Sprint 3 complete:** Snapshot schema (SKU-keyed `inventory_snapshots` with PostgreSQL check constraints), atomic transaction side effects with Product + snapshot row-level locking, oversell prevention (422 with `code`), read-only snapshot endpoints (`GET /api/inventory-snapshots[/{product}]`) for all authenticated roles, and the frontend Stock Overview page are all implemented and verified (FR-22/FR-23, §4). Snapshot semantics were consolidated into the pure `InventoryTransactionService::project()` shared by the live path and the demo seeder. `InventoryTransactionSeeder` now rebuilds snapshots by replaying a self-consistent 26-row demo ledger (a `RESERVE` precedes each `PICK`), so the Stock Overview shows realistic non-zero stock. Full backend suite green on PostgreSQL 17 (84 tests / 369 assertions); `npm run build` passes.
 

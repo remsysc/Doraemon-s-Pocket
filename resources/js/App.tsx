@@ -7,6 +7,7 @@ import Products from "./pages/Products";
 import Lots from "./pages/Lots";
 import Transactions from "./pages/Transactions";
 import StockOverview from "./pages/StockOverview";
+import PurchasingDashboard from "./pages/PurchasingDashboard";
 import AuditLogs from "./pages/AuditLogs";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
@@ -65,6 +66,16 @@ export default function App() {
                     element={
                         <ProtectedRoute>
                             <StockOverview />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/purchasing"
+                    element={
+                        <ProtectedRoute>
+                            <RoleRoute allowedRoles={["admin", "purchasing_manager"]}>
+                                <PurchasingDashboard />
+                            </RoleRoute>
                         </ProtectedRoute>
                     }
                 />

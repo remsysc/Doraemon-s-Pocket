@@ -284,3 +284,64 @@ export function getAuditLogs(page = 1, perPage = 15) {
 export function getAuditLog(id: string) {
     return api.get<{ data: AuditLog }>(`/api/audit-logs/${id}`);
 }
+
+// ─── Reorder Intelligence & Purchasing Alerts (Sprint 4) ─────────────────────
+
+export interface ReorderConfig {
+    sku_id: string;
+    reorder_point: number | null;
+    safety_stock: number | null;
+    lead_time_days: number;
+    order_cost: string | number | null;
+    holding_cost_per_unit: string | number | null;
+    service_level_z: string | number;
+    product?: Product;
+    updated_at: string | null;
+}
+
+export interface ReorderAlert {
+    sku_id: string;
+    product: Product;
+    qty_available: number;
+    reorder_point: number;
+    suggested_order_qty: number | null;
+    seasonal: boolean;
+}
+
+export interface ExpiryAlert {
+    lot_id: string;
+    sku_id: string;
+    product: Product;
+    expiry_date: string;
+    days_to_expiry: number;
+    qty_on_hand: number;
+}
+
+export interface Classification {
+    sku_id: string;
+    product: Product;
+    abc: "A" | "B" | "C";
+    xyz: "X" | "Y" | "Z";
+    annual_demand: number;
+    cv: number | null;
+}
+
+export function getReorderConfigs(page = 1, perPage = 15) {
+    return api.get<PaginatedResponse<ReorderConfig>>("/api/reorder-configs", {
+        params: { page, per_page: perPage },
+    });
+}
+
+export function getReorderAlerts() {
+    return api.get<{ data: ReorderAlert[] }>("/api/alerts/reorder");
+}
+
+export function getExpiryAlerts(days = 30) {
+    return api.get<{ data: ExpiryAlert[] }>("/api/alerts/expiry", {
+        params: { days },
+    });
+}
+
+export function getClassifications() {
+    return api.get<{ data: Classification[] }>("/api/inventory-classifications");
+}
