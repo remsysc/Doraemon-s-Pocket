@@ -42,10 +42,19 @@ export interface InventoryTransaction {
     id: string;
     type: "RECEIPT" | "RESERVE" | "PICK" | "SALE" | "ADJUSTMENT" | "WRITE_OFF";
     quantity_delta: number;
-    occured_at: string;
+    occurred_at: string;
     created_at: string;
     lot?: Lot;
     actor?: { id: number; name: string; email: string; role: string };
+}
+
+export interface InventorySnapshot {
+    sku_id: string;
+    qty_on_hand: number;
+    qty_reserved: number;
+    qty_available: number;
+    product?: Product;
+    updated_at: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -124,7 +133,7 @@ export interface StoreTransactionPayload {
     lot_id: string;
     txn_type: "RECEIPT" | "RESERVE" | "PICK" | "SALE" | "ADJUSTMENT" | "WRITE_OFF";
     qty_delta: number;
-    occured_at: string;
+    occurred_at: string;
 }
 
 // ─── API Functions ─────────────────────────────────────────────────────────
@@ -235,6 +244,21 @@ export async function createTransaction(payload: StoreTransactionPayload) {
     return api.post<{ data: InventoryTransaction }>(
         "/api/inventory-transactions",
         payload,
+    );
+}
+
+// Inventory Snapshots (read-only derived stock)
+export function getInventorySnapshots(page = 1, perPage = 15) {
+    return api.get<PaginatedResponse<InventorySnapshot>>(
+        "/api/inventory-snapshots",
+        { params: { page, per_page: perPage, include: "product" } },
+    );
+}
+
+export function getInventorySnapshot(skuId: string) {
+    return api.get<{ data: InventorySnapshot }>(
+        `/api/inventory-snapshots/${skuId}`,
+        { params: { include: "product" } },
     );
 }
 

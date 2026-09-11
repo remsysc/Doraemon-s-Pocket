@@ -64,6 +64,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 { to: "/categories", label: "Categories" },
                 { to: "/products", label: "Products" },
                 { to: "/lots", label: "Lots" },
+                { to: "/stock", label: "Stock Overview" },
                 { to: "/transactions", label: "Transactions" },
             ],
         },
