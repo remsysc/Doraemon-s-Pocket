@@ -129,6 +129,7 @@ Admin is a superuser and is omitted from the middle columns below — read it as
 - ✅ Resolved (2026-08-09): Soft-deleted Categories remain valid historical references for existing Products, but new Product creation and Category reassignment reject them with 422. Existing Product → Category reads include trashed Categories for history; explicit Admin restoration via `POST /api/categories/{category}/restore` is required before reuse.
 - ✅ Resolved (2026-08-09): Normal Lot creation and update reject an `expiry_date` before today with 422 while retaining nullable expiry dates. Historical expired Lots require a separate explicitly authorized backfill/import workflow, which is not part of the normal receipt endpoint.
 - Open self-registration with role selection is accepted as a demo-only simplification, not a production security decision.
+- ✅ Resolved (2026-09-11, Sprint 4): EOQ cost inputs (`order_cost`, `holding_cost_per_unit`) are modeled as non-price operational cost fields on `REORDER_CONFIG`, not on Product — pricing/valuation remains out of scope (§3). EOQ is computed for non-seasonal SKUs only when both inputs are present and positive. ROP/safety stock (FR-12), EOQ (FR-13), seasonal trigger (FR-14), and ABC/XYZ classification (FR-15) are implemented and derive demand from the append-only ledger; reorder and expiry alerts (FR-10) are Purchasing-Manager/Admin only.
 
 ## 10. Risks
 

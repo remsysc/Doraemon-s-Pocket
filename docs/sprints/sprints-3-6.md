@@ -1,7 +1,7 @@
 # Sprints 3–6 — Forward-Looking Roadmap
 
 > Status: ⬜ Roadmap
-> Sprints 2 and 3 are complete. Sprint 3 has a dedicated plan in [`sprint-3.md`](sprint-3.md); Sprint 4–6 sections remain requirement-level only.
+> Sprints 2, 3, and 4 are complete. Sprints 3 and 4 have dedicated plans in [`sprint-3.md`](sprint-3.md) and [`sprint-4.md`](sprint-4.md); Sprint 5–6 sections remain requirement-level only.
 
 ---
 
@@ -21,16 +21,18 @@
 
 ## Sprint 4 — Classification & Reorder Intelligence
 
+> Detailed plan: [`sprint-4.md`](sprint-4.md) | Status: ✅ Complete
+
 | Item                                                              | Owner | Status         |
 | ----------------------------------------------------------------- | ----- | -------------- |
-| ABC/XYZ classification engine                                     | —     | ⬜ not started |
-| REORDER_CONFIG table + endpoints (PM + admin write; WS no access) | —     | ⬜ not started |
-| ROP computation (avg demand × lead time + safety stock)           | —     | ⬜ not started |
-| EOQ computation (non-seasonal items) — blocked on OQ-6            | —     | ⬜ not started |
-| Seasonal reorder trigger (is_seasonal items, Holt-Winters/index)  | —     | ⬜ not started |
-| Expiry alert endpoint (PM + admin only)                           | —     | ⬜ not started |
-| Reorder alert endpoint (PM + admin only)                          | —     | ⬜ not started |
-| Frontend: purchasing dashboard (alerts + stock overview)          | —     | ⬜ not started |
+| ABC/XYZ classification engine                                     | Rem   | ✅ done — volume Pareto + CV |
+| REORDER_CONFIG table + endpoints (PM + admin write; WS no access) | Rem   | ✅ done |
+| ROP computation (avg demand × lead time + safety stock)           | Rem   | ✅ done |
+| EOQ computation (non-seasonal items) — OQ-6 resolved              | Rem   | ✅ done — operational costs on reorder_configs |
+| Seasonal reorder trigger (is_seasonal items, seasonal index)      | Rem   | ✅ done — flag + basis baseline |
+| Expiry alert endpoint (PM + admin only)                           | Rem   | ✅ done |
+| Reorder alert endpoint (PM + admin only)                          | Rem   | ✅ done |
+| Frontend: purchasing dashboard (alerts + stock overview)          | Rem   | ✅ done |
 
 ---
 
@@ -63,6 +65,6 @@
 
 | Item                                 | Blocked On                                                   |
 | ------------------------------------ | ------------------------------------------------------------ |
-| EOQ computation (FR-29)              | OQ-6: `order_cost`/`holding_cost_per_unit` not modeled; pricing is out of scope. |
-| Seasonal reorder trigger (FR-28)     | Depends on `inventory_transactions` history from Sprint 2/3. |
+| ~~EOQ computation (FR-29)~~ ✅ resolved | OQ-6 resolved 2026-09-11 — operational cost inputs modeled on `reorder_configs`, not Product. |
+| ~~Seasonal reorder trigger (FR-28)~~ ✅ baseline | Implemented as a seasonal flag + basis; richer decomposition improves the number as ledger history accumulates. |
 | Cycle-count split (FR-30, FR-36)     | OQ-3: submit vs. view role split is inferred — confirm with perms team before Sprint 5. |

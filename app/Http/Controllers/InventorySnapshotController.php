@@ -16,12 +16,12 @@ class InventorySnapshotController extends Controller
         IndexInventorySnapshotRequest $request,
     ): AnonymousResourceCollection {
         $snapshots = QueryBuilder::for(InventorySnapshot::class)
-            ->with("product.category")
-            ->allowedIncludes("product", "product.category")
-            ->allowedFilters(AllowedFilter::exact("sku_id"))
-            ->allowedSorts("qty_on_hand", "qty_reserved", "qty_available", "updated_at")
-            ->defaultSort("-updated_at")
-            ->paginate($request->integer("per_page", 15))
+            ->with('product.category')
+            ->allowedIncludes('product', 'product.category')
+            ->allowedFilters(AllowedFilter::exact('sku_id'))
+            ->allowedSorts('qty_on_hand', 'qty_reserved', 'qty_available', 'updated_at')
+            ->defaultSort('-updated_at')
+            ->paginate($request->integer('per_page', 15))
             ->withQueryString();
 
         return InventorySnapshotResource::collection($snapshots);
@@ -35,7 +35,7 @@ class InventorySnapshotController extends Controller
         ShowInventorySnapshotRequest $request,
         InventorySnapshot $inventorySnapshot,
     ): InventorySnapshotResource {
-        $inventorySnapshot->loadMissing("product.category");
+        $inventorySnapshot->loadMissing('product.category');
 
         return new InventorySnapshotResource($inventorySnapshot);
     }

@@ -1,6 +1,6 @@
 # ERD — Doraemon's Pocket
 
-> Last updated: 2026-08-04
+> Last updated: 2026-09-11
 > `(impl.)` = migration exists | `(planned)` = not yet migrated
 > ⚠️ Non-standard PKs (`sku_id`, `lot_id`) require explicit
 > `protected $primaryKey` on every model — missing it silently breaks
@@ -53,16 +53,16 @@
 
 ┌──────────────────────────┐    ┌──────────────────────────┐
 │     reorder_configs      │    │        audit_logs        │
-│  (planned — Sprint 4)    │    │ (implemented schema/read  │
+│  (implemented — Sprint 4)│    │ (implemented schema/read  │
 │──────────────────────────│    │ API + automatic observers)│
 │ sku_id UUID (PK, FK)     │    │ audit_id UUID (PK)       │
-│ reorder_point integer    │    │ actor_id FK → users.id   │
-│ safety_stock integer     │    │ action string            │
+│ reorder_point int (null) │    │ actor_id FK → users.id   │
+│ safety_stock int (null)  │    │ action string            │
 │ lead_time_days integer   │    │ entity_type string       │
-└──────────────────────────┘    │ entity_id string         │
-                                │ old_values jsonb         │
-                                │ new_values jsonb         │
-                                │ occurred_at timestamp    │
+│ order_cost decimal (null)│    │ entity_id string         │
+│ holding_cost_per_unit    │    │ old_values jsonb         │
+│ service_level_z decimal  │    │ new_values jsonb         │
+└──────────────────────────┘    │ occurred_at timestamp    │
                                 └──────────────────────────┘
 ```
 
@@ -153,16 +153,21 @@ Append-only: no UPDATE/DELETE route ever exposed.
 
 PostgreSQL checks require all quantities to be non-negative and enforce `qty_available = qty_on_hand - qty_reserved`. Updates will be restricted to the transaction-insert path with `lockForUpdate()`.
 
-### reorder_configs (planned — Sprint 4)
+### reorder_configs (implemented — Sprint 4)
 
-| Column         | Type    | Notes                |
-| -------------- | ------- | -------------------- |
-| sku_id         | uuid PK | FK → products.sku_id |
-| reorder_point  | integer | not null             |
-| safety_stock   | integer | not null             |
-| lead_time_days | integer | not null             |
+| Column                | Type         | Notes                                                        |
+| --------------------- | ------------ | ------------------------------------------------------------ |
+| sku_id                | uuid PK      | FK → products.sku_id; cascade delete                         |
+| reorder_point         | integer      | nullable — manual override; null means "use derived ROP"     |
+| safety_stock          | integer      | nullable — manual override; null means "use derived value"   |
+| lead_time_days        | integer      | not null, default 0                                          |
+| order_cost            | decimal(12,2)| nullable — non-price operational cost for EOQ (OQ-6)         |
+| holding_cost_per_unit | decimal(12,2)| nullable — non-price operational cost for EOQ (OQ-6)         |
+| service_level_z       | decimal(5,2) | not null, default 1.65 — Z for statistical safety stock      |
+| created_at            | timestamp    |                                                              |
+| updated_at            | timestamp    |                                                              |
 
-Write: `purchasing_manager` + `admin`. `warehouse_staff` has no access at all (read or write).
+Write: `purchasing_manager` + `admin`. `warehouse_staff` has no access at all (read or write). PostgreSQL check constraints keep all quantities and costs non-negative. `order_cost`/`holding_cost_per_unit` are operational costs only — not unit price, COGS, or valuation (FR-14 preserved; OQ-6 resolved 2026-09-11).
 
 ### audit_logs (implemented schema, admin read API, and automatic observer generation)
 

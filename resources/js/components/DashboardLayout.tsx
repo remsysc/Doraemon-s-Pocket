@@ -68,6 +68,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 { to: "/transactions", label: "Transactions" },
             ],
         },
+        ...(user?.role === "admin" || user?.role === "purchasing_manager"
+            ? [
+                  {
+                      label: "PURCHASING",
+                      items: [{ to: "/purchasing", label: "Purchasing Dashboard" }],
+                  },
+              ]
+            : []),
         ...(user?.role === "admin"
             ? [
                   {

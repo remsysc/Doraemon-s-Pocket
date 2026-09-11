@@ -13,38 +13,39 @@ class DatabaseSeeder extends Seeder
         // Bootstrap data is installation state, not a human-authored change.
         Model::withoutEvents(function (): void {
             User::updateOrCreate(
-                ["email" => "admin@test.com"],
+                ['email' => 'admin@test.com'],
                 [
-                    "name" => "Admin User",
-                    "password" => "password",
-                    "role" => "admin",
-                    "email_verified_at" => now(),
+                    'name' => 'Admin User',
+                    'password' => 'password',
+                    'role' => 'admin',
+                    'email_verified_at' => now(),
                 ],
             );
 
             User::updateOrCreate(
-                ["email" => "purchasing@test.com"],
+                ['email' => 'purchasing@test.com'],
                 [
-                    "name" => "Purchasing Manager",
-                    "password" => "password",
-                    "role" => "purchasing_manager",
-                    "email_verified_at" => now(),
+                    'name' => 'Purchasing Manager',
+                    'password' => 'password',
+                    'role' => 'purchasing_manager',
+                    'email_verified_at' => now(),
                 ],
             );
 
             User::updateOrCreate(
-                ["email" => "warehouse@test.com"],
+                ['email' => 'warehouse@test.com'],
                 [
-                    "name" => "Warehouse Staff",
-                    "password" => "password",
-                    "role" => "warehouse_staff",
-                    "email_verified_at" => now(),
+                    'name' => 'Warehouse Staff',
+                    'password' => 'password',
+                    'role' => 'warehouse_staff',
+                    'email_verified_at' => now(),
                 ],
             );
 
             $this->call([
                 CatalogSeeder::class,
                 InventoryTransactionSeeder::class,
+                ReorderConfigSeeder::class,
             ]);
         });
     }
