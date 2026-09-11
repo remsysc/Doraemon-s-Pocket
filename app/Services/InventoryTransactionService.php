@@ -14,12 +14,12 @@ class InventoryTransactionService
     /**
      * Apply the stock side effect and append the ledger row atomically.
      *
-     * @param array{lot_id: string, txn_type: string, qty_delta: int, occurred_at: mixed} $attributes
+     * @param  array{lot_id: string, txn_type: string, qty_delta: int, occurred_at: mixed}  $attributes
      */
     public function record(array $attributes, int $actorId): InventoryTransaction
     {
         return DB::transaction(function () use ($attributes, $actorId): InventoryTransaction {
-            $lot = Lot::query()->findOrFail($attributes["lot_id"]);
+            $lot = Lot::query()->findOrFail($attributes['lot_id']);
 
             // Lock the Product before first snapshot creation. This serializes
             // initialization when concurrent transactions target a new SKU.
@@ -29,33 +29,33 @@ class InventoryTransactionService
                 ->firstOrFail();
 
             $snapshot = InventorySnapshot::query()
-                ->where("sku_id", $product->sku_id)
+                ->where('sku_id', $product->sku_id)
                 ->lockForUpdate()
                 ->first();
 
             if ($snapshot === null) {
                 InventorySnapshot::create([
-                    "sku_id" => $product->sku_id,
+                    'sku_id' => $product->sku_id,
                 ]);
 
                 // Explicitly acquire the snapshot row lock after creating it.
                 $snapshot = InventorySnapshot::query()
-                    ->where("sku_id", $product->sku_id)
+                    ->where('sku_id', $product->sku_id)
                     ->lockForUpdate()
                     ->firstOrFail();
             }
 
             $this->applySideEffect(
                 $snapshot,
-                $attributes["txn_type"],
-                (int) $attributes["qty_delta"],
+                $attributes['txn_type'],
+                (int) $attributes['qty_delta'],
             );
 
             $snapshot->save();
 
             return InventoryTransaction::create([
                 ...$attributes,
-                "actor_id" => $actorId,
+                'actor_id' => $actorId,
             ]);
         }, 5);
     }
@@ -65,104 +65,136 @@ class InventoryTransactionService
         string $transactionType,
         int $quantityDelta,
     ): void {
+        [$onHand, $reserved, $available] = self::project(
+            $snapshot->qty_on_hand,
+            $snapshot->qty_reserved,
+            $snapshot->qty_available,
+            $transactionType,
+            $quantityDelta,
+        );
+
+        $snapshot->qty_on_hand = $onHand;
+        $snapshot->qty_reserved = $reserved;
+        $snapshot->qty_available = $available;
+    }
+
+    /**
+     * Pure projection of a single signed ledger delta onto a snapshot's
+     * quantity triple. This is the single source of truth for snapshot
+     * semantics (SPEC FR-22/FR-23) shared by the live transaction path and
+     * by ledger-replay callers such as the demo seeder. It performs no I/O
+     * and throws {@see InventoryTransactionException} on any sign, sufficiency,
+     * or invariant violation.
+     *
+     * @return array{0: int, 1: int, 2: int} The resulting [onHand, reserved, available].
+     */
+    public static function project(
+        int $onHand,
+        int $reserved,
+        int $available,
+        string $transactionType,
+        int $quantityDelta,
+    ): array {
         switch ($transactionType) {
-            case "RECEIPT":
-                $this->requirePositiveQuantity($transactionType, $quantityDelta);
-                $snapshot->qty_on_hand += $quantityDelta;
-                $snapshot->qty_available += $quantityDelta;
+            case 'RECEIPT':
+                self::requirePositiveQuantity($transactionType, $quantityDelta);
+                $onHand += $quantityDelta;
+                $available += $quantityDelta;
                 break;
 
-            case "ADJUSTMENT":
-                $snapshot->qty_on_hand += $quantityDelta;
-                $snapshot->qty_available += $quantityDelta;
+            case 'ADJUSTMENT':
+                $onHand += $quantityDelta;
+                $available += $quantityDelta;
                 break;
 
-            case "RESERVE":
+            case 'RESERVE':
                 if ($quantityDelta < 0) {
                     $amount = abs($quantityDelta);
-                    $this->requireAvailableStock($snapshot, $amount);
-                    $snapshot->qty_reserved += $amount;
-                    $snapshot->qty_available -= $amount;
+                    self::requireAvailableStock($available, $amount);
+                    $reserved += $amount;
+                    $available -= $amount;
                 } else {
-                    $this->requireReservedStock($snapshot, $quantityDelta);
-                    $snapshot->qty_reserved -= $quantityDelta;
-                    $snapshot->qty_available += $quantityDelta;
+                    self::requireReservedStock($reserved, $quantityDelta);
+                    $reserved -= $quantityDelta;
+                    $available += $quantityDelta;
                 }
                 break;
 
-            case "PICK":
-                $this->requireNegativeQuantity($transactionType, $quantityDelta);
+            case 'PICK':
+                self::requireNegativeQuantity($transactionType, $quantityDelta);
                 $amount = abs($quantityDelta);
-                $this->requireReservedStock($snapshot, $amount);
-                $snapshot->qty_on_hand -= $amount;
-                $snapshot->qty_reserved -= $amount;
+                self::requireReservedStock($reserved, $amount);
+                $onHand -= $amount;
+                $reserved -= $amount;
                 break;
 
-            case "SALE":
-            case "WRITE_OFF":
-                $this->requireNegativeQuantity($transactionType, $quantityDelta);
+            case 'SALE':
+            case 'WRITE_OFF':
+                self::requireNegativeQuantity($transactionType, $quantityDelta);
                 $amount = abs($quantityDelta);
-                $this->requireAvailableStock($snapshot, $amount);
-                $snapshot->qty_on_hand -= $amount;
-                $snapshot->qty_available -= $amount;
+                self::requireAvailableStock($available, $amount);
+                $onHand -= $amount;
+                $available -= $amount;
                 break;
 
             default:
                 throw new InventoryTransactionException(
-                    "INVALID_TRANSACTION_TYPE",
-                    "The transaction type does not have a stock operation.",
+                    'INVALID_TRANSACTION_TYPE',
+                    'The transaction type does not have a stock operation.',
                 );
         }
 
         if (
-            $snapshot->qty_on_hand < 0
-            || $snapshot->qty_reserved < 0
-            || $snapshot->qty_available < 0
-            || $snapshot->qty_available !== $snapshot->qty_on_hand - $snapshot->qty_reserved
+            $onHand < 0
+            || $reserved < 0
+            || $available < 0
+            || $available !== $onHand - $reserved
         ) {
             throw new InventoryTransactionException(
-                "INSUFFICIENT_STOCK",
-                "The transaction would violate the available stock balance.",
+                'INSUFFICIENT_STOCK',
+                'The transaction would violate the available stock balance.',
             );
         }
+
+        return [$onHand, $reserved, $available];
     }
 
-    private function requirePositiveQuantity(string $transactionType, int $quantityDelta): void
+    private static function requirePositiveQuantity(string $transactionType, int $quantityDelta): void
     {
         if ($quantityDelta <= 0) {
             throw new InventoryTransactionException(
-                "INVALID_QTY_DELTA",
+                'INVALID_QTY_DELTA',
                 "$transactionType transactions require a positive qty_delta.",
             );
         }
     }
 
-    private function requireNegativeQuantity(string $transactionType, int $quantityDelta): void
+    private static function requireNegativeQuantity(string $transactionType, int $quantityDelta): void
     {
         if ($quantityDelta >= 0) {
             throw new InventoryTransactionException(
-                "INVALID_QTY_DELTA",
+                'INVALID_QTY_DELTA',
                 "$transactionType transactions require a negative qty_delta.",
             );
         }
     }
 
-    private function requireAvailableStock(InventorySnapshot $snapshot, int $amount): void
+    private static function requireAvailableStock(int $available, int $amount): void
     {
-        if ($snapshot->qty_available < $amount) {
+        if ($available < $amount) {
             throw new InventoryTransactionException(
-                "INSUFFICIENT_STOCK",
-                "Insufficient available stock for this transaction.",
+                'INSUFFICIENT_STOCK',
+                'Insufficient available stock for this transaction.',
             );
         }
     }
 
-    private function requireReservedStock(InventorySnapshot $snapshot, int $amount): void
+    private static function requireReservedStock(int $reserved, int $amount): void
     {
-        if ($snapshot->qty_reserved < $amount) {
+        if ($reserved < $amount) {
             throw new InventoryTransactionException(
-                "INSUFFICIENT_RESERVED_STOCK",
-                "Insufficient reserved stock for this transaction.",
+                'INSUFFICIENT_RESERVED_STOCK',
+                'Insufficient reserved stock for this transaction.',
             );
         }
     }
