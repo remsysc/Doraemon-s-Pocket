@@ -161,3 +161,9 @@ docker compose logs app
 # Open a shell inside the app container
 docker compose exec app bash
 ```
+
+### Production demo data (opt-in)
+
+The `demo/seeded-data` branch contains repeatable demo seeders for the three demo accounts, 4 categories, 8 products, 16 lots, and 24 inventory transactions. Production startup does **not** seed by default. To populate a demo deployment, set `SEED_DEMO_DATA=true` in the deployment environment and deploy this branch once, then remove or unset the variable and redeploy. The seeders use upserts/fixed transaction IDs and are repeatable, but they still modify the production database; verify the target database before enabling the flag.
+
+Demo credentials are listed above. Change or remove these accounts before using the deployment for real production data.

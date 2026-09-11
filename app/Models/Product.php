@@ -51,4 +51,9 @@ class Product extends Model
     {
         return $this->hasOne(ReorderConfig::class, 'sku_id', 'sku_id');
     }
+
+    public function snapshot(): HasOne
+    {
+        return $this->hasOne(InventorySnapshot::class, "sku_id", "sku_id");
+    }
 }
