@@ -16,13 +16,13 @@ Sprint 2 delivers the catalog, lot, append-only inventory ledger, audit read pat
 | Automatic audit logging | Rem | ✅ Done — `AuditObserver` + `AuditLogService` for Product, Lot, Category, and User |
 | Frontend Category/Product/Lot screens | Lyll & Larce | ✅ Done |
 | Frontend transaction ledger UI | Lyll & Larce | ✅ Done |
-| Repeatable realistic inventory seed data | Rem | ✅ Done — 24 deterministic transactions across 8 products |
+| Repeatable realistic inventory seed data | Rem | ✅ Done — 24 deterministic transactions across 8 products (extended to 26 in Sprint 3 to seed snapshots) |
 | Transaction append-only regression coverage | Rem | ✅ Done — no PUT/PATCH/DELETE routes |
 | Audit generation and redaction regression coverage | Rem | ✅ Done — authenticated writes audited; sensitive User fields excluded |
 
 ## Seed data
 
-`DatabaseSeeder` creates the three demo users, the complete 4-category/8-product/16-lot catalog, and 24 deterministic inventory transactions. The transaction seed covers `RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, and `WRITE_OFF`, uses the existing `occurred_at` schema spelling, and is repeatable through fixed transaction UUIDs.
+`DatabaseSeeder` creates the three demo users, the complete 4-category/8-product/16-lot catalog, and 24 deterministic inventory transactions. The transaction seed covers `RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, and `WRITE_OFF`, uses the existing `occurred_at` schema spelling, and is repeatable through fixed transaction UUIDs. (Sprint 3 extended this to 26 rows — adding a `RESERVE` before each demo `PICK` — and rebuilds `inventory_snapshots` from the ledger; see `docs/sprints/sprint-3.md`.)
 
 Bootstrap seed writes are intentionally not audited. Authenticated business writes are audited with the server-side actor; temporary unauthenticated registration is not audited until registration is replaced by Admin-only user management.
 

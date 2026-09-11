@@ -1,21 +1,21 @@
 # Sprints 3–6 — Forward-Looking Roadmap
 
 > Status: ⬜ Roadmap
-> Sprint 2 is complete. Sprint 3 has a dedicated plan in [`sprint-3.md`](sprint-3.md); later sprint sections remain requirement-level only.
+> Sprints 2 and 3 are complete. Sprint 3 has a dedicated plan in [`sprint-3.md`](sprint-3.md); Sprint 4–6 sections remain requirement-level only.
 
 ---
 
 ## Sprint 3 — Inventory Snapshots & Concurrency
 
-> Detailed plan: [`sprint-3.md`](sprint-3.md) | Status: ⬜ Planned
+> Detailed plan: [`sprint-3.md`](sprint-3.md) | Status: ✅ Complete
 
 | Item                                                              | Owner | Status         |
 | ----------------------------------------------------------------- | ----- | -------------- |
-| INVENTORY_SNAPSHOT table (qty_on_hand, qty_reserved, qty_available) | —   | ⬜ not started |
-| Row-level locking on snapshot update path (lockForUpdate)         | —     | ⬜ not started |
-| Reservation workflow (RESERVE / release)                          | —     | ⬜ not started |
-| Concurrency stress tests (oversell prevention)                    | —     | ⬜ not started |
-| Frontend: stock overview / real-time on-hand display              | —     | ⬜ not started |
+| INVENTORY_SNAPSHOT table (qty_on_hand, qty_reserved, qty_available) | Rem | ✅ done |
+| Row-level locking on snapshot update path (lockForUpdate)         | Rem   | ✅ done |
+| Reservation workflow (RESERVE / release)                          | Rem   | ✅ done |
+| Concurrency stress tests (oversell prevention)                    | Rem   | ✅ done — PostgreSQL row-lock test |
+| Frontend: stock overview / real-time on-hand display              | Rem   | ✅ done |
 
 ---
 
@@ -53,7 +53,7 @@
 | ----------------------------------------------------------------- | ----- | -------------- |
 | End-to-end demo flow (all three symptom mitigations demoable)     | —     | ⬜ not started |
 | Role-guard test coverage for FR-32–FR-38                          | —     | ⬜ not started |
-| Seed realistic demo data                                          | —     | ✅ BASELINE DONE in Sprint 2 — 24 repeatable ledger transactions; final demo-flow expansion remains Sprint 6 |
+| Seed realistic demo data                                          | —     | ✅ BASELINE DONE — 26 repeatable ledger transactions (Sprint 2 baseline + Sprint 3 snapshot rebuild); final demo-flow expansion remains Sprint 6 |
 | Performance review (N+1 checks, eager loading audit)              | —     | ⬜ not started |
 | Auth hardening notes / tech debt doc for real deployment          | —     | ⬜ not started |
 

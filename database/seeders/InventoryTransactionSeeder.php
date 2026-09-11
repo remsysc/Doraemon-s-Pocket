@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\InventorySnapshot;
 use App\Models\InventoryTransaction;
 use App\Models\Lot;
 use App\Models\User;
+use App\Services\InventoryTransactionService;
 use Illuminate\Database\Seeder;
 use RuntimeException;
 
@@ -22,7 +24,7 @@ class InventoryTransactionSeeder extends Seeder
         $lots = Lot::query()
             ->with('product')
             ->get()
-            ->keyBy(fn (Lot $lot): string => $lot->product->barcode . '|' . $lot->bin_location);
+            ->keyBy(fn (Lot $lot): string => $lot->product->barcode.'|'.$lot->bin_location);
 
         $transactions = [
             ['id' => '10000000-0000-4000-8000-000000000001', 'barcode' => 'WB-AC-1000', 'bin' => 'AC-A01', 'actor' => 'warehouse@test.com', 'type' => 'RECEIPT', 'qty' => 48, 'days' => 90],
@@ -31,6 +33,7 @@ class InventoryTransactionSeeder extends Seeder
             ['id' => '10000000-0000-4000-8000-000000000004', 'barcode' => 'WB-AC-1000', 'bin' => 'AC-A02', 'actor' => 'warehouse@test.com', 'type' => 'RESERVE', 'qty' => -4, 'days' => 8],
             ['id' => '10000000-0000-4000-8000-000000000005', 'barcode' => 'WB-AC-1500', 'bin' => 'AC-B01', 'actor' => 'warehouse@test.com', 'type' => 'RECEIPT', 'qty' => 30, 'days' => 75],
             ['id' => '10000000-0000-4000-8000-000000000006', 'barcode' => 'WB-AC-1500', 'bin' => 'AC-B02', 'actor' => 'warehouse@test.com', 'type' => 'RECEIPT', 'qty' => 24, 'days' => 30],
+            ['id' => '10000000-0000-4000-8000-000000000025', 'barcode' => 'WB-AC-1500', 'bin' => 'AC-B01', 'actor' => 'warehouse@test.com', 'type' => 'RESERVE', 'qty' => -3, 'days' => 7],
             ['id' => '10000000-0000-4000-8000-000000000007', 'barcode' => 'WB-AC-1500', 'bin' => 'AC-B01', 'actor' => 'warehouse@test.com', 'type' => 'PICK', 'qty' => -3, 'days' => 6],
             ['id' => '10000000-0000-4000-8000-000000000008', 'barcode' => 'WB-AP-0100', 'bin' => 'AP-A01', 'actor' => 'warehouse@test.com', 'type' => 'RECEIPT', 'qty' => 20, 'days' => 60],
             ['id' => '10000000-0000-4000-8000-000000000009', 'barcode' => 'WB-AP-0100', 'bin' => 'AP-A02', 'actor' => 'warehouse@test.com', 'type' => 'RECEIPT', 'qty' => 16, 'days' => 20],
@@ -46,13 +49,14 @@ class InventoryTransactionSeeder extends Seeder
             ['id' => '10000000-0000-4000-8000-000000000019', 'barcode' => 'WB-FL-0200', 'bin' => 'FL-B01', 'actor' => 'warehouse@test.com', 'type' => 'SALE', 'qty' => -8, 'days' => 3],
             ['id' => '10000000-0000-4000-8000-000000000020', 'barcode' => 'WB-TH-0100', 'bin' => 'TH-A01', 'actor' => 'warehouse@test.com', 'type' => 'RECEIPT', 'qty' => 18, 'days' => 50],
             ['id' => '10000000-0000-4000-8000-000000000021', 'barcode' => 'WB-TH-0100', 'bin' => 'TH-A02', 'actor' => 'warehouse@test.com', 'type' => 'RECEIPT', 'qty' => 12, 'days' => 12],
+            ['id' => '10000000-0000-4000-8000-000000000026', 'barcode' => 'WB-TH-0100', 'bin' => 'TH-A01', 'actor' => 'warehouse@test.com', 'type' => 'RESERVE', 'qty' => -2, 'days' => 3],
             ['id' => '10000000-0000-4000-8000-000000000022', 'barcode' => 'WB-TH-0100', 'bin' => 'TH-A01', 'actor' => 'warehouse@test.com', 'type' => 'PICK', 'qty' => -2, 'days' => 2],
             ['id' => '10000000-0000-4000-8000-000000000023', 'barcode' => 'WB-TH-0200', 'bin' => 'TH-B01', 'actor' => 'warehouse@test.com', 'type' => 'RECEIPT', 'qty' => 14, 'days' => 40],
             ['id' => '10000000-0000-4000-8000-000000000024', 'barcode' => 'WB-TH-0200', 'bin' => 'TH-B02', 'actor' => 'admin@test.com', 'type' => 'WRITE_OFF', 'qty' => -1, 'days' => 1],
         ];
 
         foreach ($transactions as $transaction) {
-            $lot = $lots->get($transaction['barcode'] . '|' . $transaction['bin']);
+            $lot = $lots->get($transaction['barcode'].'|'.$transaction['bin']);
             $actorId = $actors->get($transaction['actor']);
 
             if ($lot === null || $actorId === null) {
@@ -67,6 +71,53 @@ class InventoryTransactionSeeder extends Seeder
                     'txn_type' => $transaction['type'],
                     'qty_delta' => $transaction['qty'],
                     'occurred_at' => now()->subDays($transaction['days']),
+                ],
+            );
+        }
+
+        $this->rebuildSnapshots();
+    }
+
+    /**
+     * Rebuild `inventory_snapshots` by replaying the seeded ledger per SKU.
+     *
+     * The seeder writes ledger rows directly (with backdated `occurred_at`
+     * and fixed UUIDs for repeatability) rather than through the transaction
+     * service, so it must derive snapshots itself. Replaying through
+     * {@see InventoryTransactionService::project()} keeps the demo snapshots
+     * consistent with the live transaction semantics (SPEC FR-22/FR-23) and
+     * fails loudly if the demo ledger is ever made internally inconsistent.
+     */
+    private function rebuildSnapshots(): void
+    {
+        $ledgerBySku = InventoryTransaction::query()
+            ->with('lot:lot_id,sku_id')
+            ->orderBy('occurred_at')
+            ->orderBy('txn_id')
+            ->get()
+            ->groupBy(fn (InventoryTransaction $txn): string => $txn->lot->sku_id);
+
+        foreach ($ledgerBySku as $skuId => $transactions) {
+            $onHand = 0;
+            $reserved = 0;
+            $available = 0;
+
+            foreach ($transactions as $txn) {
+                [$onHand, $reserved, $available] = InventoryTransactionService::project(
+                    $onHand,
+                    $reserved,
+                    $available,
+                    $txn->txn_type,
+                    (int) $txn->qty_delta,
+                );
+            }
+
+            InventorySnapshot::updateOrCreate(
+                ['sku_id' => $skuId],
+                [
+                    'qty_on_hand' => $onHand,
+                    'qty_reserved' => $reserved,
+                    'qty_available' => $available,
                 ],
             );
         }

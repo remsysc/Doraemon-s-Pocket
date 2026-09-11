@@ -16,10 +16,10 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 
 - **[Sprint 1 — Foundation & Auth](../sprints/sprint-1.md)** ✅ DONE
 - **[Sprint 2 — Core Ledger](../sprints/sprint-2.md)** ✅ Complete
-- **[Sprint 3 — Inventory Snapshots & Concurrency](../sprints/sprint-3.md)** ⬜ Planned (next)
+- **[Sprint 3 — Inventory Snapshots & Concurrency](../sprints/sprint-3.md)** ✅ Complete
 - **[Sprints 3–6 — Roadmap](../sprints/sprints-3-6.md)** ⬜ Future roadmap
 
-**Sprints 3–6** — nothing in Snapshot derivation, reservation workflow, ABC/XYZ classification, ROP/EOQ, cycle-count reconciliation, or hardening has been started. Treat §§4–7 of this spec for those sprints as **forward-looking requirements only**, not in-progress work.
+**Sprints 4–6** — Sprint 3 snapshot derivation and reservation workflow are complete (see FR-22/FR-23 below). Nothing in ABC/XYZ classification, ROP/EOQ, cycle-count reconciliation, or hardening has been started. Treat the §§5–7 requirements for those sprints as **forward-looking requirements only**, not in-progress work.
 
 ---
 
@@ -60,8 +60,8 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 
 - **FR-20** THE SYSTEM SHALL record every stock movement as an append-only row in `inventory_transactions` with `txn_type` in (`RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, `WRITE_OFF`), a signed `qty_delta`, `occurred_at`, and `actor_id` set from the authenticated session — never a client-supplied actor_id. THE SYSTEM SHALL restrict `POST` access to `warehouse_staff` and `admin` (superuser — same permission, not a separate tier); `purchasing_manager` has read-only access to the ledger. ✅ IMPLEMENTED 2026-08-09; all six types are accepted by validation and covered by `InventoryTransactionTest`. Snapshot-side effects remain deferred to FR-22/FR-23 implementation.
 - **FR-21** THE SYSTEM SHALL NOT expose any UPDATE or DELETE route for `inventory_transactions`. Only `POST` (create) and `GET` (read) are permitted.
-- **FR-22** WHEN any stock-affecting `inventory_transactions` row is inserted THE SYSTEM SHALL, within the same database transaction, update the corresponding SKU's `inventory_snapshots` row using row-level locking (`SELECT ... FOR UPDATE` or Eloquent's `lockForUpdate()`). Snapshot rows SHALL maintain `qty_on_hand >= 0`, `qty_reserved >= 0`, `qty_available >= 0`, and `qty_available = qty_on_hand - qty_reserved`.
-- **FR-23** The signed `qty_delta` SHALL have these side effects: `RECEIPT +N` increases on-hand and available; `ADJUSTMENT ±N` changes on-hand and available; `RESERVE -N` increases reserved and decreases available; `RESERVE +N` releases reserved stock and increases available; `PICK -N` decreases on-hand and reserved while leaving available unchanged; `SALE -N` and `WRITE_OFF -N` decrease on-hand and available. A `SALE`, `PICK`, reservation, release, adjustment, or write-off that would violate a snapshot invariant SHALL return 422 and atomically roll back the snapshot and ledger insert.
+- **FR-22** WHEN any stock-affecting `inventory_transactions` row is inserted THE SYSTEM SHALL, within the same database transaction, update the corresponding SKU's `inventory_snapshots` row using row-level locking (`SELECT ... FOR UPDATE` or Eloquent's `lockForUpdate()`). Snapshot rows SHALL maintain `qty_on_hand >= 0`, `qty_reserved >= 0`, `qty_available >= 0`, and `qty_available = qty_on_hand - qty_reserved`. ✅ Implemented Sprint 3 — `InventoryTransactionService` performs the ledger insert and snapshot update in one `DB::transaction`, locking the Product on first-touch and the snapshot row via `lockForUpdate()`; PostgreSQL check constraints enforce both invariants.
+- **FR-23** The signed `qty_delta` SHALL have these side effects: `RECEIPT +N` increases on-hand and available; `ADJUSTMENT ±N` changes on-hand and available; `RESERVE -N` increases reserved and decreases available; `RESERVE +N` releases reserved stock and increases available; `PICK -N` decreases on-hand and reserved while leaving available unchanged; `SALE -N` and `WRITE_OFF -N` decrease on-hand and available. A `SALE`, `PICK`, reservation, release, adjustment, or write-off that would violate a snapshot invariant SHALL return 422 and atomically roll back the snapshot and ledger insert. ✅ Implemented Sprint 3 — semantics live in the pure `InventoryTransactionService::project()`; violations raise `InventoryTransactionException` rendered as JSON 422 with a `code` (`INSUFFICIENT_STOCK`, `INSUFFICIENT_RESERVED_STOCK`, `INVALID_QTY_DELTA`, `INVALID_TRANSACTION_TYPE`).
 
 ### Sprint 3 snapshot contract
 
@@ -111,7 +111,7 @@ Quick reference — tables and their implementation status:
 | `products`               | impl.                | `sku_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
 | `lots`                   | impl.                | `lot_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
 | `inventory_transactions` | impl. (Sprint 2)     | `txn_id` uuid    | append-only, signed qty_delta; write: WS+admin, read: all roles |
-| `inventory_snapshots`    | planned (Sprint 3)   | `sku_id` uuid    | derived, row-locked updates only                    |
+| `inventory_snapshots`    | implemented (Sprint 3) | `sku_id` uuid    | derived, row-locked updates only                    |
 | `reorder_configs`        | planned (Sprint 4)   | `sku_id` uuid    | PM + admin write; WS no access                      |
 | `audit_logs`             | impl. schema/read API/automatic logging | `audit_id` uuid | system-generated, append-only, admin read only |
 
@@ -327,6 +327,8 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 - ✅ RESOLVED 2026-08-04: `routes/api.php`, `RoleMiddleware`, and the Category/Product/Lot Policies have been updated to match — Category/Product writes are `role:admin`, Lot writes are `role:admin,warehouse_staff`, and the corresponding Policy `create`/`update`/`delete` methods were updated to match (Category/Product: admin-only via `before()`, non-admin always `false`; Lot: `warehouse_staff`, with admin via `before()`). Covered by `tests/Feature/CategoryProductLotCrudTest.php` and `tests/Feature/RoleMiddlewareTest.php` (14 tests, all passing). FR-32–FR-38's ledger/reorder_configs/audit_logs/user-management endpoints remain unbuilt (Sprint 4/5), so those routes/policies don't exist yet to update — tracked as before, just no longer blocked on this RBAC decision.
 
 ## 10. Changelog
+
+- 2026-09-11 — **Sprint 3 complete:** Snapshot schema (SKU-keyed `inventory_snapshots` with PostgreSQL check constraints), atomic transaction side effects with Product + snapshot row-level locking, oversell prevention (422 with `code`), read-only snapshot endpoints (`GET /api/inventory-snapshots[/{product}]`) for all authenticated roles, and the frontend Stock Overview page are all implemented and verified (FR-22/FR-23, §4). Snapshot semantics were consolidated into the pure `InventoryTransactionService::project()` shared by the live path and the demo seeder. `InventoryTransactionSeeder` now rebuilds snapshots by replaying a self-consistent 26-row demo ledger (a `RESERVE` precedes each `PICK`), so the Stock Overview shows realistic non-zero stock. Full backend suite green on PostgreSQL 17 (84 tests / 369 assertions); `npm run build` passes.
 
 - 2026-09-04 — **Sprint 3 preparation:** Defined snapshot invariants and signed-ledger semantics: negative `RESERVE` creates a reservation, positive `RESERVE` releases it, `PICK` consumes reserved stock, and all invalid/insufficient operations return 422 with atomic rollback. Confirmed the authoritative existing column is `inventory_transactions.occurred_at`; normalized application references away from the historical `occured_at` typo.
 

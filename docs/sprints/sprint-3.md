@@ -1,6 +1,6 @@
 # Sprint 3 — Inventory Snapshots & Concurrency
 
-> Status: ⬜ Planned | Next sprint
+> Status: ✅ Complete
 > Depends on: Sprint 2 Core Ledger ✅ complete
 
 ## Goal
@@ -45,8 +45,8 @@ A negative `RESERVE` creates a reservation; a positive `RESERVE` releases one. `
 | Apply `PICK`, `SALE`, and `WRITE_OFF` decrements | ✅ Implemented |
 | Reject insufficient stock with a documented 422 error and roll back the ledger insert | ✅ Implemented |
 | Add concurrency tests proving only one competing decrement succeeds | ✅ Implemented |
-| Add snapshot read endpoints for authenticated roles | ⬜ Not started |
-| Add frontend stock overview / on-hand display | ⬜ Not started |
+| Add snapshot read endpoints for authenticated roles | ✅ Implemented |
+| Add frontend stock overview / on-hand display | ✅ Implemented |
 
 ## Acceptance criteria
 
@@ -69,3 +69,10 @@ A negative `RESERVE` creates a reservation; a positive `RESERVE` releases one. `
 - Preserve the existing `inventory_transactions.occurred_at` column spelling from the authoritative migration; application and API references must use `occurred_at`.
 - Do not add Product price or valuation fields.
 - Keep transaction writes append-only; corrections are new ledger rows.
+
+## Completion notes
+
+- All scope-checklist items and all six acceptance criteria are implemented and verified.
+- Snapshot semantics live in a single source of truth: `InventoryTransactionService::project()` is a pure function that maps a signed ledger delta onto a `(qty_on_hand, qty_reserved, qty_available)` triple and enforces the sign, sufficiency, and balance invariants. The live transaction path and the demo seeder both apply it, so demo data can never drift from production semantics.
+- **Demo data:** `InventoryTransactionSeeder` writes ledger rows directly (with backdated `occurred_at` and fixed UUIDs for repeatability), then rebuilds `inventory_snapshots` by replaying the ledger per SKU through `project()`. The demo ledger is now internally consistent — each `PICK` is preceded by a matching `RESERVE` — so the Stock Overview page shows realistic non-zero stock for all eight products. The demo ledger is 26 rows (two `RESERVE` rows were added ahead of the pre-existing picks).
+- **Verification:** full backend suite passes on PostgreSQL 17 (84 tests / 369 assertions), including the PostgreSQL check-constraint tests, the row-level-lock concurrency test, and the seeder snapshot-rebuild test; `npm run build` succeeds.
