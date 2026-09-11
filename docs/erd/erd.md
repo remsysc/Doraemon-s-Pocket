@@ -140,17 +140,18 @@ Deletion behavior: restrict Product deletion while Lots reference it (intentiona
 
 Append-only: no UPDATE/DELETE route ever exposed.
 
-### inventory_snapshots (planned — Sprint 3)
+### inventory_snapshots (implemented — Sprint 3 foundation)
 
 | Column        | Type      | Notes                                                 |
 | ------------- | --------- | ----------------------------------------------------- |
-| sku_id        | uuid PK   | FK → products.sku_id                                  |
+| sku_id        | uuid PK   | FK → products.sku_id; one snapshot per SKU            |
 | qty_on_hand   | integer   | not null, default 0                                   |
 | qty_reserved  | integer   | not null, default 0                                   |
 | qty_available | integer   | not null, default 0 — derived: on_hand minus reserved |
-| last_updated  | timestamp | not null                                              |
+| created_at    | timestamp | Laravel timestamp                                     |
+| updated_at    | timestamp | Laravel timestamp                                     |
 
-Updated only via the transaction-insert path with `lockForUpdate()` — never written directly.
+PostgreSQL checks require all quantities to be non-negative and enforce `qty_available = qty_on_hand - qty_reserved`. Updates will be restricted to the transaction-insert path with `lockForUpdate()`.
 
 ### reorder_configs (planned — Sprint 4)
 

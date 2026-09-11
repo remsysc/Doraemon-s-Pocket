@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Product extends Model
 {
@@ -31,5 +32,10 @@ class Product extends Model
     {
         // Preserve historical Product → Category relationships after a soft delete.
         return $this->belongsTo(Category::class, "category_id")->withTrashed();
+    }
+
+    public function snapshot(): HasOne
+    {
+        return $this->hasOne(InventorySnapshot::class, "sku_id", "sku_id");
     }
 }

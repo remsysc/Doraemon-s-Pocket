@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\InventoryTransactionController;
+use App\Http\Controllers\InventorySnapshotController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
@@ -65,6 +66,15 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::apiResource(
         "inventory-transactions",
         InventoryTransactionController::class,
+    )->only(["index", "show"]);
+
+    // ---- Inventory Snapshots ----
+    // Read-only derived stock (qty_on_hand/reserved/available) per SKU.
+    // All authenticated roles can read; snapshots are never written directly
+    // by clients — they are maintained by the transaction-insert path (FR-22).
+    Route::apiResource(
+        "inventory-snapshots",
+        InventorySnapshotController::class,
     )->only(["index", "show"]);
 
     Route::middleware("role:admin,warehouse_staff")->group(function () {

@@ -66,7 +66,7 @@ class InventoryTransactionSeeder extends Seeder
                     'actor_id' => $actorId,
                     'txn_type' => $transaction['type'],
                     'qty_delta' => $transaction['qty'],
-                    'occured_at' => now()->subDays($transaction['days']),
+                    'occurred_at' => now()->subDays($transaction['days']),
                 ],
             );
         }

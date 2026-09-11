@@ -72,7 +72,7 @@ class InventoryTransactionTest extends TestCase
             'actor_id'   => $actor->id,
             'txn_type'   => 'RECEIPT',
             'qty_delta'  => 5,
-            'occured_at' => now(),
+            'occurred_at' => now(),
         ], $overrides));
     }
 
@@ -82,7 +82,7 @@ class InventoryTransactionTest extends TestCase
             'lot_id'     => $lot->lot_id,
             'txn_type'   => 'RECEIPT',
             'qty_delta'  => 10,
-            'occured_at' => now()->toDateTimeString(),
+            'occurred_at' => now()->toDateTimeString(),
         ];
     }
 
@@ -309,7 +309,7 @@ class InventoryTransactionTest extends TestCase
                     'lot_id' => $lot->lot_id,
                     'txn_type' => $type,
                     'qty_delta' => $type === 'RECEIPT' ? 10 : -1,
-                    'occured_at' => now()->toDateTimeString(),
+                    'occurred_at' => now()->toDateTimeString(),
                 ])
                 ->assertCreated()
                 ->assertJsonPath('data.type', $type);
@@ -341,27 +341,27 @@ class InventoryTransactionTest extends TestCase
             ->assertJsonValidationErrors(['qty_delta']);
     }
 
-    public function test_store_requires_occured_at(): void
+    public function test_store_requires_occurred_at(): void
     {
         $payload = $this->validPayload($this->makeLot());
-        unset($payload['occured_at']);
+        unset($payload['occurred_at']);
 
         $this->actingAs($this->warehouseStaff())
             ->postJson('/api/inventory-transactions', $payload)
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['occured_at']);
+            ->assertJsonValidationErrors(['occurred_at']);
     }
 
-    public function test_store_rejects_invalid_occured_at(): void
+    public function test_store_rejects_invalid_occurred_at(): void
     {
         $payload = array_merge($this->validPayload($this->makeLot()), [
-            'occured_at' => 'not-a-date',
+            'occurred_at' => 'not-a-date',
         ]);
 
         $this->actingAs($this->warehouseStaff())
             ->postJson('/api/inventory-transactions', $payload)
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['occured_at']);
+            ->assertJsonValidationErrors(['occurred_at']);
     }
 
     // -------------------------------------------------------------------------
@@ -411,7 +411,7 @@ class InventoryTransactionTest extends TestCase
                     'id',
                     'type',
                     'quantity_delta',
-                    'occured_at',
+                    'occurred_at',
                     'created_at',
                 ],
             ]);
