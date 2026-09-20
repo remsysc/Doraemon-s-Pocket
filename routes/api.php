@@ -8,7 +8,6 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClassificationController;
 use App\Http\Controllers\InventorySnapshotController;
 use App\Http\Controllers\InventoryTransactionController;
-use App\Http\Controllers\InventorySnapshotController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReorderConfigController;
