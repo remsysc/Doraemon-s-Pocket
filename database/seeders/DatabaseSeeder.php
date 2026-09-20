@@ -46,6 +46,7 @@ class DatabaseSeeder extends Seeder
                 CatalogSeeder::class,
                 InventoryTransactionSeeder::class,
                 ReorderConfigSeeder::class,
+                CycleCountSeeder::class,
             ]);
         });
     }

@@ -107,11 +107,13 @@
 | unit_of_measure | string    | not null                                                     |
 | is_seasonal     | boolean   | default false                                                |
 | shelf_life_days | integer   | nullable                                                     |
-| is_active       | boolean   | default true                                                 |
-| created_at      | timestamp |                                                              |
-| updated_at      | timestamp |                                                              |
+| is_active       | boolean        | default true                                                 |
+| unit_cost       | decimal(12, 2) | nullable — unit purchase cost for valuation & monetary ABC   |
+| unit_price      | decimal(12, 2) | nullable — unit selling price                                |
+| created_at      | timestamp      |                                                              |
+| updated_at      | timestamp      |                                                              |
 
-No price/cost/valuation field — deliberate non-goal.
+Pricing: `unit_cost` and `unit_price` are nullable decimals, managed by Admin only. Enables monetary ABC analysis, inventory valuation, and shrinkage loss tracking.
 
 ### lots (impl.)
 
