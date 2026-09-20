@@ -6,11 +6,14 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClassificationController;
+use App\Http\Controllers\CycleCountController;
 use App\Http\Controllers\InventorySnapshotController;
 use App\Http\Controllers\InventoryTransactionController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReorderConfigController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -112,6 +115,29 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('alerts/reorder', [AlertController::class, 'reorder']);
         Route::get('alerts/expiry', [AlertController::class, 'expiry']);
+    });
+
+    // ---- Cycle Counts (Sprint 5, FR-30) ----
+    // WS and Admin can create counts and view (WS own counts only).
+    // Admin can reconcile/dismiss all counts.
+    Route::middleware('role:admin,warehouse_staff')->group(function () {
+        Route::apiResource('cycle-counts', CycleCountController::class);
+        Route::post('cycle-counts/{cycle_count}/reconcile', [CycleCountController::class, 'reconcile']);
+        Route::post('cycle-counts/{cycle_count}/dismiss', [CycleCountController::class, 'dismiss']);
+    });
+
+    // ---- Reports (Sprint 5, FR-18) ----
+    // Admin only: variance and turnover reports
+    Route::middleware('role:admin')->group(function () {
+        Route::get('reports/variance', [ReportController::class, 'variance']);
+        Route::get('reports/turnover', [ReportController::class, 'turnover']);
+    });
+
+    // ---- User Management (Sprint 5, FR-19, FR-38) ----
+    // Admin only: CRUD + deactivation
+    Route::middleware('role:admin')->group(function () {
+        Route::apiResource('users', UserController::class);
+        Route::post('users/{user}/deactivate', [UserController::class, 'deactivate']);
     });
 
     // ---- Audit Logs ----
