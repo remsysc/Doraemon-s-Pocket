@@ -2,18 +2,22 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * The API health check responds successfully.
+     *
+     * The root route ("/") serves the React SPA and requires a built Vite
+     * manifest, which is produced by the separate frontend-build CI job. This
+     * backend test instead asserts the JSON API is reachable and enforces
+     * authentication, which does not depend on compiled front-end assets.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_the_api_requires_authentication(): void
     {
-        $response = $this->get('/');
+        $response = $this->getJson('/api/user');
 
-        $response->assertStatus(200);
+        $response->assertUnauthorized();
     }
 }
