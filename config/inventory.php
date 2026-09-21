@@ -19,4 +19,22 @@ return [
     | Overridable per-request via ?days=.
     */
     'expiry_alert_window_days' => (int) env('EXPIRY_ALERT_WINDOW_DAYS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Variance alert threshold percentage
+    |--------------------------------------------------------------------------
+    | Variance above this percentage (absolute value) is flagged for review
+    | in cycle counts (SPEC FR-30). Default 5.0%.
+    */
+    'variance_alert_threshold_percentage' => (float) env('VARIANCE_ALERT_THRESHOLD_PERCENTAGE', 5.0),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Turnover window (days)
+    |--------------------------------------------------------------------------
+    | Trailing window used to calculate inventory turnover ratio from outflow
+    | units and average on-hand quantity (SPEC FR-18).
+    */
+    'turnover_window_days' => (int) env('TURNOVER_WINDOW_DAYS', 90),
 ];

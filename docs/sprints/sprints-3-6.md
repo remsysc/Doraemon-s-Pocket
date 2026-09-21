@@ -38,6 +38,8 @@
 
 ## Sprint 5 — Reconciliation & Audit
 
+> Detailed plan: [`sprint-5.md`](sprint-5.md) | Status: ⬜ Planned
+
 | Item                                                              | Owner | Status         |
 | ----------------------------------------------------------------- | ----- | -------------- |
 | Automatic AUDIT_LOG write path for Product/Lot/Category/User writes | —     | ✅ DONE in Sprint 2 — `AuditObserver` + `AuditLogService` |
@@ -67,4 +69,15 @@
 | ------------------------------------ | ------------------------------------------------------------ |
 | ~~EOQ computation (FR-29)~~ ✅ resolved | OQ-6 resolved 2026-09-11 — operational cost inputs modeled on `reorder_configs`, not Product. |
 | ~~Seasonal reorder trigger (FR-28)~~ ✅ baseline | Implemented as a seasonal flag + basis; richer decomposition improves the number as ledger history accumulates. |
-| Cycle-count split (FR-30, FR-36)     | OQ-3: submit vs. view role split is inferred — confirm with perms team before Sprint 5. |
+| Cycle-count split (FR-30, FR-36)     | ✅ Resolved 2026-09-20 — WS submits real-time counts, Admin reconciles via ledger adjustments. |
+
+---
+
+## Post-Sprint 5 Backlog Items
+
+| Item | Status | Notes |
+| --- | --- | --- |
+| Product catalog pricing (`unit_cost`, `unit_price`) | ⬜ Backlog | Enable `unit_cost` and `unit_price` on `products` table (Admin write only). |
+| Monetary ABC Classification | ⬜ Backlog | Upgrade `ClassificationService` to Annual Consumption Value (`annual_demand × unit_cost`). |
+| Financial Valuation & Shrinkage Loss in Reports | ⬜ Backlog | Surface ₱ currency losses in variance reports and inventory valuation in turnover reports. |
+

@@ -16,7 +16,7 @@ WalangBrownout Appliances runs inventory on a single spreadsheet updated manuall
 
 ## 3. Non-Goals (Out of Scope)
 
-- **Pricing / financial valuation** — no cost/price fields on Product, no COGS or valuation reporting. Explicit, deliberate boundary (Blueprint §4.1).
+- **Advanced financial accounting** — multi-currency, tax calculation, invoicing, and POS accounting remain out of scope. Basic catalog pricing (`unit_cost` and `unit_price` on Product) is supported as of Sprint 5 to enable monetary ABC classification, inventory valuation, and shrinkage impact.
 - Nested/hierarchical categories — categories are a flat, fixed set of four (AC units, purifiers, filters, thermostats).
 - Any write UI for `INVENTORY_TRANSACTION` or `AUDIT_LOG` beyond the append-only endpoints — these are system-of-record tables, not user-editable. Per §4, the append-only ledger endpoint itself is restricted to a single writer role (Warehouse Staff).
 - Multi-warehouse / multi-location inventory (single warehouse, `bin_location` string only).
@@ -118,7 +118,7 @@ Admin is a superuser and is omitted from the middle columns below — read it as
 
 ## 9. Assumptions & Open Questions
 
-- Assumed: single warehouse, single currency-less unit tracking (no pricing) — confirmed explicitly in Blueprint §4.1 and memory.
+- Assumed: single warehouse, single base currency (PHP ₱). Product catalog stores `unit_cost` (purchase cost) and `unit_price` (selling price) for inventory valuation, shrinkage loss calculation, and monetary ABC analysis (updated 2026-09-20).
 - ✅ Resolved (2026-08-04, perms team submission): "purchasing_manager" and "admin" do **not** share write access to Category/Product/Lot. Category/Product writes are Admin-only; Lot writes are Admin + Warehouse Staff; only Admin manages Users. **Implemented** in `routes/api.php`, `RoleMiddleware`, and the `CategoryPolicy`/`ProductPolicy`/`LotPolicy` classes, with regression tests in `tests/Feature/CategoryProductLotCrudTest.php` and `tests/Feature/RoleMiddlewareTest.php`.
 - ✅ Resolved (2026-08-04): Admin is a plain backend superuser, not a separate "escalation-only" access tier. `RoleMiddleware` grants `admin` an unconditional pass on every role-guarded route regardless of that route's role list (and each Policy's `before()` hook does the equivalent for FormRequest-driven authorization). "Admin doesn't do daily picking/reorder config" is a UI/navigation convention only, not a backend permission distinction.
 - ✅ Resolved (2026-08-09): Lot writes follow the physical-receipt interpretation. Admin and Warehouse Staff can create/update Lots; Purchasing Manager is read-only. This matches the Warehouse responsibility for recording physical receipts while preserving Admin correction/oversight access.
@@ -130,6 +130,7 @@ Admin is a superuser and is omitted from the middle columns below — read it as
 - ✅ Resolved (2026-08-09): Normal Lot creation and update reject an `expiry_date` before today with 422 while retaining nullable expiry dates. Historical expired Lots require a separate explicitly authorized backfill/import workflow, which is not part of the normal receipt endpoint.
 - Open self-registration with role selection is accepted as a demo-only simplification, not a production security decision.
 - ✅ Resolved (2026-09-11, Sprint 4): EOQ cost inputs (`order_cost`, `holding_cost_per_unit`) are modeled as non-price operational cost fields on `REORDER_CONFIG`, not on Product — pricing/valuation remains out of scope (§3). EOQ is computed for non-seasonal SKUs only when both inputs are present and positive. ROP/safety stock (FR-12), EOQ (FR-13), seasonal trigger (FR-14), and ABC/XYZ classification (FR-15) are implemented and derive demand from the append-only ledger; reorder and expiry alerts (FR-10) are Purchasing-Manager/Admin only.
+- ✅ Resolved (2026-09-20, Sprint 5): Product catalog pricing enabled. Added `unit_cost` and `unit_price` (nullable decimal(12,2)) to `Product` (Admin write only). Unblocks true monetary ABC analysis (Annual Demand × unit_cost), inventory monetary valuation, and monetary shrinkage loss reporting.
 
 ## 10. Risks
 

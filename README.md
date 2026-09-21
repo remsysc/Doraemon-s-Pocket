@@ -143,6 +143,15 @@ All under `/api`, JSON in/out, session-cookie authenticated via Sanctum after lo
 | GET/PUT/DELETE | `/products/{id}`   | ✓    | Show / update / delete   |
 | GET/POST       | `/lots`            | ✓    | List / create lots       |
 | GET/PUT/DELETE | `/lots/{id}`       | ✓    | Show / update / delete   |
+| GET/POST       | `/cycle-counts`    | ✓    | List / submit cycle counts (WS + Admin; PM 403) |
+| GET            | `/cycle-counts/{id}` | ✓  | Show a cycle count (WS own / Admin all) |
+| POST           | `/cycle-counts/{id}/reconcile` | ✓ | Reconcile via `ADJUSTMENT` (Admin only) |
+| POST           | `/cycle-counts/{id}/dismiss`   | ✓ | Dismiss a false alarm (Admin only) |
+| GET            | `/reports/variance` | ✓   | Shrinkage/variance report (Admin only) |
+| GET            | `/reports/turnover` | ✓   | Inventory turnover report (Admin only) |
+| GET/POST       | `/users`           | ✓    | List / create users (Admin only) |
+| GET/PUT/DELETE | `/users/{id}`      | ✓    | Show / update / delete user (Admin only) |
+| POST           | `/users/{id}/deactivate` | ✓ | Deactivate a user (Admin only) |
 
 ---
 

@@ -47,7 +47,7 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 - **FR-11** THE SYSTEM SHALL restrict Product write operations to the `admin` role only. 🔄 CHANGED 2026-08-04: `purchasing_manager` write access to Product is removed, same rationale as FR-7 — see FR-32/§9.
 - **FR-12** THE SYSTEM SHALL allow any authenticated role to read Product.
 - **FR-13** IF a Product's `category_id` does not reference an existing Category THEN THE SYSTEM SHALL return 422.
-- **FR-14** THE SYSTEM SHALL NOT expose any price, cost, or valuation field on Product (non-goal, Blueprint §4.1).
+- **FR-14** THE SYSTEM SHALL store nullable non-negative `unit_cost` and `unit_price` fields (decimal(12, 2)) on Product. Write access is restricted to `admin` only; all authenticated roles can read. Supports monetary ABC analysis (Annual Demand × unit_cost), inventory valuation, and monetary shrinkage loss reporting. 🔄 DECIDED 2026-09-20 (Backlog milestone post-Sprint 5; was non-goal in Blueprint §4.1).
 
 ### Lot (Sprint 2 — complete)
 
@@ -109,7 +109,7 @@ Quick reference — tables and their implementation status:
 | ------------------------ | -------------------- | ---------------- | --------------------------------------------------- |
 | `users`                  | impl.                | `id` bigint ⚠️*¹ | role enum: admin/purchasing_manager/warehouse_staff |
 | `categories`             | impl.                | `id` uuid        | soft deletes                                        |
-| `products`               | impl.                | `sku_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
+| `products`               | impl.                | `sku_id` uuid ⚠️ | non-standard PK — `$primaryKey` required; includes unit_cost & unit_price |
 | `lots`                   | impl.                | `lot_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
 | `inventory_transactions` | impl. (Sprint 2)     | `txn_id` uuid    | append-only, signed qty_delta; write: WS+admin, read: all roles |
 | `inventory_snapshots`    | implemented (Sprint 3) | `sku_id` uuid    | derived, row-locked updates only                    |
@@ -332,6 +332,8 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 - ✅ RESOLVED 2026-08-04: `routes/api.php`, `RoleMiddleware`, and the Category/Product/Lot Policies have been updated to match — Category/Product writes are `role:admin`, Lot writes are `role:admin,warehouse_staff`, and the corresponding Policy `create`/`update`/`delete` methods were updated to match (Category/Product: admin-only via `before()`, non-admin always `false`; Lot: `warehouse_staff`, with admin via `before()`). Covered by `tests/Feature/CategoryProductLotCrudTest.php` and `tests/Feature/RoleMiddlewareTest.php` (14 tests, all passing). FR-32–FR-38's ledger/reorder_configs/audit_logs/user-management endpoints remain unbuilt (Sprint 4/5), so those routes/policies don't exist yet to update — tracked as before, just no longer blocked on this RBAC decision.
 
 ## 10. Changelog
+
+- 2026-09-20 — **Product Catalog Pricing Enabled (FR-14):** Updated FR-14 and PRD non-goals to support catalog pricing. Product master includes `unit_cost` and `unit_price` (nullable decimal(12, 2), Admin write only). Enables monetary ABC classification (Annual Demand × unit_cost), inventory monetary valuation, and monetary shrinkage loss reporting for Sprint 5.
 
 - 2026-09-11 — **Sprint 4 complete (Classification & Reorder Intelligence):** Added `reorder_configs` (SKU-keyed; `reorder_point`/`safety_stock` overrides, `lead_time_days`, `service_level_z`, and non-price operational `order_cost`/`holding_cost_per_unit`) with a PM+admin CRUD API and a `{reorder_config}/metrics` endpoint. `ReorderService` derives demand statistics from `SALE`+`PICK` ledger outflow over a trailing window and computes ROP (FR-26), statistical safety stock (FR-27, lead-time variance zeroed), EOQ for non-seasonal SKUs when cost inputs are present (FR-29), and a seasonal flag/basis (FR-28). `ClassificationService` derives ABC (cumulative Pareto by volume) and XYZ (coefficient of variation) — `GET /api/inventory-classifications` (any role) and a PM+admin recompute (PRD FR-15). Reorder and expiry alerts (`GET /api/alerts/reorder`, `GET /api/alerts/expiry`) are PM+admin only (FR-25, FR-35). **OQ-6 resolved**: cost inputs are non-price operational fields on `reorder_configs`, not on Product (FR-14 preserved). Added a PM+admin frontend Purchasing Dashboard and `ReorderConfigSeeder` (8 demo configs). Full backend suite green on PostgreSQL 17 (101 tests / 432 assertions); `npm run build` passes.
 
