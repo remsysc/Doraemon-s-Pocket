@@ -28,9 +28,10 @@ if [ "$TRIES" -lt "$MAX_TRIES" ]; then
     # Run migrations
     php artisan migrate --force || echo "WARNING: migrate failed"
 
-    # Only seed in non-production environments
-    if [ "${APP_ENV}" != "production" ]; then
-        echo "Non-production — running seeders..."
+    # Production seeding is opt-in for demo environments. Keep the flag unset
+    # for normal production deployments, and remove it after the demo seed runs.
+    if [ "${APP_ENV}" != "production" ] || [ "${SEED_DEMO_DATA:-false}" = "true" ]; then
+        echo "Running seeders..."
         php artisan db:seed --force || echo "WARNING: seed failed"
     fi
 fi
