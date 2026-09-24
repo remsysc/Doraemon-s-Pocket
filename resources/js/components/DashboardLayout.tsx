@@ -66,6 +66,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 { to: "/lots", label: "Lots" },
                 { to: "/stock", label: "Stock Overview" },
                 { to: "/transactions", label: "Transactions" },
+                ...(user?.role === "admin" || user?.role === "warehouse_staff"
+                    ? [{ to: "/cycle-counts", label: "Cycle Counts" }]
+                    : []),
             ],
         },
         ...(user?.role === "admin" || user?.role === "purchasing_manager"
@@ -80,7 +83,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             ? [
                   {
                       label: "ADMINISTRATION",
-                      items: [{ to: "/audit-logs", label: "Audit Logs" }],
+                      items: [
+                          { to: "/reports", label: "Reports & Analytics" },
+                          { to: "/users", label: "User Management" },
+                          { to: "/audit-logs", label: "Audit Logs" },
+                      ],
                   },
               ]
             : []),

@@ -9,13 +9,18 @@ import Transactions from "./pages/Transactions";
 import StockOverview from "./pages/StockOverview";
 import PurchasingDashboard from "./pages/PurchasingDashboard";
 import AuditLogs from "./pages/AuditLogs";
+import CycleCounts from "./pages/CycleCounts";
+import Reports from "./pages/Reports";
+import UserManagement from "./pages/UserManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 export default function App() {
     return (
-        <BrowserRouter>
-            <Routes>
+        <ErrorBoundary>
+            <BrowserRouter>
+                <Routes>
                 {/* Public routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
@@ -70,11 +75,41 @@ export default function App() {
                     }
                 />
                 <Route
+                    path="/cycle-counts"
+                    element={
+                        <ProtectedRoute>
+                            <RoleRoute allowedRoles={["admin", "warehouse_staff"]}>
+                                <CycleCounts />
+                            </RoleRoute>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
                     path="/purchasing"
                     element={
                         <ProtectedRoute>
                             <RoleRoute allowedRoles={["admin", "purchasing_manager"]}>
                                 <PurchasingDashboard />
+                            </RoleRoute>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/reports"
+                    element={
+                        <ProtectedRoute>
+                            <RoleRoute allowedRoles={["admin"]}>
+                                <Reports />
+                            </RoleRoute>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/users"
+                    element={
+                        <ProtectedRoute>
+                            <RoleRoute allowedRoles={["admin"]}>
+                                <UserManagement />
                             </RoleRoute>
                         </ProtectedRoute>
                     }
@@ -94,5 +129,6 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Routes>
         </BrowserRouter>
+        </ErrorBoundary>
     );
 }

@@ -29,7 +29,14 @@ export default function RoleRoute({ children, allowedRoles }: RoleRouteProps) {
     }, []);
 
     if (checking) {
-        return <div>Checking permissions...</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center p-6 bg-slate-900 text-slate-300">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs font-medium text-slate-400">Verifying role permissions...</span>
+                </div>
+            </div>
+        );
     }
 
     if (!user || !allowedRoles.includes(user.role)) {
