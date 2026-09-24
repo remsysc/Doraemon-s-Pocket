@@ -345,3 +345,190 @@ export function getExpiryAlerts(days = 30) {
 export function getClassifications() {
     return api.get<{ data: Classification[] }>("/api/inventory-classifications");
 }
+
+// ─── Cycle Counts (Sprint 5, FR-30, FR-36) ──────────────────────────────────
+
+export interface CycleCount {
+    id: string;
+    sku_id: string;
+    lot_id: string | null;
+    product?: Product;
+    counted_by: number;
+    counter_name: string;
+    expected_qty: number;
+    counted_qty: number;
+    variance_qty: number;
+    variance_pct: number;
+    is_flagged: boolean;
+    status: "pending" | "reconciled" | "dismissed";
+    notes: string | null;
+    reconciled_by: number | null;
+    reconciled_at: string | null;
+    reconciliation_txn_id: string | null;
+    counted_at: string;
+}
+
+export interface StoreCycleCountPayload {
+    sku_id: string;
+    lot_id?: string | null;
+    counted_qty: number;
+    notes?: string | null;
+}
+
+export interface ReconcileCycleCountPayload {
+    notes?: string | null;
+}
+
+export function getCycleCounts(
+    page = 1,
+    perPage = 15,
+    filters?: { status?: string; is_flagged?: boolean },
+) {
+    return api.get<PaginatedResponse<CycleCount>>("/api/cycle-counts", {
+        params: {
+            page,
+            per_page: perPage,
+            ...filters,
+        },
+    });
+}
+
+export function getCycleCount(id: string) {
+    return api.get<{ data: CycleCount }>(`/api/cycle-counts/${id}`);
+}
+
+export async function createCycleCount(payload: StoreCycleCountPayload) {
+    await getCsrfCookie();
+    return api.post<{ data: CycleCount }>("/api/cycle-counts", payload);
+}
+
+export async function reconcileCycleCount(
+    id: string,
+    payload?: ReconcileCycleCountPayload,
+) {
+    await getCsrfCookie();
+    return api.post<{ data: CycleCount }>(
+        `/api/cycle-counts/${id}/reconcile`,
+        payload ?? {},
+    );
+}
+
+export async function dismissCycleCount(id: string) {
+    await getCsrfCookie();
+    return api.post<{ data: CycleCount }>(`/api/cycle-counts/${id}/dismiss`);
+}
+
+// ─── Reports (Sprint 5, FR-18) ──────────────────────────────────────────────
+
+export interface VarianceReportItem {
+    sku_id: string;
+    product_name: string;
+    category_name: string;
+    current_qty_on_hand: number;
+    total_counts: number;
+    net_variance_qty: number;
+    flagged_discrepancy_count: number;
+    last_counted_at: string | null;
+}
+
+export interface VarianceReportResponse {
+    data: VarianceReportItem[];
+    meta: {
+        threshold_percentage: number;
+        total_audited_skus: number;
+        total_discrepancies: number;
+        net_shrinkage_units: number;
+    };
+}
+
+export interface TurnoverReportItem {
+    category_id: string;
+    category_name: string;
+    product_count: number;
+    outflow_units: number;
+    avg_on_hand: number;
+    turnover_ratio: number;
+    velocity_tier: "High" | "Medium" | "Low" | "Dead Stock";
+}
+
+export interface TurnoverReportResponse {
+    data: TurnoverReportItem[];
+    meta: {
+        window_days: number;
+        generated_at: string;
+    };
+}
+
+export function getVarianceReport(params?: {
+    flagged_only?: boolean;
+    category_id?: string;
+}) {
+    return api.get<VarianceReportResponse>("/api/reports/variance", {
+        params,
+    });
+}
+
+export function getTurnoverReport(params?: { window_days?: number }) {
+    return api.get<TurnoverReportResponse>("/api/reports/turnover", {
+        params,
+    });
+}
+
+// ─── User Management (Sprint 5, FR-19, FR-38) ───────────────────────────────
+
+export interface ManagedUser {
+    id: number;
+    name: string;
+    email: string;
+    role: "admin" | "purchasing_manager" | "warehouse_staff";
+    is_active: boolean;
+    created_at: string;
+}
+
+export interface StoreUserPayload {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+    role: "admin" | "purchasing_manager" | "warehouse_staff";
+}
+
+export interface UpdateUserPayload {
+    name?: string;
+    email?: string;
+    password?: string;
+    password_confirmation?: string;
+    role?: "admin" | "purchasing_manager" | "warehouse_staff";
+    is_active?: boolean;
+}
+
+export function getUsers(page = 1, perPage = 15) {
+    return api.get<PaginatedResponse<ManagedUser>>("/api/users", {
+        params: { page, per_page: perPage },
+    });
+}
+
+export function getUser(id: number) {
+    return api.get<{ data: ManagedUser }>(`/api/users/${id}`);
+}
+
+export async function createUser(payload: StoreUserPayload) {
+    await getCsrfCookie();
+    return api.post<{ data: ManagedUser }>("/api/users", payload);
+}
+
+export async function updateUser(id: number, payload: UpdateUserPayload) {
+    await getCsrfCookie();
+    return api.put<{ data: ManagedUser }>(`/api/users/${id}`, payload);
+}
+
+export async function deleteUser(id: number) {
+    await getCsrfCookie();
+    return api.delete(`/api/users/${id}`);
+}
+
+export async function deactivateUser(id: number) {
+    await getCsrfCookie();
+    return api.post<{ data: ManagedUser }>(`/api/users/${id}/deactivate`);
+}
+

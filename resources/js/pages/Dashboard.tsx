@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
@@ -8,238 +7,276 @@ import {
     getLots,
     getTransactions,
     getAuditLogs,
+    getExpiryAlerts,
+    getReorderAlerts,
+    getReorderConfigs,
+    getClassifications,
+    getCycleCounts,
     type InventoryTransaction,
     type AuditLog,
+    type ExpiryAlert,
+    type ReorderAlert,
+    type ReorderConfig,
+    type Classification,
+    type CycleCount,
 } from "../lib/inventory-api";
-
-interface DashboardStats {
-    categories: number;
-    products: number;
-    lots: number;
-    transactions: number;
-}
+import AdminDashboardView from "../components/dashboard/AdminDashboardView";
+import WarehouseDashboardView from "../components/dashboard/WarehouseDashboardView";
+import PurchasingDashboardView from "../components/dashboard/PurchasingDashboardView";
+import CycleCountModal from "../components/CycleCountModal";
 
 export default function Dashboard() {
     const [user, setUser] = useState<AuthUser | null>(null);
-    const [stats, setStats] = useState<DashboardStats>({
-        categories: 0,
-        products: 0,
-        lots: 0,
-        transactions: 0,
-    });
-    const [recentTxns, setRecentTxns] = useState<InventoryTransaction[]>([]);
-    const [recentAuditLogs, setRecentAuditLogs] = useState<AuditLog[]>([]);
+    const [activeView, setActiveView] = useState<"admin" | "warehouse" | "purchasing">("admin");
     const [loading, setLoading] = useState(true);
+    const [isCountModalOpen, setIsCountModalOpen] = useState(false);
 
-    useEffect(() => {
-        async function fetchDashboardData() {
-            try {
-                const userRes = await getCurrentUser();
-                setUser(userRes.data);
-                const role = userRes.data.role;
+    // Common data
+    const [categoriesCount, setCategoriesCount] = useState(0);
+    const [productsCount, setProductsCount] = useState(0);
+    const [lotsCount, setLotsCount] = useState(0);
+    const [transactionsCount, setTransactionsCount] = useState(0);
+    const [recentTxns, setRecentTxns] = useState<InventoryTransaction[]>([]);
 
-                const [catRes, prodRes, lotRes, txnRes] = await Promise.all([
-                    getCategories(1, 1),
-                    getProducts(1, 1),
-                    getLots(1, 1),
-                    getTransactions(1, 5),
-                ]);
+    // Admin & Warehouse data
+    const [recentAuditLogs, setRecentAuditLogs] = useState<AuditLog[]>([]);
+    const [cycleCounts, setCycleCounts] = useState<CycleCount[]>([]);
+    const [pendingCounts, setPendingCounts] = useState<CycleCount[]>([]);
 
-                setStats({
-                    categories: catRes.data.meta.total,
-                    products: prodRes.data.meta.total,
-                    lots: lotRes.data.meta.total,
-                    transactions: txnRes.data.meta.total,
-                });
+    // Purchasing & Warehouse data
+    const [expiryAlerts, setExpiryAlerts] = useState<ExpiryAlert[]>([]);
+    const [reorderAlerts, setReorderAlerts] = useState<ReorderAlert[]>([]);
+    const [reorderConfigs, setReorderConfigs] = useState<ReorderConfig[]>([]);
+    const [classifications, setClassifications] = useState<Classification[]>([]);
 
-                setRecentTxns(txnRes.data.data);
+    async function loadData() {
+        setLoading(true);
+        try {
+            const userRes = await getCurrentUser();
+            const currentUser = userRes.data;
+            setUser(currentUser);
 
-                if (role === "admin") {
-                    try {
-                        const auditRes = await getAuditLogs(1, 5);
-                        setRecentAuditLogs(auditRes.data.data);
-                    } catch {
-                        // Audit logs may not be accessible
-                    }
-                }
-            } catch {
-                // Stats stay at 0
-            } finally {
-                setLoading(false);
+            // Set default view based on role
+            if (currentUser.role === "warehouse_staff") {
+                setActiveView("warehouse");
+            } else if (currentUser.role === "purchasing_manager") {
+                setActiveView("purchasing");
+            } else {
+                setActiveView("admin");
             }
+
+            // Fetch core stats and transactions
+            const [catRes, prodRes, lotRes, txnRes] = await Promise.all([
+                getCategories(1, 1).catch(() => ({ data: { meta: { total: 0 } } })),
+                getProducts(1, 1).catch(() => ({ data: { meta: { total: 0 } } })),
+                getLots(1, 1).catch(() => ({ data: { meta: { total: 0 } } })),
+                getTransactions(1, 8).catch(() => ({ data: { meta: { total: 0 }, data: [] } })),
+            ]);
+
+            setCategoriesCount(catRes.data.meta.total);
+            setProductsCount(prodRes.data.meta.total);
+            setLotsCount(lotRes.data.meta.total);
+            setTransactionsCount(txnRes.data.meta.total);
+            setRecentTxns(txnRes.data.data);
+
+            // Role-specific and cross-functional intelligence
+            const promises: Promise<void>[] = [];
+
+            // Expiry alerts (used by Warehouse & Purchasing)
+            promises.push(
+                getExpiryAlerts(30)
+                    .then((res) => setExpiryAlerts(res.data.data))
+                    .catch(() => setExpiryAlerts([])),
+            );
+
+            // Cycle counts (Warehouse & Admin)
+            if (currentUser.role === "admin" || currentUser.role === "warehouse_staff") {
+                promises.push(
+                    getCycleCounts(1, 10)
+                        .then((res) => {
+                            const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+                            setCycleCounts(list);
+                            setPendingCounts(list.filter((c) => c?.status === "pending"));
+                        })
+                        .catch(() => {
+                            try {
+                                const stored = localStorage.getItem("wb_local_cycle_counts");
+                                if (stored) {
+                                    const parsed = JSON.parse(stored);
+                                    if (Array.isArray(parsed)) {
+                                        setCycleCounts(parsed.slice(0, 10));
+                                        setPendingCounts(parsed.filter((c: any) => c?.status === "pending"));
+                                        return;
+                                    }
+                                }
+                            } catch {
+                                // Ignore
+                            }
+                            setCycleCounts([]);
+                            setPendingCounts([]);
+                        }),
+                );
+            }
+
+            // Purchasing alerts & configs (Purchasing Manager & Admin)
+            if (currentUser.role === "admin" || currentUser.role === "purchasing_manager") {
+                promises.push(
+                    getReorderAlerts()
+                        .then((res) => setReorderAlerts(res.data.data))
+                        .catch(() => setReorderAlerts([])),
+                );
+                promises.push(
+                    getReorderConfigs(1, 100)
+                        .then((res) => setReorderConfigs(res.data.data))
+                        .catch(() => setReorderConfigs([])),
+                );
+                promises.push(
+                    getClassifications()
+                        .then((res) => setClassifications(res.data.data))
+                        .catch(() => setClassifications([])),
+                );
+            }
+
+            // Audit logs (Admin only)
+            if (currentUser.role === "admin") {
+                promises.push(
+                    getAuditLogs(1, 8)
+                        .then((res) => setRecentAuditLogs(res.data.data))
+                        .catch(() => setRecentAuditLogs([])),
+                );
+            }
+
+            await Promise.all(promises);
+        } catch {
+            // General error handling
+        } finally {
+            setLoading(false);
         }
-
-        fetchDashboardData();
-    }, []);
-
-    if (loading) {
-        return (
-            <DashboardLayout>
-                <div className="page-loading">Loading...</div>
-            </DashboardLayout>
-        );
     }
 
+    useEffect(() => {
+        loadData();
+    }, []);
+
     const role = user?.role ?? "warehouse_staff";
-    const canWrite = role === "admin" || role === "warehouse_staff";
 
     return (
         <DashboardLayout>
+            {/* Header with greeting and role badge */}
             <div className="page-header">
                 <div>
-                    <h1>Dashboard</h1>
-                    <p className="page-subtitle">Inventory overview</p>
+                    <div className="flex items-center gap-3">
+                        <h1>
+                            Welcome back, {user?.name ?? "User"}
+                        </h1>
+                        <span className="badge badge--receipt uppercase font-semibold text-xs tracking-wider">
+                            {role.replace(/_/g, " ")}
+                        </span>
+                    </div>
+                    <p className="page-subtitle">
+                        {role === "admin" && "Executive control & system governance hub"}
+                        {role === "warehouse_staff" && "Floor receiving, movement tracking & cycle count verification"}
+                        {role === "purchasing_manager" && "Procurement planning, reorder alerts & stock replenishment"}
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    {(role === "admin" || role === "warehouse_staff") && (
+                        <button
+                            type="button"
+                            className="btn--primary"
+                            onClick={() => setIsCountModalOpen(true)}
+                        >
+                            📋 Submit Cycle Count
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Metrics */}
-            <section className="stats-grid">
-                {(role === "admin" || role === "purchasing_manager") && (
-                    <>
-                        <div className="stat-card stat-card--blue">
-                            <div className="stat-card__info">
-                                <span className="stat-card__value">{stats.categories}</span>
-                                <span className="stat-card__label">Categories</span>
-                            </div>
-                        </div>
-                        <div className="stat-card stat-card--green">
-                            <div className="stat-card__info">
-                                <span className="stat-card__value">{stats.products}</span>
-                                <span className="stat-card__label">Products</span>
-                            </div>
-                        </div>
-                    </>
-                )}
-                <div className="stat-card stat-card--amber">
-                    <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.lots}</span>
-                        <span className="stat-card__label">Lots</span>
-                    </div>
-                </div>
-                <div className="stat-card stat-card--purple">
-                    <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.transactions}</span>
-                        <span className="stat-card__label">Transactions</span>
-                    </div>
-                </div>
-            </section>
-
-            {/* Quick Action */}
-            {canWrite && (
-                <div className="quick-action">
-                    <div className="quick-action__info">
-                        <span className="quick-action__title">Record a transaction</span>
-                        <span className="quick-action__subtitle">
-                            Log stock receipts, picks, sales, or adjustments
-                        </span>
-                    </div>
-                    <Link to="/transactions" className="quick-action__btn">
-                        + New Transaction
-                    </Link>
+            {/* Admin Department Lens View Selector */}
+            {role === "admin" && (
+                <div className="tab-bar">
+                    <button
+                        type="button"
+                        className={`tab-btn ${activeView === "admin" ? "tab-btn--active" : ""}`}
+                        onClick={() => setActiveView("admin")}
+                    >
+                        🛡️ Executive & Admin Overview
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${activeView === "warehouse" ? "tab-btn--active" : ""}`}
+                        onClick={() => setActiveView("warehouse")}
+                    >
+                        📦 Warehouse Operations Lens
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${activeView === "purchasing" ? "tab-btn--active" : ""}`}
+                        onClick={() => setActiveView("purchasing")}
+                    >
+                        ⚡ Purchasing & Reorder Intelligence Lens
+                    </button>
                 </div>
             )}
 
-            {/* Recent Transactions */}
-            <section className="table-section">
-                <div className="table-section__header">
-                    <h2>Recent Transactions</h2>
-                    <Link to="/transactions" className="audit-summary__link">
-                        View all
-                    </Link>
-                </div>
-                {recentTxns.length === 0 ? (
-                    <p className="empty-state">
-                        No transactions recorded yet. Activity will appear here.
-                    </p>
-                ) : (
-                    <div className="table-wrapper">
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Qty</th>
-                                    <th>Product</th>
-                                    <th>User</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentTxns.map((txn) => (
-                                    <tr key={txn.id}>
-                                        <td>
-                                            <span className={`badge badge--${txn.type.toLowerCase()}`}>
-                                                {txn.type}
-                                            </span>
-                                        </td>
-                                        <td className={txn.quantity_delta >= 0 ? "text-green" : "text-red"}>
-                                            {txn.quantity_delta >= 0 ? "+" : ""}
-                                            {txn.quantity_delta}
-                                        </td>
-                                        <td>{txn.lot?.product?.name ?? "\u2014"}</td>
-                                        <td>{txn.actor?.name ?? "\u2014"}</td>
-                                        <td>
-                                            {new Date(txn.occurred_at).toLocaleDateString()}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </section>
-
-            {/* Audit Logs — Admin only */}
-            {role === "admin" && (
-                <div className="audit-summary">
-                    <div className="audit-summary__header">
-                        <h2>Recent Audit Activity</h2>
-                        <Link to="/audit-logs" className="audit-summary__link">
-                            View all
-                        </Link>
-                    </div>
-                    {recentAuditLogs.length === 0 ? (
-                        <p className="empty-state">No audit activity yet.</p>
-                    ) : (
-                        <div className="table-wrapper">
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Action</th>
-                                        <th>Resource</th>
-                                        <th>User</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {recentAuditLogs.map((log) => (
-                                        <tr key={log.id}>
-                                            <td>
-                                                <span className="badge badge--adjustment">
-                                                    {log.action}
-                                                </span>
-                                            </td>
-                                            <td>{log.entity_type.split("\\").pop()}</td>
-                                            <td>{log.actor?.name ?? "System"}</td>
-                                            <td>{new Date(log.occurred_at).toLocaleDateString()}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+            {loading ? (
+                <div className="page-loading">Loading inventory data & intelligence...</div>
+            ) : (
+                <>
+                    {/* Render active role view */}
+                    {activeView === "warehouse" && (
+                        <WarehouseDashboardView
+                            stats={{
+                                lots: lotsCount,
+                                transactions: transactionsCount,
+                                expiringCount: expiryAlerts.length,
+                                pendingCounts: pendingCounts.length,
+                            }}
+                            recentTxns={recentTxns}
+                            expiringLots={expiryAlerts}
+                            recentCounts={cycleCounts}
+                            onOpenCountModal={() => setIsCountModalOpen(true)}
+                        />
                     )}
-                </div>
+
+                    {activeView === "purchasing" && (
+                        <PurchasingDashboardView
+                            reorderAlerts={reorderAlerts}
+                            expiryAlerts={expiryAlerts}
+                            configs={reorderConfigs}
+                            classifications={classifications}
+                            totalProducts={productsCount}
+                        />
+                    )}
+
+                    {activeView === "admin" && (
+                        <AdminDashboardView
+                            stats={{
+                                categories: categoriesCount,
+                                products: productsCount,
+                                lots: lotsCount,
+                                transactions: transactionsCount,
+                                pendingReconciliations: pendingCounts.length,
+                                auditCount: recentAuditLogs.length,
+                            }}
+                            recentTxns={recentTxns}
+                            recentAuditLogs={recentAuditLogs}
+                            pendingCounts={pendingCounts}
+                            onOpenCountModal={() => setIsCountModalOpen(true)}
+                        />
+                    )}
+                </>
             )}
 
-            {/* Planned */}
-            {role === "admin" && (
-                <p className="coming-soon">Planned: Alerts, Reorder Configuration, Cycle Counts</p>
-            )}
-            {role === "warehouse_staff" && (
-                <p className="coming-soon">Planned: Cycle Counts</p>
-            )}
-            {role === "purchasing_manager" && (
-                <p className="coming-soon">Planned: Purchase Orders, Reorder Suggestions</p>
-            )}
+            {/* Physical Cycle Count Modal */}
+            <CycleCountModal
+                isOpen={isCountModalOpen}
+                onClose={() => setIsCountModalOpen(false)}
+                onSuccess={() => {
+                    loadData();
+                }}
+            />
         </DashboardLayout>
     );
 }
