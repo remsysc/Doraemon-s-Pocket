@@ -24,6 +24,8 @@ class CatalogSeeder extends Seeder
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => true,
                         'shelf_life_days' => null,
+                        'unit_cost' => 12500.00,
+                        'unit_price' => 16000.00,
                         'lots' => [
                             ['bin_location' => 'AC-A01', 'expiry_date' => null],
                             ['bin_location' => 'AC-A02', 'expiry_date' => null],
@@ -36,6 +38,8 @@ class CatalogSeeder extends Seeder
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => true,
                         'shelf_life_days' => null,
+                        'unit_cost' => 15000.00,
+                        'unit_price' => 19500.00,
                         'lots' => [
                             ['bin_location' => 'AC-B01', 'expiry_date' => null],
                             ['bin_location' => 'AC-B02', 'expiry_date' => null],
@@ -55,6 +59,8 @@ class CatalogSeeder extends Seeder
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => false,
                         'shelf_life_days' => null,
+                        'unit_cost' => 3200.00,
+                        'unit_price' => 4500.00,
                         'lots' => [
                             ['bin_location' => 'AP-A01', 'expiry_date' => null],
                             ['bin_location' => 'AP-A02', 'expiry_date' => null],
@@ -67,6 +73,8 @@ class CatalogSeeder extends Seeder
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => false,
                         'shelf_life_days' => null,
+                        'unit_cost' => 6500.00,
+                        'unit_price' => 8990.00,
                         'lots' => [
                             ['bin_location' => 'AP-B01', 'expiry_date' => null],
                             ['bin_location' => 'AP-B02', 'expiry_date' => null],
@@ -86,6 +94,8 @@ class CatalogSeeder extends Seeder
                         'unit_of_measure' => 'piece',
                         'is_seasonal' => false,
                         'shelf_life_days' => 730,
+                        'unit_cost' => 450.00,
+                        'unit_price' => 850.00,
                         'lots' => [
                             ['bin_location' => 'FL-A01', 'expiry_date' => '+180 days'],
                             ['bin_location' => 'FL-A02', 'expiry_date' => '+365 days'],
@@ -98,6 +108,8 @@ class CatalogSeeder extends Seeder
                         'unit_of_measure' => 'piece',
                         'is_seasonal' => false,
                         'shelf_life_days' => 730,
+                        'unit_cost' => 850.00,
+                        'unit_price' => 1400.00,
                         'lots' => [
                             ['bin_location' => 'FL-B01', 'expiry_date' => '+120 days'],
                             ['bin_location' => 'FL-B02', 'expiry_date' => '+300 days'],
@@ -117,6 +129,8 @@ class CatalogSeeder extends Seeder
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => false,
                         'shelf_life_days' => null,
+                        'unit_cost' => 1200.00,
+                        'unit_price' => 2100.00,
                         'lots' => [
                             ['bin_location' => 'TH-A01', 'expiry_date' => null],
                             ['bin_location' => 'TH-A02', 'expiry_date' => null],
@@ -129,6 +143,8 @@ class CatalogSeeder extends Seeder
                         'unit_of_measure' => 'unit',
                         'is_seasonal' => false,
                         'shelf_life_days' => null,
+                        'unit_cost' => 800.00,
+                        'unit_price' => 1500.00,
                         'lots' => [
                             ['bin_location' => 'TH-B01', 'expiry_date' => null],
                             ['bin_location' => 'TH-B02', 'expiry_date' => null],
