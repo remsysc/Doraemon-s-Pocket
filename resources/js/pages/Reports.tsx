@@ -210,14 +210,14 @@ export default function Reports() {
                     className={`tab-btn ${activeTab === "variance" ? "tab-btn--active" : ""}`}
                     onClick={() => setActiveTab("variance")}
                 >
-                    📉 Variance & Shrinkage Report
+                    Variance & Shrinkage Report
                 </button>
                 <button
                     type="button"
                     className={`tab-btn ${activeTab === "turnover" ? "tab-btn--active" : ""}`}
                     onClick={() => setActiveTab("turnover")}
                 >
-                    🔄 Category Inventory Turnover Report
+                    Category Inventory Turnover Report
                 </button>
             </div>
 

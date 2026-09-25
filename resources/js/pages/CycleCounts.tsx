@@ -380,7 +380,7 @@ export default function CycleCounts() {
                     className="btn--primary"
                     onClick={() => setIsCountModalOpen(true)}
                 >
-                    📋 + Submit New Count
+                    + Submit New Count
                 </button>
             </div>
 
@@ -440,7 +440,7 @@ export default function CycleCounts() {
             {/* Reconciliation Process Explanation Banner */}
             <div className="info-card mb-6 text-xs text-secondary leading-relaxed">
                 <div className="flex items-start gap-3">
-                    <span className="text-base">💡</span>
+                    
                     <div className="space-y-1">
                         <p className="font-semibold text-primary td-bold">
                             Cycle Count & Ledger Reconciliation Workflow

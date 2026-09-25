@@ -187,7 +187,7 @@ export default function Dashboard() {
                             className="btn--primary"
                             onClick={() => setIsCountModalOpen(true)}
                         >
-                            📋 Submit Cycle Count
+                            Submit Cycle Count
                         </button>
                     )}
                 </div>
@@ -201,21 +201,21 @@ export default function Dashboard() {
                         className={`tab-btn ${activeView === "admin" ? "tab-btn--active" : ""}`}
                         onClick={() => setActiveView("admin")}
                     >
-                        🛡️ Executive & Admin Overview
+                        Executive & Admin Overview
                     </button>
                     <button
                         type="button"
                         className={`tab-btn ${activeView === "warehouse" ? "tab-btn--active" : ""}`}
                         onClick={() => setActiveView("warehouse")}
                     >
-                        📦 Warehouse Operations Lens
+                        Warehouse Operations Lens
                     </button>
                     <button
                         type="button"
                         className={`tab-btn ${activeView === "purchasing" ? "tab-btn--active" : ""}`}
                         onClick={() => setActiveView("purchasing")}
                     >
-                        ⚡ Purchasing & Reorder Intelligence Lens
+                        Purchasing & Reorder Intelligence Lens
                     </button>
                 </div>
             )}

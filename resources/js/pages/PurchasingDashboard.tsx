@@ -106,94 +106,25 @@ export default function PurchasingDashboard() {
 
             {/* Explanatory Guide Card */}
             <div className="info-card mb-6">
-                <div
-                    className="flex items-center justify-between cursor-pointer"
-                    onClick={() => setShowGuide(!showGuide)}
-                >
-                    <div className="flex items-center gap-2">
-                        <span className="text-base">💡</span>
-                        <span className="font-semibold td-bold text-sm">
-                            Terminology Guide: What do ABC, XYZ, and EOQ mean for your ordering?
-                        </span>
-                        <span className="text-xs text-secondary ml-1">
-                            (Click to {showGuide ? "collapse" : "view guide"})
-                        </span>
+                <div className="flex flex-col gap-2">
+                    <span className="font-semibold text-sm">
+                        Terminology Guide: ABC, XYZ, and EOQ
+                    </span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs leading-relaxed text-secondary mt-1">
+                        <div>
+                            <span className="font-semibold text-blue block mb-1">ABC Volume Priority</span>
+                            Ranks products by sales volume. Class A represents top 80%, Class B represents 15%, and Class C represents the bottom 5%.
+                        </div>
+                        <div>
+                            <span className="font-semibold text-blue block mb-1">XYZ Demand Predictability</span>
+                            Measures sales stability (CV). X is steady and reliable, Y is fluctuating, and Z is erratic and spiky.
+                        </div>
+                        <div>
+                            <span className="font-semibold text-blue block mb-1">EOQ & ROP Rules</span>
+                            ROP is the minimum stock level that triggers an order. EOQ is the mathematically optimal batch size to minimize costs.
+                        </div>
                     </div>
-                    <button
-                        type="button"
-                        className="text-xs text-blue font-medium"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setShowGuide(!showGuide);
-                        }}
-                    >
-                        {showGuide ? "Hide Guide ▲" : "Show Guide ▼"}
-                    </button>
                 </div>
-
-                {showGuide && (
-                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs leading-relaxed">
-                        <div className="p-3 rounded bg-slate-100 dark:bg-white/5 space-y-1.5">
-                            <span className="font-semibold text-blue text-sm block mb-1">
-                                📊 ABC Volume Priority
-                            </span>
-                            <p className="text-secondary">
-                                Ranks products by customer sales volume (Pareto 80/15/5):
-                            </p>
-                            <ul className="list-disc list-inside space-y-1 text-secondary">
-                                <li>
-                                    <strong className="td-bold">Class A:</strong> Generates ~80% of sales volume. Top priority; never allow stockouts.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">Class B:</strong> Next ~15% of sales. Secondary priority; standard reorders.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">Class C:</strong> Bottom ~5% of sales. Slow moving; keep lean to avoid tying up capital.
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div className="p-3 rounded bg-slate-100 dark:bg-white/5 space-y-1.5">
-                            <span className="font-semibold text-blue text-sm block mb-1">
-                                📈 XYZ Demand Predictability
-                            </span>
-                            <p className="text-secondary">
-                                Measures sales stability using the Coefficient of Variation (CV):
-                            </p>
-                            <ul className="list-disc list-inside space-y-1 text-secondary">
-                                <li>
-                                    <strong className="td-bold">X (Steady, CV &lt; 0.5):</strong> Reliable, consistent daily demand. Lean buffer needed.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">Y (Variable, CV 0.5–1.0):</strong> Moderate fluctuation or seasonality. Standard buffer.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">Z (Erratic, CV &gt; 1.0):</strong> Spiky, infrequent demand. Order on-demand.
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div className="p-3 rounded bg-slate-100 dark:bg-white/5 space-y-1.5">
-                            <span className="font-semibold text-blue text-sm block mb-1">
-                                📦 EOQ & ROP Rules
-                            </span>
-                            <p className="text-secondary">
-                                Mathematical formulas for cost optimization:
-                            </p>
-                            <ul className="list-disc list-inside space-y-1 text-secondary">
-                                <li>
-                                    <strong className="td-bold">ROP (Reorder Point):</strong> The minimum stock level that automatically triggers a purchase order.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">EOQ (Economic Order Qty):</strong> Optimal purchase order batch size to balance ordering and holding costs.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">Safety Stock:</strong> Extra cushion to protect against late supplier deliveries.
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                )}
             </div>
 
             {loading ? (
@@ -213,7 +144,7 @@ export default function PurchasingDashboard() {
 
                         {reorderAlerts.length === 0 ? (
                             <p className="empty-state">
-                                ✅ All products are currently stocked safely above their reorder points.
+                                All products are currently stocked safely above their reorder points.
                             </p>
                         ) : (
                             <div className="table-wrapper">
@@ -283,7 +214,7 @@ export default function PurchasingDashboard() {
                         </div>
 
                         {expiryAlerts.length === 0 ? (
-                            <p className="empty-state">✅ No warehouse lots expiring within the 30-day window.</p>
+                            <p className="empty-state">No warehouse lots expiring within the 30-day window.</p>
                         ) : (
                             <div className="table-wrapper">
                                 <table className="data-table">
