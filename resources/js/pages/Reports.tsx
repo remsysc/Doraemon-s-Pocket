@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import {
     getVarianceReport,
     getTurnoverReport,
@@ -193,7 +193,7 @@ export default function Reports() {
     }
 
     return (
-        <DashboardLayout>
+        <>
             <div className="page-header">
                 <div>
                     <h1>Inventory & Operational Reports</h1>
@@ -514,6 +514,6 @@ export default function Reports() {
                     </section>
                 </div>
             )}
-        </DashboardLayout>
+        </>
     );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import {
     getReorderAlerts,
     getExpiryAlerts,
@@ -55,7 +55,7 @@ export default function PurchasingDashboard() {
     const classACount = classifications.filter((c) => c.abc === "A").length;
 
     return (
-        <DashboardLayout>
+        <>
             <div className="page-header">
                 <div>
                     <h1>Purchasing & Replenishment Intelligence Hub</h1>
@@ -478,6 +478,6 @@ export default function PurchasingDashboard() {
                     </section>
                 </>
             )}
-        </DashboardLayout>
+        </>
     );
 }

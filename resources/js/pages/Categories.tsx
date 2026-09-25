@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
     getCategories,
@@ -131,7 +131,7 @@ export default function Categories() {
     }
 
     return (
-        <DashboardLayout>
+        <>
             <div className="page-header">
                 <div>
                     <h1>Categories</h1>
@@ -283,6 +283,6 @@ export default function Categories() {
                     </div>
                 </div>
             )}
-        </DashboardLayout>
+        </>
     );
 }

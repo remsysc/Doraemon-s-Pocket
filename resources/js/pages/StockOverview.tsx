@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
     getInventorySnapshots,
@@ -56,7 +56,7 @@ export default function StockOverview() {
     const totalOnHand = snapshots.reduce((acc, s) => acc + s.qty_on_hand, 0);
 
     return (
-        <DashboardLayout>
+        <>
             <div className="page-header">
                 <div>
                     <h1>Stock Overview & Snapshots</h1>
@@ -230,6 +230,6 @@ export default function StockOverview() {
                 onClose={() => setIsCountModalOpen(false)}
                 onSuccess={() => fetchSnapshots()}
             />
-        </DashboardLayout>
+        </>
     );
 }

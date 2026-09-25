@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
     getLots,
@@ -141,7 +141,7 @@ export default function Lots() {
     }
 
     return (
-        <DashboardLayout>
+        <>
             <div className="page-header">
                 <div>
                     <h1>Lots</h1>
@@ -321,6 +321,6 @@ export default function Lots() {
                     </div>
                 </div>
             )}
-        </DashboardLayout>
+        </>
     );
 }

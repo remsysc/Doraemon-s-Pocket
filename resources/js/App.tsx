@@ -14,119 +14,76 @@ import UserManagement from "./pages/UserManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
+import DashboardLayout from "./components/DashboardLayout";
 
 export default function App() {
     return (
         <ErrorBoundary>
             <BrowserRouter>
                 <Routes>
-                {/* Public routes */}
-                <Route path="/login" element={<Login />} />
+                    {/* Public routes */}
+                    <Route path="/login" element={<Login />} />
 
-                {/* Protected routes */}
-                <Route
-                    path="/dashboard"
-                    element={
-                        <ProtectedRoute>
-                            <Dashboard />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/categories"
-                    element={
-                        <ProtectedRoute>
-                            <Categories />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/products"
-                    element={
-                        <ProtectedRoute>
-                            <Products />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/lots"
-                    element={
-                        <ProtectedRoute>
-                            <Lots />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/transactions"
-                    element={
-                        <ProtectedRoute>
-                            <Transactions />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/stock"
-                    element={
-                        <ProtectedRoute>
-                            <StockOverview />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/cycle-counts"
-                    element={
-                        <ProtectedRoute>
-                            <RoleRoute allowedRoles={["admin", "warehouse_staff"]}>
-                                <CycleCounts />
-                            </RoleRoute>
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/purchasing"
-                    element={
-                        <ProtectedRoute>
-                            <RoleRoute allowedRoles={["admin", "purchasing_manager"]}>
-                                <PurchasingDashboard />
-                            </RoleRoute>
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/reports"
-                    element={
-                        <ProtectedRoute>
-                            <RoleRoute allowedRoles={["admin"]}>
-                                <Reports />
-                            </RoleRoute>
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/users"
-                    element={
-                        <ProtectedRoute>
-                            <RoleRoute allowedRoles={["admin"]}>
-                                <UserManagement />
-                            </RoleRoute>
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/audit-logs"
-                    element={
-                        <ProtectedRoute>
-                            <RoleRoute allowedRoles={["admin"]}>
-                                <AuditLogs />
-                            </RoleRoute>
-                        </ProtectedRoute>
-                    }
-                />
+                    {/* Protected dashboard layout wrapper */}
+                    <Route
+                        element={
+                            <ProtectedRoute>
+                                <DashboardLayout />
+                            </ProtectedRoute>
+                        }
+                    >
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/categories" element={<Categories />} />
+                        <Route path="/products" element={<Products />} />
+                        <Route path="/lots" element={<Lots />} />
+                        <Route path="/transactions" element={<Transactions />} />
+                        <Route path="/stock" element={<StockOverview />} />
+                        <Route
+                            path="/cycle-counts"
+                            element={
+                                <RoleRoute allowedRoles={["admin", "warehouse_staff"]}>
+                                    <CycleCounts />
+                                </RoleRoute>
+                            }
+                        />
+                        <Route
+                            path="/purchasing"
+                            element={
+                                <RoleRoute allowedRoles={["admin", "purchasing_manager"]}>
+                                    <PurchasingDashboard />
+                                </RoleRoute>
+                            }
+                        />
+                        <Route
+                            path="/reports"
+                            element={
+                                <RoleRoute allowedRoles={["admin"]}>
+                                    <Reports />
+                                </RoleRoute>
+                            }
+                        />
+                        <Route
+                            path="/users"
+                            element={
+                                <RoleRoute allowedRoles={["admin"]}>
+                                    <UserManagement />
+                                </RoleRoute>
+                            }
+                        />
+                        <Route
+                            path="/audit-logs"
+                            element={
+                                <RoleRoute allowedRoles={["admin"]}>
+                                    <AuditLogs />
+                                </RoleRoute>
+                            }
+                        />
 
-                {/* Redirect root to dashboard */}
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-        </BrowserRouter>
+                        {/* Redirect root to dashboard */}
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    </Route>
+                </Routes>
+            </BrowserRouter>
         </ErrorBoundary>
     );
 }
