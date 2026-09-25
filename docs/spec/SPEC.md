@@ -80,7 +80,7 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 - **FR-28** WHERE a Product has `is_seasonal = true` THE SYSTEM SHALL compute its reorder trigger from the same period last year's demand (seasonal index or Holt-Winters decomposition), shifted earlier by `lead_time_days`, rather than a flat trailing average. ✅ Implemented Sprint 4 (baseline) — seasonal SKUs are flagged (`seasonal: true`) and report a `seasonal_basis` (`last_year` when same-period-last-year demand exists, else `insufficient_history`); EOQ is intentionally not applied to seasonal items. Richer seasonal decomposition improves the number without an API change as history accumulates.
 - **FR-29** THE SYSTEM SHALL compute `EOQ = sqrt((2 × annual_demand × order_cost) / holding_cost_per_unit)` for non-seasonal items. ✅ Implemented Sprint 4; OQ-6 RESOLVED — `order_cost` and `holding_cost_per_unit` are modeled as **nullable, non-price operational cost fields on `reorder_configs`** (never on Product; pricing/valuation stays out of scope per FR-14). EOQ is computed only for non-seasonal SKUs when both cost inputs are present and positive; otherwise the API returns `eoq: null`.
 
-### Reconciliation & Audit (Sprint 5 — not yet started, requirement-level only)
+### Reconciliation & Audit (Sprint 5 — Implemented)
 
 - **FR-30** THE SYSTEM SHALL allow `warehouse_staff` to submit a physical cycle-count / discrepancy flag at the moment it is found, comparing it to `qty_on_hand`. THE SYSTEM SHALL restrict viewing the resulting variance/shrinkage reconciliation report to `admin`, flagging a variance alert when the discrepancy exceeds a configurable threshold (default 5%). 🔄 CHANGED 2026-08-04, 🚧 submit-vs-view role split inferred — see FR-36/§9.
 - **FR-31** THE SYSTEM SHALL record every write to `products`, `lots`, `categories`, and `users` to an append-only `audit_logs` table capturing actor, action, entity type/id, old values, new values. THE SYSTEM SHALL restrict read access to `audit_logs` to `admin` only; `purchasing_manager` and `warehouse_staff` SHALL NOT be able to view it. 🔄 CHANGED 2026-08-04 — see FR-37/§9.
@@ -186,7 +186,7 @@ GET  /api/audit-logs/{audit_log}             role:admin                         
 
 Automatic audit creation for Product, Lot, Category, and User writes is implemented through centrally registered Eloquent observers and `AuditLogService`. Authenticated actors are recorded server-side; User secrets are redacted. Bootstrap seed writes and temporary unauthenticated registration are intentionally not audited.
 
-### Not yet routed (Sprints 3–5, requirement-level only — do not implement against this table alone)
+### Implemented (Sprints 3–5 — do not implement against this table alone)
 
 ```
 POST /api/inventory-transactions               role:warehouse_staff,admin                          FR-20, FR-34  ✅ impl. 2026-08-07
@@ -212,7 +212,7 @@ GET  /api/alerts/history                      role:purchasing_manager,admin
 
 Full request/response shapes for the implemented Sprint 4 endpoints are in
 **[docs/sprints/sprint-4.md](../sprints/sprint-4.md)** (§ "API contracts").
-The remaining (Sprint 5) shapes are 🚧 OPEN — write them into this spec (§4)
+The remaining (Sprint 5) shapes are implemented (see sprint-5.md) (§4)
 before starting that sprint, not while coding it.
 
 ---
@@ -306,7 +306,7 @@ FR-20 / FR-34: InventoryTransaction Permissions
   And an inventory_transactions row is created with actor_id = auth user's id
 ```
 
-Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is implemented, not batched in advance — writing acceptance criteria for unbuilt Sprint 4/5 endpoints now would itself be guessing at their final shape.
+Remaining FR-1 through FR-38 acceptance criteria: implemented in their respective sprint docs.
 
 ---
 
@@ -327,7 +327,7 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 - ✅ **`users.id` type (resolved 2026-08-09):** Keep `users.id` as an auto-incrementing `bigint` primary key. This is appropriate for the project's single-warehouse scope and internal user/actor references; Product, Lot, and transaction domain identifiers may continue using UUIDs.
 - ✅ **Lot write ownership (FR-16, FR-33), resolved 2026-08-09:** under the physical-receipt interpretation, `admin` + `warehouse_staff` can create/update Lots and `purchasing_manager` is read-only. This is now the implementation decision.
 - ✅ **Purchasing Manager inventory-transaction access (FR-20, FR-34), resolved 2026-08-09:** Purchasing Manager is read-only for the ledger. `GET /api/inventory-transactions` and `GET /api/inventory-transactions/{transaction}` are allowed for analysis; `POST` for every transaction type is restricted to Warehouse Staff and Admin.
-- 🚧 **Cycle-count submit-vs-view split (FR-30, FR-36):** inferred by combining "Warehouse flags discrepancies at the moment they're found" with "Admin gets variance/shrinkage reports" — not stated explicitly as two separate steps. Confirm before Sprint 5.
+- ✅ RESOLVED (Sprint 5): Cycle-count submit-vs-view split. Warehouse Staff submits physical counts; Admin reconciles via ledger adjustments.
 - ✅ RESOLVED 2026-08-04: Admin's exclusion from daily picking/reorder-config is UI-only, not a backend permission distinction. `RoleMiddleware` grants `admin` an unconditional pass regardless of a route's role list, and `CategoryPolicy`/`ProductPolicy`/`LotPolicy` each grant `admin` via a `before()` hook. Admin is a plain superuser — there is no separate "escalation" access tier anywhere in the implementation. "Admin doesn't do daily picking/reorder config" is purely which screen the frontend defaults Admin to.
 - ✅ RESOLVED 2026-08-04: `routes/api.php`, `RoleMiddleware`, and the Category/Product/Lot Policies have been updated to match — Category/Product writes are `role:admin`, Lot writes are `role:admin,warehouse_staff`, and the corresponding Policy `create`/`update`/`delete` methods were updated to match (Category/Product: admin-only via `before()`, non-admin always `false`; Lot: `warehouse_staff`, with admin via `before()`). Covered by `tests/Feature/CategoryProductLotCrudTest.php` and `tests/Feature/RoleMiddlewareTest.php` (14 tests, all passing). FR-32–FR-38's ledger/reorder_configs/audit_logs/user-management endpoints remain unbuilt (Sprint 4/5), so those routes/policies don't exist yet to update — tracked as before, just no longer blocked on this RBAC decision.
 
@@ -357,3 +357,4 @@ Remaining FR-1 through FR-38 acceptance criteria: 🚧 to be written as each is 
 - 2026-08-23 — **Sprint 2 completed:** Added centrally registered Eloquent audit observers and `AuditLogService` for Product, Lot, Category, and User writes, with authenticated actor attribution and sensitive User-field redaction. Bootstrap seed writes are intentionally excluded from audit generation and temporary unauthenticated registration remains supported.
 - 2026-08-23 — **Realistic demo ledger seeded:** `InventoryTransactionSeeder` now adds 24 repeatable transactions across all 8 catalog products and all six FR-20 transaction types. `DatabaseSeeder` invokes it after `CatalogSeeder`; seed repeatability and zero bootstrap audit rows are covered by `CatalogSeederTest`.
 - 2026-08-23 — Created the dedicated Sprint 3 plan for inventory snapshots, transaction side effects, row-level locking, reservation semantics, and oversell-prevention tests. These behaviors remain unimplemented until Sprint 3 starts.
+- 2026-09-25 — **Sprint 5 complete (Reconciliation & Audit):** Implemented cycle counts (`POST /api/cycle-counts`), variance and turnover reports (`GET /api/reports/variance`, `/turnover`), and user management (`/api/users`). Added role-specific dashboard views, demystification guides for supply chain terms, and high-contrast UI design with light/dark mode design tokens. Full backend suite green on PostgreSQL 17.

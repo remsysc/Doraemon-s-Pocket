@@ -10,8 +10,8 @@ use Illuminate\Support\Collection;
 /**
  * ABC/XYZ classification (SPEC FR-15).
  *
- * ABC ranks SKUs by cumulative demand volume (Pareto): A <= 80%, B <= 95%,
- * C the remainder. Volume — not value — because pricing is out of scope.
+ * ABC ranks SKUs by cumulative annual consumption value (Pareto): A <= 80%, B <= 95%,
+ * C the remainder. Annual value is (annual_demand * unit_cost).
  * XYZ ranks by coefficient of variation of daily demand: X < 0.5 (stable),
  * Y < 1.0 (variable), Z >= 1.0 (erratic). Zero-demand SKUs are Z.
  */
@@ -39,32 +39,36 @@ class ClassificationService
             $series = $this->dailyDemandSeries($product->sku_id);
             $mean = $this->mean($series);
             $annualDemand = $mean * 365;
+            $unitCost = (float) ($product->unit_cost ?? 0.0);
+            $annualValue = $annualDemand * $unitCost;
             $cv = $mean > 0.0 ? $this->stddev($series) / $mean : INF;
 
             return [$product->sku_id => [
                 'product' => $product,
                 'annual_demand' => $annualDemand,
+                'annual_value' => $annualValue,
                 'cv' => $cv,
             ]];
         });
 
-        $totalDemand = $stats->sum(fn (array $s): float => $s['annual_demand']);
+        $totalValue = $stats->sum(fn (array $s): float => $s['annual_value']);
 
-        // Assign ABC by descending demand share (cumulative Pareto).
+        // Assign ABC by descending value share (cumulative Pareto).
         $ranked = $stats
-            ->sortByDesc(fn (array $s): float => $s['annual_demand']);
+            ->sortByDesc(fn (array $s): float => $s['annual_value']);
 
         $cumulativeBefore = 0.0;
         $result = collect();
         foreach ($ranked as $skuId => $s) {
-            $share = $totalDemand > 0.0 ? $s['annual_demand'] / $totalDemand : 0.0;
+            $share = $totalValue > 0.0 ? $s['annual_value'] / $totalValue : 0.0;
 
             $result->push([
                 'sku_id' => $skuId,
                 'product' => $s['product'],
-                'abc' => $this->abcClass($cumulativeBefore, $s['annual_demand'], $totalDemand),
+                'abc' => $this->abcClass($cumulativeBefore, $s['annual_value'], $totalValue),
                 'xyz' => $this->xyzClass($s['cv']),
                 'annual_demand' => round($s['annual_demand'], 4),
+                'annual_value' => round($s['annual_value'], 4),
                 'cv' => is_finite($s['cv']) ? round($s['cv'], 4) : null,
             ]);
 
@@ -75,14 +79,14 @@ class ClassificationService
     }
 
     /**
-     * ABC class from the cumulative demand share that precedes this item
+     * ABC class from the cumulative value share that precedes this item
      * (its lower band boundary). An item that starts within the A band is A
-     * even when it alone pushes the cumulative past 80%. Zero-demand items
+     * even when it alone pushes the cumulative past 80%. Zero-value items
      * are always C.
      */
-    private function abcClass(float $cumulativeBefore, float $annualDemand, float $totalDemand): string
+    private function abcClass(float $cumulativeBefore, float $annualValue, float $totalValue): string
     {
-        if ($totalDemand <= 0.0 || $annualDemand <= 0.0) {
+        if ($totalValue <= 0.0 || $annualValue <= 0.0) {
             return 'C';
         }
         if ($cumulativeBefore < 0.80) {

@@ -1,11 +1,7 @@
-import { useState, useEffect, type ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import { getCurrentUser, logout, type AuthUser } from "../lib/api";
 import "../../css/dashboard.css";
-
-interface DashboardLayoutProps {
-    children: ReactNode;
-}
 
 interface NavSection {
     label?: string;
@@ -22,7 +18,7 @@ function getStoredTheme(): "dark" | "light" {
     return "dark";
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function DashboardLayout() {
     const navigate = useNavigate();
     const [user, setUser] = useState<AuthUser | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -192,7 +188,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </div>
                 </header>
 
-                <main className="content content--grid-bg">{children}</main>
+                <main className="content content--grid-bg"><Outlet /></main>
             </div>
         </div>
     );

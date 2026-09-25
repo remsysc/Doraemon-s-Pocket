@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import {
     login,
@@ -149,11 +149,6 @@ export default function Login() {
                             {loading ? "Signing in..." : "Sign in"}
                         </button>
                     </form>
-
-                    <div className="auth-footer">
-                        Don't have an account?{" "}
-                        <Link to="/register">Create one</Link>
-                    </div>
                 </div>
             </div>
         </div>

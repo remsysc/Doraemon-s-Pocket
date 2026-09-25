@@ -51,6 +51,7 @@ class ReportService
                     'current_qty_on_hand' => 0,
                     'total_counts' => 0,
                     'net_variance_qty' => 0,
+                    'net_variance_value' => 0.0,
                     'flagged_discrepancy_count' => 0,
                     'last_counted_at' => null,
                 ]);
@@ -64,6 +65,7 @@ class ReportService
                 'current_qty_on_hand' => $this->getCurrentQtyOnHand($skuId),
                 'total_counts' => $skuAggregates->get($skuId)['total_counts'] + 1,
                 'net_variance_qty' => $skuAggregates->get($skuId)['net_variance_qty'] + $count->variance_qty,
+                'net_variance_value' => $skuAggregates->get($skuId)['net_variance_value'] + ($count->variance_qty * (float) ($count->product?->unit_cost ?? 0.0)),
                 'flagged_discrepancy_count' => $skuAggregates->get($skuId)['flagged_discrepancy_count'] + ($count->is_flagged ? 1 : 0),
                 'last_counted_at' => $count->counted_at->toIso8601String(),
             ]);
@@ -72,14 +74,19 @@ class ReportService
         // Calculate threshold and net shrinkage
         $totalDiscrepancies = $counts->where('is_flagged', true)->count();
         $netShrinkage = $counts->sum('variance_qty');
+        $netShrinkageValue = $counts->sum(fn ($c) => $c->variance_qty * (float) ($c->product?->unit_cost ?? 0.0));
 
         return [
-            'data' => $skuAggregates->values()->toArray(),
+            'data' => $skuAggregates->values()->map(function ($row) {
+                $row['net_variance_value'] = round($row['net_variance_value'], 2);
+                return $row;
+            })->toArray(),
             'meta' => [
                 'threshold_percentage' => $threshold,
                 'total_audited_skus' => $skuAggregates->count(),
                 'total_discrepancies' => $totalDiscrepancies,
                 'net_shrinkage_units' => $netShrinkage,
+                'net_shrinkage_value' => round($netShrinkageValue, 2),
             ],
         ];
     }
@@ -119,10 +126,12 @@ class ReportService
             // Calculate average on-hand across category SKUs
             $avgOnHand = 0.0;
             $snapshotCount = 0;
+            $inventoryValuation = 0.0;
 
             foreach ($category->products as $product) {
                 if ($product->snapshot) {
                     $avgOnHand += $product->snapshot->qty_on_hand;
+                    $inventoryValuation += $product->snapshot->qty_on_hand * (float) ($product->unit_cost ?? 0.0);
                     $snapshotCount++;
                 }
             }
@@ -141,6 +150,7 @@ class ReportService
                 'product_count' => $productCount,
                 'outflow_units' => $outflowUnits,
                 'avg_on_hand' => round($avgOnHand, 2),
+                'inventory_valuation' => round($inventoryValuation, 2),
                 'turnover_ratio' => $turnoverRatio,
                 'velocity_tier' => $velocityTier,
             ];

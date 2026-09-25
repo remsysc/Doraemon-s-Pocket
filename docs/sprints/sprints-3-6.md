@@ -38,16 +38,16 @@
 
 ## Sprint 5 — Reconciliation & Audit
 
-> Detailed plan: [`sprint-5.md`](sprint-5.md) | Status: ⬜ Planned
+> Detailed plan: [`sprint-5.md`](sprint-5.md) | Status: ✅ Complete
 
 | Item                                                              | Owner | Status         |
 | ----------------------------------------------------------------- | ----- | -------------- |
 | Automatic AUDIT_LOG write path for Product/Lot/Category/User writes | —     | ✅ DONE in Sprint 2 — `AuditObserver` + `AuditLogService` |
 | Automatic audit logging service/middleware                        | —     | ✅ DONE in Sprint 2 — observer/service path; no HTTP middleware |
-| Cycle-count submission endpoint (warehouse_staff)                 | —     | ⬜ not started |
-| Variance/shrinkage reconciliation report (admin)                  | —     | ⬜ not started |
-| Inventory turnover by category report (admin)                     | —     | ⬜ not started |
-| Frontend: admin reports & user management screen                  | —     | ⬜ not started |
+| Cycle-count submission endpoint (warehouse_staff)                 | —     | ✅ done |
+| Variance/shrinkage reconciliation report (admin)                  | —     | ✅ done |
+| Inventory turnover by category report (admin)                     | —     | ✅ done |
+| Frontend: admin reports & user management screen                  | —     | ✅ done |
 
 ---
 
@@ -77,7 +77,7 @@
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Product catalog pricing (`unit_cost`, `unit_price`) | ⬜ Backlog | Enable `unit_cost` and `unit_price` on `products` table (Admin write only). |
-| Monetary ABC Classification | ⬜ Backlog | Upgrade `ClassificationService` to Annual Consumption Value (`annual_demand × unit_cost`). |
-| Financial Valuation & Shrinkage Loss in Reports | ⬜ Backlog | Surface ₱ currency losses in variance reports and inventory valuation in turnover reports. |
+| Product catalog pricing (`unit_cost`, `unit_price`) | ✅ Done | Enable `unit_cost` and `unit_price` on `products` table (Admin write only). |
+| Monetary ABC Classification | ✅ Done | Upgrade `ClassificationService` to Annual Consumption Value (`annual_demand × unit_cost`). |
+| Financial Valuation & Shrinkage Loss in Reports | ✅ Done | Surface ₱ currency losses in variance reports and inventory valuation in turnover reports. |
 

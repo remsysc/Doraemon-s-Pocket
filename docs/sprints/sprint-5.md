@@ -1,6 +1,6 @@
 # Sprint 5 — Reconciliation, Reports & User Management
 
-> Status: ⬜ Planned  
+> Status: ✅ Complete  
 > Depends on: Sprint 4 Classification & Reorder Intelligence ✅ Complete
 
 ## Goal
@@ -72,10 +72,10 @@ Implements PRD FR-16, FR-18, FR-19 and SPEC FR-30, FR-36, FR-38.
 | User management endpoints (Admin only CRUD + deactivation) | ✅ Done |
 | Config keys: `variance_alert_threshold_percentage` and `turnover_window_days` | ✅ Done |
 | Demo cycle count seeder (thermostat shrinkage case: 45 recorded vs 12 physical) | ✅ Done |
-| Frontend: Warehouse cycle count submission form/modal | ⬜ Not started |
-| Frontend: Admin reconciliation review queue (reconcile / dismiss) | ⬜ Not started |
-| Frontend: Admin variance and turnover report screens | ⬜ Not started |
-| Frontend: Admin user management screen | ⬜ Not started |
+| Frontend: Warehouse cycle count submission form/modal | ✅ Done |
+| Frontend: Admin reconciliation review queue (reconcile / dismiss) | ✅ Done |
+| Frontend: Admin variance and turnover report screens | ✅ Done |
+| Frontend: Admin user management screen | ✅ Done |
 | RBAC + reconciliation + math + edge-case tests | ✅ Done |
 
 > Backend implemented and verified on real PostgreSQL 17 (full suite: 140 tests /

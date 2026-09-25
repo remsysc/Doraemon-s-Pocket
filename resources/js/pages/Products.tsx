@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
     getProducts,
@@ -33,6 +33,8 @@ export default function Products() {
     const [formDescription, setFormDescription] = useState("");
     const [formBarcode, setFormBarcode] = useState("");
     const [formUnit, setFormUnit] = useState("");
+    const [formUnitCost, setFormUnitCost] = useState("");
+    const [formUnitPrice, setFormUnitPrice] = useState("");
     const [formCategoryId, setFormCategoryId] = useState("");
     const [formIsSeasonal, setFormIsSeasonal] = useState(false);
     const [formShelfLife, setFormShelfLife] = useState("");
@@ -67,6 +69,8 @@ export default function Products() {
         setFormDescription("");
         setFormBarcode("");
         setFormUnit("");
+        setFormUnitCost("");
+        setFormUnitPrice("");
         setFormCategoryId(categories[0]?.id ?? "");
         setFormIsSeasonal(false);
         setFormShelfLife("");
@@ -80,6 +84,8 @@ export default function Products() {
         setFormDescription(product.description ?? "");
         setFormBarcode(product.barcode ?? "");
         setFormUnit(product.unit_of_measure);
+        setFormUnitCost(product.unit_cost?.toString() ?? "");
+        setFormUnitPrice(product.unit_price?.toString() ?? "");
         setFormCategoryId(product.category?.id ?? "");
         setFormIsSeasonal(product.metadata.is_seasonal);
         setFormShelfLife(product.metadata.shelf_life_days?.toString() ?? "");
@@ -105,6 +111,8 @@ export default function Products() {
                     description: formDescription || undefined,
                     barcode: formBarcode || undefined,
                     unit_of_measure: formUnit,
+                    unit_cost: formUnitCost ? parseFloat(formUnitCost) : null,
+                    unit_price: formUnitPrice ? parseFloat(formUnitPrice) : null,
                     category_id: formCategoryId,
                     is_seasonal: formIsSeasonal,
                     shelf_life_days: formShelfLife ? parseInt(formShelfLife, 10) : null,
@@ -116,6 +124,8 @@ export default function Products() {
                     description: formDescription || undefined,
                     barcode: formBarcode || undefined,
                     unit_of_measure: formUnit,
+                    unit_cost: formUnitCost ? parseFloat(formUnitCost) : null,
+                    unit_price: formUnitPrice ? parseFloat(formUnitPrice) : null,
                     category_id: formCategoryId,
                     is_seasonal: formIsSeasonal,
                     shelf_life_days: formShelfLife ? parseInt(formShelfLife, 10) : null,
@@ -156,7 +166,7 @@ export default function Products() {
     }
 
     return (
-        <DashboardLayout>
+        <>
             <div className="page-header">
                 <div>
                     <h1>Products</h1>
@@ -184,6 +194,7 @@ export default function Products() {
                                             <th>Name</th>
                                             <th>Category</th>
                                             <th>Unit</th>
+                                            <th>Cost / Price</th>
                                             <th>Barcode</th>
                                             <th>Status</th>
                                             {isAdmin && <th>Actions</th>}
@@ -195,6 +206,13 @@ export default function Products() {
                                                 <td className="td-bold">{prod.name}</td>
                                                 <td>{prod.category?.name ?? "—"}</td>
                                                 <td>{prod.unit_of_measure}</td>
+                                                <td>
+                                                    {prod.unit_cost !== null || prod.unit_price !== null ? (
+                                                        <span>
+                                                            {prod.unit_cost !== null ? `₱${prod.unit_cost.toFixed(2)}` : "—"} / {prod.unit_price !== null ? `₱${prod.unit_price.toFixed(2)}` : "—"}
+                                                        </span>
+                                                    ) : "—"}
+                                                </td>
                                                 <td><code>{prod.barcode ?? "—"}</code></td>
                                                 <td>
                                                     <span className={`badge badge--${prod.status}`}>
@@ -319,6 +337,33 @@ export default function Products() {
                                 </div>
                             </div>
 
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="prod-unit-cost">Unit Cost (₱)</label>
+                                    <input
+                                        id="prod-unit-cost"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={formUnitCost}
+                                        onChange={(e) => setFormUnitCost(e.target.value)}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="prod-unit-price">Unit Price (₱)</label>
+                                    <input
+                                        id="prod-unit-price"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={formUnitPrice}
+                                        onChange={(e) => setFormUnitPrice(e.target.value)}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+
                             <div className="form-group">
                                 <label htmlFor="prod-desc">Description</label>
                                 <textarea
@@ -371,6 +416,6 @@ export default function Products() {
                     </div>
                 </div>
             )}
-        </DashboardLayout>
+        </>
     );
 }

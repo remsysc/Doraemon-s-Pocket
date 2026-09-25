@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import {
     getAuditLogs,
     type AuditLog,
@@ -30,7 +30,7 @@ export default function AuditLogs() {
     }
 
     return (
-        <DashboardLayout>
+        <>
             <div className="page-header">
                 <div>
                     <h1>Audit Logs</h1>
@@ -106,6 +106,6 @@ export default function AuditLogs() {
                     )}
                 </>
             )}
-        </DashboardLayout>
+        </>
     );
 }

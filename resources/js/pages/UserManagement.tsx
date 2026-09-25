@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
     getUsers,
@@ -245,7 +245,7 @@ export default function UserManagement() {
     };
 
     return (
-        <DashboardLayout>
+        <>
             <div className="page-header">
                 <div>
                     <h1>Team & User Access Management</h1>
@@ -527,6 +527,6 @@ export default function UserManagement() {
                     </div>
                 </div>
             )}
-        </DashboardLayout>
+        </>
     );
 }

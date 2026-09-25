@@ -17,6 +17,8 @@ export interface Product {
     description: string | null;
     barcode: string | null;
     unit_of_measure: string;
+    unit_cost?: number | null;
+    unit_price?: number | null;
     category: Category;
     metadata: {
         is_seasonal: boolean;
@@ -94,6 +96,8 @@ export interface StoreProductPayload {
     description?: string;
     barcode?: string;
     unit_of_measure: string;
+    unit_cost?: number | null;
+    unit_price?: number | null;
     is_seasonal?: boolean;
     shelf_life_days?: number | null;
     is_active?: boolean;
@@ -105,6 +109,8 @@ export interface UpdateProductPayload {
     description?: string;
     barcode?: string;
     unit_of_measure?: string;
+    unit_cost?: number | null;
+    unit_price?: number | null;
     is_seasonal?: boolean;
     shelf_life_days?: number | null;
     is_active?: boolean;
@@ -323,6 +329,7 @@ export interface Classification {
     abc: "A" | "B" | "C";
     xyz: "X" | "Y" | "Z";
     annual_demand: number;
+    annual_value: number;
     cv: number | null;
 }
 
@@ -427,6 +434,7 @@ export interface VarianceReportItem {
     current_qty_on_hand: number;
     total_counts: number;
     net_variance_qty: number;
+    net_variance_value: number;
     flagged_discrepancy_count: number;
     last_counted_at: string | null;
 }
@@ -438,6 +446,7 @@ export interface VarianceReportResponse {
         total_audited_skus: number;
         total_discrepancies: number;
         net_shrinkage_units: number;
+        net_shrinkage_value: number;
     };
 }
 
@@ -447,6 +456,7 @@ export interface TurnoverReportItem {
     product_count: number;
     outflow_units: number;
     avg_on_hand: number;
+    inventory_valuation: number;
     turnover_ratio: number;
     velocity_tier: "High" | "Medium" | "Low" | "Dead Stock";
 }

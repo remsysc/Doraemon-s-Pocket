@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
     getCycleCounts,
@@ -358,7 +358,7 @@ export default function CycleCounts() {
     const reconciledCount = (isDemoMode ? allStoredCounts : safeCounts).filter((c) => c?.status === "reconciled").length;
 
     return (
-        <DashboardLayout>
+        <>
             <div className="page-header">
                 <div>
                     <div className="flex items-center gap-3">
@@ -817,6 +817,6 @@ export default function CycleCounts() {
                 onClose={() => setIsCountModalOpen(false)}
                 onSuccess={() => fetchCounts()}
             />
-        </DashboardLayout>
+        </>
     );
 }

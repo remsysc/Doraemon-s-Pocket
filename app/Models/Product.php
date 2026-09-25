@@ -22,6 +22,8 @@ class Product extends Model
         'shelf_life_days',
         'is_active',
         'category_id',
+        'unit_cost',
+        'unit_price',
     ];
 
     protected function casts(): array
@@ -30,6 +32,8 @@ class Product extends Model
             'is_seasonal' => 'boolean',
             'is_active' => 'boolean',
             'shelf_life_days' => 'integer',
+            'unit_cost' => 'decimal:2',
+            'unit_price' => 'decimal:2',
         ];
     }
 

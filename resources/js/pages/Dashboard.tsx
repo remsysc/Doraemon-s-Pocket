@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import DashboardLayout from "../components/DashboardLayout";
+
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
     getCategories,
@@ -161,7 +161,7 @@ export default function Dashboard() {
     const role = user?.role ?? "warehouse_staff";
 
     return (
-        <DashboardLayout>
+        <>
             {/* Header with greeting and role badge */}
             <div className="page-header">
                 <div>
@@ -277,6 +277,6 @@ export default function Dashboard() {
                     loadData();
                 }}
             />
-        </DashboardLayout>
+        </>
     );
 }

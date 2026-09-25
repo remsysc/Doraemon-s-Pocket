@@ -5,13 +5,7 @@ export interface LoginPayload {
     password: string;
 }
 
-export interface RegisterPayload {
-    name: string;
-    email: string;
-    password: string;
-    password_confirmation: string;
-    role: "admin" | "purchasing_manager" | "warehouse_staff";
-}
+
 
 export interface AuthUser {
     id: number;
@@ -48,10 +42,7 @@ export async function login(payload: LoginPayload) {
     return api.post<AuthUser>("/api/login", payload);
 }
 
-export async function register(payload: RegisterPayload) {
-    await getCsrfCookie();
-    return api.post<AuthUser>("/api/register", payload);
-}
+
 
 export function logout() {
     return api.post("/api/logout");
