@@ -43,6 +43,7 @@ class ClassificationController extends Controller
                 'abc' => $row['abc'],
                 'xyz' => $row['xyz'],
                 'annual_demand' => $row['annual_demand'],
+                'annual_value' => $row['annual_value'],
                 'cv' => $row['cv'],
             ])
             ->all();

@@ -15,7 +15,7 @@ class StoreProductRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can("create", Product::class); // Only allow authenticated users to make this request
+        return $this->user()->can('create', Product::class); // Only allow authenticated users to make this request
     }
 
     /**
@@ -26,27 +26,29 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "name" => ["required", "string", "max:255"],
-            "description" => ["nullable", "string"],
-            "barcode" => [
-                "required",
-                "string",
-                "max:255",
-                "unique:products,barcode",
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'barcode' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:products,barcode',
             ],
-            "unit_of_measure" => ["required", "string", "max:255"],
-            "is_seasonal" => ["required", "boolean"],
-            "shelf_life_days" => [
-                "required_if:is_seasonal,true",
-                "nullable",
-                "integer",
-                "min:1",
+            'unit_of_measure' => ['required', 'string', 'max:255'],
+            'is_seasonal' => ['required', 'boolean'],
+            'shelf_life_days' => [
+                'required_if:is_seasonal,true',
+                'nullable',
+                'integer',
+                'min:1',
             ],
-            "is_active" => ["required", "boolean"],
-            "category_id" => [
-                "required",
-                Rule::exists(Category::class, "category_id")->withoutTrashed(),
+            'is_active' => ['required', 'boolean'],
+            'category_id' => [
+                'required',
+                Rule::exists(Category::class, 'category_id')->withoutTrashed(),
             ],
+            'unit_cost' => ['nullable', 'numeric', 'min:0'],
+            'unit_price' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

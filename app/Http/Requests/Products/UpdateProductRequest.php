@@ -15,10 +15,10 @@ class UpdateProductRequest extends FormRequest
     public function authorize(): bool
     {
         /** @var Product $product */
-        $product = $this->route("product");
+        $product = $this->route('product');
 
         // Authorizes against ProductPolicy::update($user, $product)
-        return $this->user()->can("update", $product);
+        return $this->user()->can('update', $product);
     }
 
     /**
@@ -27,26 +27,28 @@ class UpdateProductRequest extends FormRequest
     public function rules(): array
     {
         /** @var Product $product */
-        $product = $this->route("product");
+        $product = $this->route('product');
 
         return [
-            "category_id" => [
-                "sometimes",
-                "uuid",
-                Rule::exists(Category::class, "category_id")->withoutTrashed(),
+            'category_id' => [
+                'sometimes',
+                'uuid',
+                Rule::exists(Category::class, 'category_id')->withoutTrashed(),
             ],
-            "name" => [
-                "sometimes",
-                "string",
-                "max:255",
+            'name' => [
+                'sometimes',
+                'string',
+                'max:255',
                 // Ignore the current product's ID so unique validation passes when keeping the name
-                Rule::unique("products", "name")->ignore(
+                Rule::unique('products', 'name')->ignore(
                     $product?->getKey(),
-                    "sku_id",
+                    'sku_id',
                 ),
             ],
-            "description" => ["sometimes", "nullable", "string", "max:1000"],
-            "is_active" => ["sometimes", "boolean"],
+            'description' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'is_active' => ['sometimes', 'boolean'],
+            'unit_cost' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'unit_price' => ['sometimes', 'nullable', 'numeric', 'min:0'],
         ];
     }
 
@@ -55,10 +57,10 @@ class UpdateProductRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if ($this->has("is_active")) {
+        if ($this->has('is_active')) {
             $this->merge([
-                "is_active" => filter_var(
-                    $this->input("is_active"),
+                'is_active' => filter_var(
+                    $this->input('is_active'),
                     FILTER_VALIDATE_BOOLEAN,
                     FILTER_NULL_ON_FAILURE,
                 ),
