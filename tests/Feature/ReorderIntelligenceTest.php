@@ -149,6 +149,8 @@ class ReorderIntelligenceTest extends TestCase
             'is_seasonal' => $seasonal,
             'is_active' => true,
             'category_id' => $category->category_id,
+            'unit_cost' => 1000.00,
+            'unit_price' => 1500.00,
         ]);
     }
 
