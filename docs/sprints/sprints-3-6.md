@@ -77,7 +77,7 @@
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Product catalog pricing (`unit_cost`, `unit_price`) | ⬜ Backlog | Enable `unit_cost` and `unit_price` on `products` table (Admin write only). |
-| Monetary ABC Classification | ⬜ Backlog | Upgrade `ClassificationService` to Annual Consumption Value (`annual_demand × unit_cost`). |
-| Financial Valuation & Shrinkage Loss in Reports | ⬜ Backlog | Surface ₱ currency losses in variance reports and inventory valuation in turnover reports. |
+| Product catalog pricing (`unit_cost`, `unit_price`) | ✅ Done | Enable `unit_cost` and `unit_price` on `products` table (Admin write only). |
+| Monetary ABC Classification | ✅ Done | Upgrade `ClassificationService` to Annual Consumption Value (`annual_demand × unit_cost`). |
+| Financial Valuation & Shrinkage Loss in Reports | ✅ Done | Surface ₱ currency losses in variance reports and inventory valuation in turnover reports. |
 
