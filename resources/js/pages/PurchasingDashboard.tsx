@@ -341,9 +341,9 @@ export default function PurchasingDashboard() {
                                     <thead>
                                         <tr>
                                             <th>Product</th>
-                                            <th>Volume Priority (ABC)</th>
+                                            <th>Value Priority (ABC)</th>
                                             <th>Demand Predictability (XYZ)</th>
-                                            <th>Annual Sales Outflow</th>
+                                            <th>Annual Volume / Value</th>
                                             <th>
                                                 Volatility Index (CV)
                                                 <span className="block text-xs font-normal text-muted">
@@ -367,10 +367,10 @@ export default function PurchasingDashboard() {
                                                         }`}
                                                     >
                                                         {row.abc === "A"
-                                                            ? "Class A • High Volume"
+                                                            ? "Class A • High Value"
                                                             : row.abc === "B"
                                                             ? "Class B • Medium"
-                                                            : "Class C • Slow Mover"}
+                                                            : "Class C • Low Value"}
                                                     </span>
                                                 </td>
                                                 <td>
@@ -390,7 +390,10 @@ export default function PurchasingDashboard() {
                                                             : "Z • Erratic"}
                                                     </span>
                                                 </td>
-                                                <td className="font-semibold">{row.annual_demand} units/yr</td>
+                                                <td className="font-semibold">
+                                                    <div>{row.annual_demand} units/yr</div>
+                                                    <div className="text-sm text-muted">₱{row.annual_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/yr</div>
+                                                </td>
                                                 <td>
                                                     {row.cv != null ? (
                                                         <span className={row.cv < 0.5 ? "text-green" : row.cv <= 1.0 ? "text-blue" : "text-amber"}>

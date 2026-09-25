@@ -20,6 +20,7 @@ export default function Reports() {
         total_audited_skus: number;
         total_discrepancies: number;
         net_shrinkage_units: number;
+        net_shrinkage_value: number;
     } | null>(null);
     const [flaggedOnly, setFlaggedOnly] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -69,60 +70,57 @@ export default function Reports() {
                     sku_id: "prod-sp400-mono",
                     product_name: "Solar Panel 400W Monocrystalline",
                     category_name: "Solar Panels",
-                    counts_conducted: 3,
-                    total_variance_qty: -2,
-                    avg_variance_pct: -5.0,
-                    flagged_counts: 1,
-                    reconciled_counts: 0,
-                    pending_counts: 1,
-                    latest_count_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+                    current_qty_on_hand: 40,
+                    total_counts: 3,
+                    net_variance_qty: -2,
+                    net_variance_value: -12000,
+                    flagged_discrepancy_count: 1,
+                    last_counted_at: new Date(Date.now() - 3600000 * 2).toISOString(),
                 },
                 {
                     sku_id: "prod-inv-5kw",
                     product_name: "Hybrid Solar Inverter 5kW Pure Sine",
                     category_name: "Inverters",
-                    counts_conducted: 2,
-                    total_variance_qty: -1,
-                    avg_variance_pct: -8.3,
-                    flagged_counts: 1,
-                    reconciled_counts: 0,
-                    pending_counts: 1,
-                    latest_count_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+                    current_qty_on_hand: 12,
+                    total_counts: 2,
+                    net_variance_qty: -1,
+                    net_variance_value: -20000,
+                    flagged_discrepancy_count: 1,
+                    last_counted_at: new Date(Date.now() - 3600000 * 5).toISOString(),
                 },
                 {
                     sku_id: "prod-bat-200ah",
                     product_name: "Deep Cycle Gel Battery 12V 200Ah",
                     category_name: "Batteries",
-                    counts_conducted: 4,
-                    total_variance_qty: 0,
-                    avg_variance_pct: 0.0,
-                    flagged_counts: 0,
-                    reconciled_counts: 4,
-                    pending_counts: 0,
-                    latest_count_at: new Date(Date.now() - 3600000 * 14).toISOString(),
+                    current_qty_on_hand: 50,
+                    total_counts: 4,
+                    net_variance_qty: 0,
+                    net_variance_value: 0,
+                    flagged_discrepancy_count: 0,
+                    last_counted_at: new Date(Date.now() - 3600000 * 14).toISOString(),
                 },
                 {
                     sku_id: "prod-mc4-conn",
                     product_name: "MC4 Solar Cable Connectors (Pair)",
                     category_name: "Accessories",
-                    counts_conducted: 2,
-                    total_variance_qty: -8,
-                    avg_variance_pct: -5.3,
-                    flagged_counts: 1,
-                    reconciled_counts: 0,
-                    pending_counts: 1,
-                    latest_count_at: new Date(Date.now() - 3600000 * 20).toISOString(),
+                    current_qty_on_hand: 150,
+                    total_counts: 2,
+                    net_variance_qty: -8,
+                    net_variance_value: -400,
+                    flagged_discrepancy_count: 1,
+                    last_counted_at: new Date(Date.now() - 3600000 * 20).toISOString(),
                 },
             ];
             const filtered = flaggedOnly
-                ? demoVariance.filter((item) => item.flagged_counts > 0)
+                ? demoVariance.filter((item) => item.flagged_discrepancy_count > 0)
                 : demoVariance;
             setVarianceData(filtered);
             setVarianceMeta({
                 threshold_percentage: 5.0,
                 total_audited_skus: filtered.length,
-                total_discrepancies: filtered.filter((i) => i.total_variance_qty !== 0).length,
-                net_shrinkage_units: filtered.reduce((acc, i) => acc + i.total_variance_qty, 0),
+                total_discrepancies: filtered.filter((i) => i.net_variance_qty !== 0).length,
+                net_shrinkage_units: filtered.reduce((acc, i) => acc + i.net_variance_qty, 0),
+                net_shrinkage_value: filtered.reduce((acc, i) => acc + (i.net_variance_value ?? 0), 0),
             });
         } finally {
             setLoading(false);
@@ -146,36 +144,40 @@ export default function Reports() {
                 {
                     category_id: "cat-solar-panels",
                     category_name: "Solar Panels",
-                    total_skus: 2,
-                    total_units_sold: 145,
-                    avg_inventory_units: 38.5,
+                    product_count: 2,
+                    outflow_units: 145,
+                    avg_on_hand: 38.5,
+                    inventory_valuation: 450000,
                     turnover_ratio: 3.77,
                     velocity_tier: "High",
                 },
                 {
                     category_id: "cat-inverters",
                     category_name: "Inverters",
-                    total_skus: 2,
-                    total_units_sold: 42,
-                    avg_inventory_units: 14.0,
+                    product_count: 2,
+                    outflow_units: 42,
+                    avg_on_hand: 14.0,
+                    inventory_valuation: 280000,
                     turnover_ratio: 3.0,
                     velocity_tier: "High",
                 },
                 {
                     category_id: "cat-batteries",
                     category_name: "Batteries",
-                    total_skus: 2,
-                    total_units_sold: 35,
-                    avg_inventory_units: 24.0,
+                    product_count: 2,
+                    outflow_units: 35,
+                    avg_on_hand: 24.0,
+                    inventory_valuation: 120000,
                     turnover_ratio: 1.46,
                     velocity_tier: "Medium",
                 },
                 {
                     category_id: "cat-mounting",
                     category_name: "Mounting & Racks",
-                    total_skus: 2,
-                    total_units_sold: 18,
-                    avg_inventory_units: 75.0,
+                    product_count: 2,
+                    outflow_units: 18,
+                    avg_on_hand: 75.0,
+                    inventory_valuation: 15000,
                     turnover_ratio: 0.24,
                     velocity_tier: "Low",
                 },
@@ -263,6 +265,22 @@ export default function Reports() {
                             </div>
                         </div>
 
+                        <div
+                            className={`stat-card ${
+                                (varianceMeta?.net_shrinkage_value ?? 0) < 0
+                                    ? "stat-card--red"
+                                    : "stat-card--blue"
+                            }`}
+                        >
+                            <div className="stat-card__info">
+                                <span className="stat-card__value">
+                                    ₱{Math.abs(varianceMeta?.net_shrinkage_value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {(varianceMeta?.net_shrinkage_value ?? 0) < 0 ? " Loss" : ""}
+                                </span>
+                                <span className="stat-card__label">Financial Impact</span>
+                            </div>
+                        </div>
+
                         <div className="stat-card stat-card--purple">
                             <div className="stat-card__info">
                                 <span className="stat-card__value">
@@ -331,6 +349,7 @@ export default function Reports() {
                                             <th>Current On-Hand</th>
                                             <th>Total Counts</th>
                                             <th>Net Variance</th>
+                                            <th>Financial Impact</th>
                                             <th>Flagged Counts</th>
                                             <th>Last Audited</th>
                                         </tr>
@@ -353,6 +372,17 @@ export default function Reports() {
                                                 >
                                                     {row.net_variance_qty > 0 ? "+" : ""}
                                                     {row.net_variance_qty} units
+                                                </td>
+                                                <td
+                                                    className={
+                                                        (row.net_variance_value ?? 0) < 0
+                                                            ? "text-red font-semibold"
+                                                            : (row.net_variance_value ?? 0) > 0
+                                                            ? "text-green font-semibold"
+                                                            : ""
+                                                    }
+                                                >
+                                                    {(row.net_variance_value ?? 0) < 0 ? "-" : ((row.net_variance_value ?? 0) > 0 ? "+" : "")}₱{Math.abs(row.net_variance_value ?? 0).toFixed(2)}
                                                 </td>
                                                 <td>
                                                     {row.flagged_discrepancy_count > 0 ? (
@@ -442,6 +472,7 @@ export default function Reports() {
                                             <th>Products Count</th>
                                             <th>Outflow Units</th>
                                             <th>Average On-Hand</th>
+                                            <th>Inventory Valuation</th>
                                             <th>Turnover Ratio</th>
                                             <th>Velocity Tier</th>
                                         </tr>
@@ -455,6 +486,7 @@ export default function Reports() {
                                                     {row.outflow_units} units
                                                 </td>
                                                 <td>{row.avg_on_hand.toFixed(1)} units</td>
+                                                <td>₱{(row.inventory_valuation ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                 <td className="font-semibold text-blue">
                                                     {row.turnover_ratio.toFixed(2)}x
                                                 </td>
