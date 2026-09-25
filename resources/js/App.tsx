@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
 import Dashboard from "./pages/Dashboard";
 import Categories from "./pages/Categories";
 import Products from "./pages/Products";
@@ -23,7 +22,6 @@ export default function App() {
                 <Routes>
                 {/* Public routes */}
                 <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
 
                 {/* Protected routes */}
                 <Route
