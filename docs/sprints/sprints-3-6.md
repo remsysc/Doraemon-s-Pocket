@@ -38,16 +38,16 @@
 
 ## Sprint 5 — Reconciliation & Audit
 
-> Detailed plan: [`sprint-5.md`](sprint-5.md) | Status: ⬜ Planned
+> Detailed plan: [`sprint-5.md`](sprint-5.md) | Status: ✅ Complete
 
 | Item                                                              | Owner | Status         |
 | ----------------------------------------------------------------- | ----- | -------------- |
 | Automatic AUDIT_LOG write path for Product/Lot/Category/User writes | —     | ✅ DONE in Sprint 2 — `AuditObserver` + `AuditLogService` |
 | Automatic audit logging service/middleware                        | —     | ✅ DONE in Sprint 2 — observer/service path; no HTTP middleware |
-| Cycle-count submission endpoint (warehouse_staff)                 | —     | ⬜ not started |
-| Variance/shrinkage reconciliation report (admin)                  | —     | ⬜ not started |
-| Inventory turnover by category report (admin)                     | —     | ⬜ not started |
-| Frontend: admin reports & user management screen                  | —     | ⬜ not started |
+| Cycle-count submission endpoint (warehouse_staff)                 | —     | ✅ done |
+| Variance/shrinkage reconciliation report (admin)                  | —     | ✅ done |
+| Inventory turnover by category report (admin)                     | —     | ✅ done |
+| Frontend: admin reports & user management screen                  | —     | ✅ done |
 
 ---
 
