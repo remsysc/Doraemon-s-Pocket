@@ -73,7 +73,7 @@ export default function StockOverview() {
                             setIsCountModalOpen(true);
                         }}
                     >
-                        📋 + Log Physical Count
+                        + Log Physical Count
                     </button>
                 )}
             </div>
