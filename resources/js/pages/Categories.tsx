@@ -197,24 +197,28 @@ export default function Categories() {
                     </section>
 
                     {meta && meta.last_page > 1 && (
-                        <div className="pagination">
-                            <button
-                                className="btn btn--sm"
-                                disabled={page <= 1}
-                                onClick={() => setPage(page - 1)}
-                            >
-                                ← Prev
-                            </button>
-                            <span className="pagination__info">
-                                Page {meta.current_page} of {meta.last_page}
+                        <div className="pagination p-4">
+                            <span className="pagination__info text-xs text-secondary">
+                                Page {meta.current_page} of {meta.last_page} · {meta.total} categories
                             </span>
-                            <button
-                                className="btn btn--sm"
-                                disabled={page >= meta.last_page}
-                                onClick={() => setPage(page + 1)}
-                            >
-                                Next →
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    className="btn btn--secondary btn--sm"
+                                    disabled={page <= 1}
+                                    onClick={() => setPage(page - 1)}
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn--secondary btn--sm"
+                                    disabled={page >= meta.last_page}
+                                    onClick={() => setPage(page + 1)}
+                                >
+                                    Next
+                                </button>
+                            </div>
                         </div>
                     )}
                 </>

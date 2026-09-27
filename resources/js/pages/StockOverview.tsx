@@ -59,46 +59,55 @@ export default function StockOverview() {
         <>
             <div className="page-header">
                 <div>
-                    <h1>Stock Overview & Snapshots</h1>
-                    <p className="page-subtitle">
-                        Real-time on-hand, reserved, and available stock per master SKU with row-level locking integrity
-                    </p>
+                    <h1>Stock Overview</h1>
+                    <p className="page-subtitle">Real-time on-hand, reserved, and available stock</p>
                 </div>
                 {canSubmitCount && (
                     <button
                         type="button"
-                        className="btn--primary"
+                        className="btn btn--primary"
                         onClick={() => {
                             setSelectedSkuId(undefined);
                             setIsCountModalOpen(true);
                         }}
                     >
-                        + Log Physical Count
+                        + Log Count
                     </button>
                 )}
             </div>
 
-            {/* Metrics */}
+            {/* ── Stat Cards ── */}
             <section className="stats-grid">
                 <div className="stat-card stat-card--blue">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{meta?.total ?? snapshots.length}</span>
-                        <span className="stat-card__label">Active Master SKUs</span>
+                        <span className="stat-card__label">Master SKUs</span>
                     </div>
                 </div>
 
                 <div className="stat-card stat-card--green">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{inStockCount}</span>
-                        <span className="stat-card__label">In Stock (Available &gt; 0)</span>
+                        <span className="stat-card__label">In Stock (&gt;0)</span>
                     </div>
                 </div>
 
-                <div
-                    className={`stat-card ${
-                        outOfStockCount > 0 ? "stat-card--red" : "stat-card--blue"
-                    }`}
-                >
+                <div className={`stat-card ${outOfStockCount > 0 ? "stat-card--red" : "stat-card--blue"}`}>
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{outOfStockCount}</span>
                         <span className="stat-card__label">Out of Stock</span>
@@ -106,14 +115,19 @@ export default function StockOverview() {
                 </div>
 
                 <div className="stat-card stat-card--purple">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" />
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{totalOnHand}</span>
-                        <span className="stat-card__label">Total Units on Hand</span>
+                        <span className="stat-card__label">Total Units</span>
                     </div>
                 </div>
             </section>
 
-            {/* Search filter bar */}
+            {/* ── Search ── */}
             <div className="mb-4">
                 <input
                     type="text"
@@ -124,7 +138,7 @@ export default function StockOverview() {
                 />
             </div>
 
-            {/* Table */}
+            {/* ── Table ── */}
             <section className="table-section">
                 {loading ? (
                     <div className="page-loading">Loading inventory snapshots…</div>
@@ -132,19 +146,19 @@ export default function StockOverview() {
                     <p className="empty-state">
                         {searchTerm
                             ? "No products matched your search."
-                            : "No stock recorded yet. Snapshots appear once stock transactions are logged."}
+                            : "No stock recorded yet."}
                     </p>
                 ) : (
                     <div className="table-wrapper">
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th>Product SKU</th>
+                                    <th>Product</th>
                                     <th>On Hand</th>
                                     <th>Reserved</th>
                                     <th>Available</th>
-                                    <th>Stock Status</th>
-                                    {canSubmitCount && <th>Floor Audit</th>}
+                                    <th>Status</th>
+                                    {canSubmitCount && <th></th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -155,37 +169,25 @@ export default function StockOverview() {
                                         </td>
                                         <td>{snapshot.qty_on_hand}</td>
                                         <td className="text-secondary">{snapshot.qty_reserved}</td>
-                                        <td
-                                            className={
-                                                snapshot.qty_available > 0
-                                                    ? "text-green font-semibold"
-                                                    : "text-red font-semibold"
-                                            }
-                                        >
+                                        <td className={snapshot.qty_available > 0 ? "text-green font-semibold" : "text-red font-semibold"}>
                                             {snapshot.qty_available}
                                         </td>
                                         <td>
-                                            {snapshot.qty_available <= 0 ? (
-                                                <span className="badge badge--sale">
-                                                    Out of stock
-                                                </span>
-                                            ) : (
-                                                <span className="badge badge--receipt">
-                                                    In stock
-                                                </span>
-                                            )}
+                                            <span className={`badge ${snapshot.qty_available <= 0 ? "badge--sale" : "badge--receipt"}`}>
+                                                {snapshot.qty_available <= 0 ? "Out of stock" : "In stock"}
+                                            </span>
                                         </td>
                                         {canSubmitCount && (
                                             <td>
                                                 <button
                                                     type="button"
-                                                    className="btn--secondary btn--sm"
+                                                    className="btn btn--secondary btn--sm"
                                                     onClick={() => {
                                                         setSelectedSkuId(snapshot.sku_id);
                                                         setIsCountModalOpen(true);
                                                     }}
                                                 >
-                                                    Audit Count
+                                                    Count
                                                 </button>
                                             </td>
                                         )}
@@ -199,31 +201,30 @@ export default function StockOverview() {
                 {meta && meta.last_page > 1 && (
                     <div className="pagination p-4">
                         <span className="pagination__info text-xs text-secondary">
-                            Page {meta.current_page} of {meta.last_page} ({meta.total} products)
+                            Page {meta.current_page} of {meta.last_page} · {meta.total} products
                         </span>
                         <div className="flex gap-2">
                             <button
                                 type="button"
-                                className="btn--secondary btn--sm"
+                                className="btn btn--secondary btn--sm"
                                 disabled={page <= 1}
                                 onClick={() => setPage(page - 1)}
                             >
-                                ← Prev
+                                Previous
                             </button>
                             <button
                                 type="button"
-                                className="btn--secondary btn--sm"
+                                className="btn btn--secondary btn--sm"
                                 disabled={page >= meta.last_page}
                                 onClick={() => setPage(page + 1)}
                             >
-                                Next →
+                                Next
                             </button>
                         </div>
                     </div>
                 )}
             </section>
 
-            {/* Cycle Count Modal */}
             <CycleCountModal
                 isOpen={isCountModalOpen}
                 defaultSkuId={selectedSkuId}

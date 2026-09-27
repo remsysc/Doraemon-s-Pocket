@@ -8,8 +8,9 @@ class DestroyLotRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $lot = $this->route("lot");
-        return $this->user()->can("delete", $lot);
+        $lot = $this->route('lot');
+
+        return $this->user()->can('delete', $lot);
     }
 
     public function rules(): array

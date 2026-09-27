@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Categories\DestroyCategoryRequest;
 use App\Http\Requests\Categories\IndexCategoryRequest;
+use App\Http\Requests\Categories\RestoreCategoryRequest;
 use App\Http\Requests\Categories\ShowCategoryRequest;
 use App\Http\Requests\Categories\StoreCategoryRequest;
 use App\Http\Requests\Categories\UpdateCategoryRequest;
-use App\Http\Requests\Categories\RestoreCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,31 +17,30 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class CategoryController extends Controller
 {
-    /**
-     * @return AnonymousResourceCollection
-     */
     public function index(
         IndexCategoryRequest $request,
     ): AnonymousResourceCollection {
         $categories = QueryBuilder::for(Category::class)
-            ->allowedIncludes("products") // Allows GET /api/categories?include=products
-            ->allowedFilters(AllowedFilter::partial("name"))
-            ->allowedSorts("name", "created_at")
-            ->defaultSort("name")
-            ->paginate($request->integer("per_page", 15))
+            ->allowedIncludes('products') // Allows GET /api/categories?include=products
+            ->allowedFilters(AllowedFilter::partial('name'))
+            ->allowedSorts('name', 'created_at')
+            ->defaultSort('name')
+            ->paginate($request->integer('per_page', 15))
             ->withQueryString();
 
         return CategoryResource::collection($categories);
     }
+
     /**
      * @return CategoryResource
      */
     public function show(ShowCategoryRequest $request, Category $category)
     {
-        $category->loadMissing("products");
+        $category->loadMissing('products');
 
         return new CategoryResource($category);
     }
+
     /**
      * @return CategoryResource
      */
@@ -50,9 +49,10 @@ class CategoryController extends Controller
         $category = Category::create($request->validated());
 
         return new CategoryResource($category)->additional([
-            "message" => "Category created successfully",
+            'message' => 'Category created successfully',
         ]);
     }
+
     /**
      * @return CategoryResource
      */
@@ -61,9 +61,10 @@ class CategoryController extends Controller
         $category->update($request->validated());
 
         return new CategoryResource($category)->additional([
-            "message" => "Category updated successfully",
+            'message' => 'Category updated successfully',
         ]);
     }
+
     /**
      * Restore a soft-deleted Category for explicit reuse.
      */
@@ -73,7 +74,7 @@ class CategoryController extends Controller
         $category->restore();
 
         return new CategoryResource($category)->additional([
-            "message" => "Category restored successfully",
+            'message' => 'Category restored successfully',
         ]);
     }
 
@@ -83,6 +84,7 @@ class CategoryController extends Controller
     public function destroy(DestroyCategoryRequest $request, Category $category)
     {
         $category->delete();
+
         return response()->noContent();
     }
 }

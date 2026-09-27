@@ -4,23 +4,23 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class AuthenticatedSessionController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
         $credentials = $request->validate([
-            "email" => ["required", "email"],
-            "password" => ["required"],
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
-        if (!Auth::attempt($credentials, $request->boolean("remember"))) {
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
-                "email" => __("auth.failed"),
+                'email' => __('auth.failed'),
             ]);
         }
         $request->session()->regenerate();
@@ -30,10 +30,11 @@ class AuthenticatedSessionController extends Controller
 
     public function destroy(Request $request): Response
     {
-        Auth::guard("web")->logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return response()->noContent();
     }
 }

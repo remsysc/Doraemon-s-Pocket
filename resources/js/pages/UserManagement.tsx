@@ -154,7 +154,7 @@ export default function UserManagement() {
                 await createUser(payload);
                 setStatusMessage({
                     type: "success",
-                    text: `Created user ${formName} with role ${formRole.replace(/_/g, " ")}.`,
+                    text: `Created user ${formName}.`,
                 });
             } else if (modalMode === "edit" && editTarget) {
                 const payload: UpdateUserPayload = {
@@ -169,7 +169,7 @@ export default function UserManagement() {
                 await updateUser(editTarget.id, payload);
                 setStatusMessage({
                     type: "success",
-                    text: `Updated user account for ${formName}.`,
+                    text: `Updated user ${formName}.`,
                 });
             }
             closeModal();
@@ -190,21 +190,18 @@ export default function UserManagement() {
         if (targetUser.id === currentUser?.id) {
             setStatusMessage({
                 type: "error",
-                text: "Security Guard: You cannot deactivate your own administrative account.",
+                text: "You cannot deactivate your own account.",
             });
             return;
         }
 
-        const confirmAction = window.confirm(
-            `Are you sure you want to deactivate ${targetUser.name}? They will not be able to log in.`,
-        );
-        if (!confirmAction) return;
+        if (!window.confirm(`Deactivate ${targetUser.name}? They won't be able to log in.`)) return;
 
         try {
             await deactivateUser(targetUser.id);
             setStatusMessage({
                 type: "success",
-                text: `User ${targetUser.name} has been deactivated.`,
+                text: `${targetUser.name} deactivated.`,
             });
             fetchUsers();
         } catch (err: any) {
@@ -219,21 +216,18 @@ export default function UserManagement() {
         if (targetUser.id === currentUser?.id) {
             setStatusMessage({
                 type: "error",
-                text: "Security Guard: You cannot delete your own administrative account.",
+                text: "You cannot delete your own account.",
             });
             return;
         }
 
-        const confirmAction = window.confirm(
-            `Are you sure you want to permanently delete ${targetUser.name}? This will remove account credentials.`,
-        );
-        if (!confirmAction) return;
+        if (!window.confirm(`Permanently delete ${targetUser.name}?`)) return;
 
         try {
             await deleteUser(targetUser.id);
             setStatusMessage({
                 type: "success",
-                text: `User ${targetUser.name} has been deleted.`,
+                text: `${targetUser.name} deleted.`,
             });
             fetchUsers();
         } catch (err: any) {
@@ -248,71 +242,77 @@ export default function UserManagement() {
         <>
             <div className="page-header">
                 <div>
-                    <h1>Team & User Access Management</h1>
-                    <p className="page-subtitle">
-                        Administrative management of user accounts, role-based access control, and account status
-                    </p>
+                    <h1>User Management</h1>
+                    <p className="page-subtitle">Manage team accounts and permissions</p>
                 </div>
-                <button type="button" className="btn--primary" onClick={openCreate}>
-                    + Add New User
+                <button type="button" className="btn btn--primary" onClick={openCreate}>
+                    + Add User
                 </button>
             </div>
 
             {statusMessage && (
-                <div
-                    className={`alert-banner ${
-                        statusMessage.type === "success"
-                            ? "alert-banner--info"
-                            : "alert-banner--danger"
-                    }`}
-                >
+                <div className={`alert-banner ${statusMessage.type === "success" ? "alert-banner--info" : "alert-banner--danger"}`}>
                     {statusMessage.text}
                 </div>
             )}
 
-            {/* User Metrics */}
+            {/* ── Stat Cards ── */}
             <section className="stats-grid">
                 <div className="stat-card stat-card--blue">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{meta?.total ?? users.length}</span>
-                        <span className="stat-card__label">Total User Accounts</span>
+                        <span className="stat-card__label">Total Users</span>
                     </div>
                 </div>
 
                 <div className="stat-card stat-card--purple">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
-                        <span className="stat-card__value">
-                            {users.filter((u) => u.role === "admin").length}
-                        </span>
-                        <span className="stat-card__label">System Administrators</span>
+                        <span className="stat-card__value">{users.filter((u) => u.role === "admin").length}</span>
+                        <span className="stat-card__label">Admins</span>
                     </div>
                 </div>
 
                 <div className="stat-card stat-card--green">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
-                        <span className="stat-card__value">
-                            {users.filter((u) => u.role === "purchasing_manager").length}
-                        </span>
-                        <span className="stat-card__label">Purchasing Managers</span>
+                        <span className="stat-card__value">{users.filter((u) => u.role === "purchasing_manager").length}</span>
+                        <span className="stat-card__label">Purchasing</span>
                     </div>
                 </div>
 
                 <div className="stat-card stat-card--amber">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" />
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
-                        <span className="stat-card__value">
-                            {users.filter((u) => u.role === "warehouse_staff").length}
-                        </span>
-                        <span className="stat-card__label">Warehouse Floor Staff</span>
+                        <span className="stat-card__value">{users.filter((u) => u.role === "warehouse_staff").length}</span>
+                        <span className="stat-card__label">Warehouse</span>
                     </div>
                 </div>
             </section>
 
-            {/* Users Table */}
+            {/* ── Table ── */}
             <section className="table-section">
                 <div className="table-section__header">
                     <div>
-                        <h2>Active System Users</h2>
-                        <p className="page-subtitle">Authorized accounts in WalangBrownout</p>
+                        <h2>System Users</h2>
+                        <p className="page-subtitle">Authorized accounts</p>
                     </div>
                 </div>
 
@@ -327,10 +327,10 @@ export default function UserManagement() {
                                 <tr>
                                     <th>Name</th>
                                     <th>Email</th>
-                                    <th>Assigned Role</th>
+                                    <th>Role</th>
                                     <th>Status</th>
-                                    <th>Registered Date</th>
-                                    <th>Actions</th>
+                                    <th>Registered</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -338,41 +338,29 @@ export default function UserManagement() {
                                     <tr key={u.id}>
                                         <td className="td-bold">
                                             {u.name}
-                                            {u.id === currentUser?.id && (
-                                                <span className="text-xs text-muted ml-2">
-                                                    (You)
-                                                </span>
-                                            )}
+                                            {u.id === currentUser?.id && <span className="text-muted ml-2">(You)</span>}
                                         </td>
                                         <td>{u.email}</td>
                                         <td>
-                                            <span
-                                                className={`badge ${
-                                                    u.role === "admin"
-                                                        ? "badge--sale"
-                                                        : u.role === "purchasing_manager"
-                                                        ? "badge--receipt"
-                                                        : "badge--adjustment"
-                                                }`}
-                                            >
+                                            <span className={`badge ${
+                                                u.role === "admin" ? "badge--sale"
+                                                : u.role === "purchasing_manager" ? "badge--receipt"
+                                                : "badge--adjustment"
+                                            }`}>
                                                 {u.role.replace(/_/g, " ")}
                                             </span>
                                         </td>
                                         <td>
-                                            {u.is_active ? (
-                                                <span className="badge badge--active">Active</span>
-                                            ) : (
-                                                <span className="badge badge--inactive">
-                                                    Deactivated
-                                                </span>
-                                            )}
+                                            <span className={`badge ${u.is_active ? "badge--active" : "badge--inactive"}`}>
+                                                {u.is_active ? "Active" : "Deactivated"}
+                                            </span>
                                         </td>
-                                        <td>{new Date(u.created_at).toLocaleDateString()}</td>
+                                        <td className="text-muted">{new Date(u.created_at).toLocaleDateString()}</td>
                                         <td>
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     type="button"
-                                                    className="btn--secondary btn--sm"
+                                                    className="btn btn--secondary btn--sm"
                                                     onClick={() => openEdit(u)}
                                                 >
                                                     Edit
@@ -380,7 +368,7 @@ export default function UserManagement() {
                                                 {u.is_active && u.id !== currentUser?.id && (
                                                     <button
                                                         type="button"
-                                                        className="btn--danger btn--sm"
+                                                        className="btn btn--danger btn--sm"
                                                         onClick={() => handleDeactivate(u)}
                                                     >
                                                         Deactivate
@@ -389,7 +377,7 @@ export default function UserManagement() {
                                                 {u.id !== currentUser?.id && (
                                                     <button
                                                         type="button"
-                                                        className="btn--danger btn--sm"
+                                                        className="btn btn--danger btn--sm"
                                                         onClick={() => handleDelete(u)}
                                                     >
                                                         Delete
@@ -405,18 +393,14 @@ export default function UserManagement() {
                 )}
             </section>
 
-            {/* Modal */}
+            {/* ── Modal ── */}
             {modalMode && (
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal__header">
                             <div>
-                                <h2>
-                                    {modalMode === "create" ? "Create New User" : "Edit User Account"}
-                                </h2>
-                                <p className="page-subtitle">
-                                    Configure authentication & permissions
-                                </p>
+                                <h2>{modalMode === "create" ? "Create User" : "Edit User"}</h2>
+                                <p className="page-subtitle">Account details & permissions</p>
                             </div>
                             <button className="modal__close" onClick={closeModal}>
                                 &times;
@@ -439,40 +423,33 @@ export default function UserManagement() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="user-email">Email Address *</label>
+                                <label htmlFor="user-email">Email *</label>
                                 <input
                                     id="user-email"
                                     type="email"
                                     value={formEmail}
                                     onChange={(e) => setFormEmail(e.target.value)}
-                                    placeholder="e.g. maria@walangbrownout.ph"
+                                    placeholder="e.g. maria@doraemon.com"
                                     required
                                 />
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="user-role">Assigned System Role *</label>
+                                <label htmlFor="user-role">Role *</label>
                                 <select
                                     id="user-role"
                                     value={formRole}
-                                    onChange={(e) =>
-                                        setFormRole(
-                                            e.target.value as
-                                                | "admin"
-                                                | "purchasing_manager"
-                                                | "warehouse_staff",
-                                        )
-                                    }
+                                    onChange={(e) => setFormRole(e.target.value as any)}
                                 >
                                     <option value="warehouse_staff">Warehouse Staff</option>
                                     <option value="purchasing_manager">Purchasing Manager</option>
-                                    <option value="admin">System Administrator</option>
+                                    <option value="admin">Admin</option>
                                 </select>
                             </div>
 
                             <div className="form-group">
                                 <label htmlFor="user-password">
-                                    Password {modalMode === "edit" ? "(Leave blank to keep current)" : "*"}
+                                    Password {modalMode === "edit" ? "(Leave blank to keep)" : "*"}
                                 </label>
                                 <input
                                     id="user-password"
@@ -492,9 +469,7 @@ export default function UserManagement() {
                                         id="user-password-conf"
                                         type="password"
                                         value={formPasswordConfirmation}
-                                        onChange={(e) =>
-                                            setFormPasswordConfirmation(e.target.value)
-                                        }
+                                        onChange={(e) => setFormPasswordConfirmation(e.target.value)}
                                         placeholder="••••••••"
                                         required
                                         minLength={8}
@@ -505,7 +480,7 @@ export default function UserManagement() {
                             <div className="modal__actions">
                                 <button
                                     type="button"
-                                    className="btn--secondary"
+                                    className="btn btn--secondary"
                                     onClick={closeModal}
                                     disabled={submitting}
                                 >
@@ -513,14 +488,10 @@ export default function UserManagement() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn--primary"
+                                    className="btn btn--primary"
                                     disabled={submitting}
                                 >
-                                    {submitting
-                                        ? "Saving..."
-                                        : modalMode === "create"
-                                        ? "Create Account"
-                                        : "Save Changes"}
+                                    {submitting ? "Saving..." : modalMode === "create" ? "Create User" : "Save Changes"}
                                 </button>
                             </div>
                         </form>

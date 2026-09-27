@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\AuditLog;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class AuditLogPolicy
 {
@@ -13,7 +12,7 @@ class AuditLogPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role === "admin";
+        return $user->role === 'admin';
     }
 
     /**
@@ -21,7 +20,7 @@ class AuditLogPolicy
      */
     public function view(User $user, AuditLog $auditLog): bool
     {
-        return $user->role === "admin";
+        return $user->role === 'admin';
     }
 
     /**

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AuditLogs\IndexAuditLogRequest;
 use App\Http\Requests\AuditLogs\ShowAuditLogRequest;
-use App\Models\AuditLog;
 use App\Http\Resources\AuditLogResource;
+use App\Models\AuditLog;
 
 class AuditLogController extends Controller
 {
@@ -15,10 +15,11 @@ class AuditLogController extends Controller
     public function index(IndexAuditLogRequest $request)
     {
         $auditLogs = AuditLog::query()
-            ->with("actor")
-            ->latest("occurred_at")
-            ->paginate($request->integer("per_page", 10))
+            ->with('actor')
+            ->latest('occurred_at')
+            ->paginate($request->integer('per_page', 10))
             ->withQueryString();
+
         return AuditLogResource::collection($auditLogs);
     }
 
@@ -27,7 +28,8 @@ class AuditLogController extends Controller
      */
     public function show(ShowAuditLogRequest $request, AuditLog $auditLog)
     {
-        $auditLog->loadMissing("actor");
+        $auditLog->loadMissing('actor');
+
         return new AuditLogResource($auditLog);
     }
 }

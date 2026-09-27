@@ -55,6 +55,6 @@ class UserFactory extends Factory
 
     public function warehouseStaff(): static
     {
-        return $this-> state(fn() => ['role' => 'warehouse_staff']);
+        return $this->state(fn () => ['role' => 'warehouse_staff']);
     }
 }

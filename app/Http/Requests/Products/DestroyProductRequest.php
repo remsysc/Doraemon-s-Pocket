@@ -13,8 +13,9 @@ class DestroyProductRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $product = $this->route("product"); // Get the product from the route parameter
-        return $this->user()->can("delete", $product); // Only allow authenticated users to make this request
+        $product = $this->route('product'); // Get the product from the route parameter
+
+        return $this->user()->can('delete', $product); // Only allow authenticated users to make this request
     }
 
     /*
@@ -25,7 +26,7 @@ class DestroyProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-                //
-            ];
+            //
+        ];
     }
 }

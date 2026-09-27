@@ -27,136 +27,142 @@ export default function WarehouseDashboardView({
 }: WarehouseDashboardProps) {
     return (
         <div className="warehouse-dashboard space-y-6">
-            {/* Quick Action Grid */}
+
+            {/* ── Stat Cards ── */}
+            <section className="stats-grid">
+                <div className="stat-card stat-card--amber">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 8h14M5 12h14M5 16h6" /><rect x="3" y="4" width="18" height="16" rx="2" />
+                        </svg>
+                    </div>
+                    <div className="stat-card__info">
+                        <span className="stat-card__value">{stats.lots}</span>
+                        <span className="stat-card__label">Active Lots</span>
+                    </div>
+                </div>
+
+                <div className={`stat-card ${stats.expiringCount > 0 ? "stat-card--red" : "stat-card--blue"}`}>
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                    </div>
+                    <div className="stat-card__info">
+                        <span className="stat-card__value">{stats.expiringCount}</span>
+                        <span className="stat-card__label">Expiring in 30d</span>
+                    </div>
+                </div>
+
+                <div className="stat-card stat-card--green">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                        </svg>
+                    </div>
+                    <div className="stat-card__info">
+                        <span className="stat-card__value">{stats.pendingCounts}</span>
+                        <span className="stat-card__label">Pending Counts</span>
+                    </div>
+                </div>
+
+                <div className="stat-card stat-card--purple">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                            <polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                        </svg>
+                    </div>
+                    <div className="stat-card__info">
+                        <span className="stat-card__value">{stats.transactions}</span>
+                        <span className="stat-card__label">Movements</span>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── Quick Actions ── */}
             <section className="action-grid">
                 <button
                     type="button"
                     className="action-tile text-left"
                     onClick={onOpenCountModal}
                 >
-                    <div className="action-tile__icon">📋</div>
-                    <div className="action-tile__title">+ Submit Cycle Count</div>
-                    <div className="action-tile__desc">
-                        Audit shelf stock & submit physical inventory verification
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                        </svg>
                     </div>
+                    <div className="action-tile__title">Submit Cycle Count</div>
+                    <div className="action-tile__desc">Log a physical shelf verification</div>
                 </button>
 
                 <Link to="/transactions" className="action-tile">
-                    <div className="action-tile__icon">📦</div>
-                    <div className="action-tile__title">+ Record Stock Movement</div>
-                    <div className="action-tile__desc">
-                        Log physical receipt, pick, dispatch, or damage write-off
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                            <polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                        </svg>
                     </div>
+                    <div className="action-tile__title">Record Movement</div>
+                    <div className="action-tile__desc">Receipt, pick, or write-off</div>
                 </Link>
 
                 <Link to="/lots" className="action-tile">
-                    <div className="action-tile__icon">📍</div>
-                    <div className="action-tile__title">Bin Locations & Lots</div>
-                    <div className="action-tile__desc">
-                        Inspect warehouse bin mapping and lot expiration dates
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 8h14M5 12h14M5 16h6" /><rect x="3" y="4" width="18" height="16" rx="2" />
+                        </svg>
                     </div>
+                    <div className="action-tile__title">Lots & Bins</div>
+                    <div className="action-tile__desc">Lot locations & expiry dates</div>
                 </Link>
 
                 <Link to="/stock" className="action-tile">
-                    <div className="action-tile__icon">📊</div>
-                    <div className="action-tile__title">Real-time Stock Levels</div>
-                    <div className="action-tile__desc">
-                        Check current on-hand, reserved, and available stock
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
                     </div>
+                    <div className="action-tile__title">Stock Levels</div>
+                    <div className="action-tile__desc">On-hand, reserved & available</div>
                 </Link>
             </section>
 
-            {/* Floor Metrics */}
-            <section className="stats-grid">
-                <div className="stat-card stat-card--amber">
-                    <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.lots}</span>
-                        <span className="stat-card__label">Active Lots in Warehouse</span>
-                    </div>
-                </div>
-
-                <div
-                    className={`stat-card ${
-                        stats.expiringCount > 0 ? "stat-card--red" : "stat-card--blue"
-                    }`}
-                >
-                    <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.expiringCount}</span>
-                        <span className="stat-card__label">Expiring Within 30 Days</span>
-                    </div>
-                </div>
-
-                <div className="stat-card stat-card--green">
-                    <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.pendingCounts}</span>
-                        <span className="stat-card__label">Active Count Audits</span>
-                    </div>
-                </div>
-
-                <div className="stat-card stat-card--purple">
-                    <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.transactions}</span>
-                        <span className="stat-card__label">Ledger Movements</span>
-                    </div>
-                </div>
-            </section>
-
-            {/* Urgent FEFO Picking Watchlist */}
+            {/* ── FEFO Expiry Watchlist ── */}
             <section className="table-section">
                 <div className="table-section__header">
-                    <div>
-                        <h2>Urgent FEFO Pick Watchlist (Expiring Stock)</h2>
-                        <p className="page-subtitle">
-                            Prioritize first-expiry lots for picking and outbound fulfillment
-                        </p>
-                    </div>
-                    <Link to="/lots" className="audit-summary__link">
-                        View all lots
-                    </Link>
+                    <h2>
+                        Expiry Watchlist
+                        <span style={{ fontWeight: 400, color: 'var(--wb-text-muted)', fontSize: 12, marginLeft: 8 }}>
+                            FEFO — next 30 days
+                        </span>
+                    </h2>
+                    <Link to="/lots" className="audit-summary__link">All lots →</Link>
                 </div>
 
                 {expiringLots.length === 0 ? (
-                    <p className="empty-state">
-                        ✅ No lots currently expiring within the next 30 days. Stock shelf-life is healthy.
-                    </p>
+                    <p className="empty-state">No lots expiring within 30 days.</p>
                 ) : (
                     <div className="table-wrapper">
                         <table className="data-table">
                             <thead>
                                 <tr>
                                     <th>Product</th>
-                                    <th>Lot ID</th>
-                                    <th>Bin Location</th>
-                                    <th>Expiry Date</th>
+                                    <th>Lot</th>
+                                    <th>Expiry</th>
                                     <th>Days Left</th>
-                                    <th>Qty on Hand</th>
+                                    <th>Units</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {expiringLots.slice(0, 5).map((lot) => (
+                                {expiringLots.slice(0, 6).map((lot) => (
                                     <tr key={lot.lot_id}>
-                                        <td className="td-bold">
-                                            {lot.product?.name ?? lot.sku_id}
-                                        </td>
-                                        <td>
-                                            <code>{lot.lot_id.slice(0, 8)}</code>
-                                        </td>
-                                        <td>
-                                            <span className="badge badge--receipt">
-                                                {lot.product?.unit_of_measure ? "Bin: " : ""}
-                                                {lot.lot_id ? "Active Rack" : "—"}
-                                            </span>
-                                        </td>
+                                        <td className="td-bold">{lot.product?.name ?? lot.sku_id}</td>
+                                        <td><code>{lot.lot_id.slice(0, 8)}</code></td>
                                         <td>{lot.expiry_date}</td>
                                         <td>
-                                            <span
-                                                className={`badge ${
-                                                    lot.days_to_expiry <= 10
-                                                        ? "badge--flagged"
-                                                        : "badge--pending"
-                                                }`}
-                                            >
-                                                {lot.days_to_expiry} days
+                                            <span className={`badge ${lot.days_to_expiry <= 10 ? "badge--flagged" : "badge--pending"}`}>
+                                                {lot.days_to_expiry}d
                                             </span>
                                         </td>
                                         <td className="td-bold">{lot.qty_on_hand}</td>
@@ -168,18 +174,13 @@ export default function WarehouseDashboardView({
                 )}
             </section>
 
-            {/* Recent Warehouse Movements Feed & Physical Counts */}
+            {/* ── Split: Movements + Counts ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Movements */}
+                {/* Recent Movements */}
                 <section className="table-section">
                     <div className="table-section__header">
-                        <div>
-                            <h2>Recent Warehouse Movements</h2>
-                            <p className="page-subtitle">Latest floor receipts and picks</p>
-                        </div>
-                        <Link to="/transactions" className="audit-summary__link">
-                            View ledger
-                        </Link>
+                        <h2>Recent Movements</h2>
+                        <Link to="/transactions" className="audit-summary__link">View all →</Link>
                     </div>
                     {recentTxns.length === 0 ? (
                         <p className="empty-state">No movements logged yet.</p>
@@ -198,27 +199,16 @@ export default function WarehouseDashboardView({
                                     {recentTxns.slice(0, 6).map((txn) => (
                                         <tr key={txn.id}>
                                             <td>
-                                                <span
-                                                    className={`badge badge--${txn.type.toLowerCase()}`}
-                                                >
+                                                <span className={`badge badge--${txn.type.toLowerCase()}`}>
                                                     {txn.type}
                                                 </span>
                                             </td>
-                                            <td
-                                                className={
-                                                    txn.quantity_delta >= 0
-                                                        ? "text-green font-medium"
-                                                        : "text-red font-medium"
-                                                }
-                                            >
-                                                {txn.quantity_delta >= 0 ? "+" : ""}
-                                                {txn.quantity_delta}
+                                            <td className={txn.quantity_delta >= 0 ? "text-green" : "text-red"}>
+                                                {txn.quantity_delta >= 0 ? "+" : ""}{txn.quantity_delta}
                                             </td>
                                             <td>{txn.lot?.product?.name ?? "—"}</td>
-                                            <td>
-                                                {new Date(
-                                                    txn.occurred_at,
-                                                ).toLocaleDateString()}
+                                            <td className="text-muted">
+                                                {new Date(txn.occurred_at).toLocaleDateString()}
                                             </td>
                                         </tr>
                                     ))}
@@ -228,25 +218,18 @@ export default function WarehouseDashboardView({
                     )}
                 </section>
 
-                {/* Submitted Cycle Counts */}
+                {/* Cycle Counts */}
                 <section className="table-section">
                     <div className="table-section__header">
-                        <div>
-                            <h2>Recent Floor Count Audits</h2>
-                            <p className="page-subtitle">Cycle count verification history</p>
-                        </div>
-                        <Link to="/cycle-counts" className="audit-summary__link">
-                            All counts
-                        </Link>
+                        <h2>Cycle Counts</h2>
+                        <Link to="/cycle-counts" className="audit-summary__link">All counts →</Link>
                     </div>
                     {recentCounts.length === 0 ? (
-                        <div className="empty-state text-center py-6">
-                            <p className="text-muted mb-3">
-                                No physical counts submitted yet for this cycle.
-                            </p>
+                        <div className="empty-state">
+                            <p style={{ marginBottom: 12 }}>No counts submitted yet.</p>
                             <button
                                 type="button"
-                                className="btn--primary btn--sm inline-flex"
+                                className="btn btn--primary btn--sm"
                                 onClick={onOpenCountModal}
                             >
                                 + Record First Count
@@ -270,19 +253,14 @@ export default function WarehouseDashboardView({
                                                 {count.product?.name ?? count.sku_id.slice(0, 8)}
                                             </td>
                                             <td>{count.counted_qty}</td>
-                                            <td className="text-secondary">{count.expected_qty}</td>
+                                            <td className="text-muted">{count.expected_qty}</td>
                                             <td>
-                                                <span
-                                                    className={`badge ${
-                                                        count.status === "reconciled"
-                                                            ? "badge--reconciled"
-                                                            : count.status === "dismissed"
-                                                            ? "badge--dismissed"
-                                                            : count.is_flagged
-                                                            ? "badge--flagged"
-                                                            : "badge--pending"
-                                                    }`}
-                                                >
+                                                <span className={`badge ${
+                                                    count.status === "reconciled" ? "badge--reconciled"
+                                                    : count.status === "dismissed" ? "badge--dismissed"
+                                                    : count.is_flagged ? "badge--flagged"
+                                                    : "badge--pending"
+                                                }`}>
                                                     {count.status === "pending" && count.is_flagged
                                                         ? "Flagged"
                                                         : count.status}
@@ -296,6 +274,7 @@ export default function WarehouseDashboardView({
                     )}
                 </section>
             </div>
+
         </div>
     );
 }

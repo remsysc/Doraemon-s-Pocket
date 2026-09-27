@@ -79,6 +79,7 @@ class ReportService
         return [
             'data' => $skuAggregates->values()->map(function ($row) {
                 $row['net_variance_value'] = round($row['net_variance_value'], 2);
+
                 return $row;
             })->toArray(),
             'meta' => [

@@ -13,7 +13,7 @@ class StoreCategoryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can("create", Category::class);
+        return $this->user()->can('create', Category::class);
     }
 
     /**
@@ -24,9 +24,9 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "name" => ["required", "string", "max:255"],
-            "slug" => ["required", "string", "max:255", "unique:categories,slug"],
-            "description" => ["nullable", "string", "max:255"],
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'unique:categories,slug'],
+            'description' => ['nullable', 'string', 'max:255'],
         ];
     }
 }
