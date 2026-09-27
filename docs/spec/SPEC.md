@@ -85,6 +85,17 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 - **FR-30** THE SYSTEM SHALL allow `warehouse_staff` to submit a physical cycle-count / discrepancy flag at the moment it is found, comparing it to `qty_on_hand`. THE SYSTEM SHALL restrict viewing the resulting variance/shrinkage reconciliation report to `admin`, flagging a variance alert when the discrepancy exceeds a configurable threshold (default 5%). 🔄 CHANGED 2026-08-04, 🚧 submit-vs-view role split inferred — see FR-36/§9.
 - **FR-31** THE SYSTEM SHALL record every write to `products`, `lots`, `categories`, and `users` to an append-only `audit_logs` table capturing actor, action, entity type/id, old values, new values. THE SYSTEM SHALL restrict read access to `audit_logs` to `admin` only; `purchasing_manager` and `warehouse_staff` SHALL NOT be able to view it. 🔄 CHANGED 2026-08-04 — see FR-37/§9.
 
+### Supplier & Purchase Orders (Sprint 6 — New)
+
+- **FR-39** THE SYSTEM SHALL support CRUD for Suppliers (`id` UUID, `name`, `contact_email`, `lead_time_days`). Write access is restricted to `purchasing_manager` and `admin`. `warehouse_staff` can read Suppliers for PO context.
+- **FR-40** THE SYSTEM SHALL allow `purchasing_manager` and `admin` to create Purchase Orders (POs) tracking status (`draft`, `ordered`, `received`), linked to a Supplier.
+- **FR-41** THE SYSTEM SHALL allow `warehouse_staff` to view POs and record physical receipts against them, which appends to `INVENTORY_TRANSACTION` as a `RECEIPT` and transitions the PO to `received` when fully fulfilled.
+
+### Smart Analytics & Data Visualization (Sprint 6 — New)
+
+- **FR-42** THE SYSTEM SHALL provide visual graphs and smart analytics on the Admin and Purchasing Manager dashboards (e.g., Turnover velocity, ABC/XYZ distribution, shrinkage trends) to improve data digestability.
+- **FR-43** The frontend SHALL implement a charting solution (e.g., Recharts) to visualize the data returned by existing report and classification endpoints without requiring heavy new analytical backend processing.
+
 ### Role-Based Access Control (RBAC) refinement — perms team submission, 2026-08-04
 
 This subsection is the single source of truth for role checks going forward; where it and a per-entity FR above ever drift, this subsection wins.
@@ -110,6 +121,9 @@ Quick reference — tables and their implementation status:
 | `users`                  | impl.                | `id` bigint ⚠️*¹ | role enum: admin/purchasing_manager/warehouse_staff |
 | `categories`             | impl.                | `id` uuid        | soft deletes                                        |
 | `products`               | impl.                | `sku_id` uuid ⚠️ | non-standard PK — `$primaryKey` required; includes unit_cost & unit_price |
+| `suppliers`              | planned (Sprint 6)   | `id` uuid        | supplier master data                                |
+| `purchase_orders`        | planned (Sprint 6)   | `id` uuid        | track PO lifecycle (`draft`, `ordered`, `received`) |
+| `purchase_order_items`   | planned (Sprint 6)   | `id` uuid        | PO line items (`po_id`, `sku_id`, `qty`)            |
 | `lots`                   | impl.                | `lot_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
 | `inventory_transactions` | impl. (Sprint 2)     | `txn_id` uuid    | append-only, signed qty_delta; write: WS+admin, read: all roles |
 | `inventory_snapshots`    | implemented (Sprint 3) | `sku_id` uuid    | derived, row-locked updates only                    |
@@ -208,6 +222,10 @@ GET  /api/cycle-counts/{count}                role:warehouse_staff,admin
 GET  /api/reports/turnover                    role:admin
 GET  /api/reports/variance                    role:admin                                          FR-16, FR-36
 GET  /api/alerts/history                      role:purchasing_manager,admin
+GET/POST /api/suppliers                       role:purchasing_manager,admin (WS: GET only)         FR-39
+GET/PUT/DELETE /api/suppliers/{supplier}      role:purchasing_manager,admin                        FR-39
+GET/POST /api/purchase-orders                 role:purchasing_manager,admin (WS: GET only)         FR-40, FR-41
+GET/PUT/DELETE /api/purchase-orders/{po}      role:purchasing_manager,admin (WS: GET/PUT status)   FR-40, FR-41
 ```
 
 Full request/response shapes for the implemented Sprint 4 endpoints are in
@@ -332,6 +350,8 @@ Remaining FR-1 through FR-38 acceptance criteria: implemented in their respectiv
 - ✅ RESOLVED 2026-08-04: `routes/api.php`, `RoleMiddleware`, and the Category/Product/Lot Policies have been updated to match — Category/Product writes are `role:admin`, Lot writes are `role:admin,warehouse_staff`, and the corresponding Policy `create`/`update`/`delete` methods were updated to match (Category/Product: admin-only via `before()`, non-admin always `false`; Lot: `warehouse_staff`, with admin via `before()`). Covered by `tests/Feature/CategoryProductLotCrudTest.php` and `tests/Feature/RoleMiddlewareTest.php` (14 tests, all passing). FR-32–FR-38's ledger/reorder_configs/audit_logs/user-management endpoints remain unbuilt (Sprint 4/5), so those routes/policies don't exist yet to update — tracked as before, just no longer blocked on this RBAC decision.
 
 ## 10. Changelog
+
+- 2026-09-27 — **Sprint 6 scope expansion:** Officially brought Supplier and Purchase Order (PO) management into scope (previously listed as Non-Goals in the PRD). Added FR-39, FR-40, and FR-41 defining full CRUD for Suppliers and PO generation/tracking, assigned to Purchasing Manager (with Warehouse Staff receiving against POs). Updated data models and API contracts accordingly.
 
 - 2026-09-20 — **Product Catalog Pricing Enabled (FR-14):** Updated FR-14 and PRD non-goals to support catalog pricing. Product master includes `unit_cost` and `unit_price` (nullable decimal(12, 2), Admin write only). Enables monetary ABC classification (Annual Demand × unit_cost), inventory monetary valuation, and monetary shrinkage loss reporting for Sprint 5.
 

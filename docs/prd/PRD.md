@@ -20,7 +20,6 @@ WalangBrownout Appliances runs inventory on a single spreadsheet updated manuall
 - Nested/hierarchical categories — categories are a flat, fixed set of four (AC units, purifiers, filters, thermostats).
 - Any write UI for `INVENTORY_TRANSACTION` or `AUDIT_LOG` beyond the append-only endpoints — these are system-of-record tables, not user-editable. Per §4, the append-only ledger endpoint itself is restricted to a single writer role (Warehouse Staff).
 - Multi-warehouse / multi-location inventory (single warehouse, `bin_location` string only).
-- Supplier/vendor management, purchase order lifecycle beyond triggering a reorder alert.
 - Mobile app (Warehouse Staff UI is a responsive web view, not a native app).
 - Production-hardening of auth (open self-registration with role selection is acceptable for the academic demo; flagged as tech debt for real deployment).
 
@@ -36,9 +35,9 @@ Roles are scoped by separation of duties: catalog governance (Admin) is kept sep
 
 ### Purchasing Manager — solves the Summer Crunch
 
-- **Can:** view seasonal/reorder alerts, see EOQ-suggested order quantities, configure reorder points and safety stock (`REORDER_CONFIG`), view stock overview (read-only) across SKUs.
-- **Can't:** touch user accounts; edit Product/Category structure; perform physical stock movements — no `INVENTORY_TRANSACTION` writes of any type, that's Warehouse's job; view the full audit log.
-- **UI expectation:** primary screen is the purchasing dashboard (alerts + stock overview), not the pick list.
+- **Can:** view seasonal/reorder alerts, see EOQ-suggested order quantities, configure reorder points and safety stock (`REORDER_CONFIG`), view stock overview (read-only) across SKUs, manage Suppliers, and create/manage Purchase Orders (POs).
+- **Can't:** touch user accounts; edit Product/Category structure; perform physical stock movements (receiving stock against a PO is Warehouse's job); view the full audit log.
+- **UI expectation:** primary screen is the purchasing dashboard (alerts + stock overview), Supplier tracking, and PO management, not the pick list.
 
 ### Admin (Branch/Owner) — solves all three symptoms at a summary level
 
@@ -53,6 +52,7 @@ Admin is a superuser and is omitted from the middle columns below — read it as
 | Capability                                                              | Warehouse Staff          | Purchasing Manager |
 | ----------------------------------------------------------------------- | ------------------------ | ------------------ |
 | Read Category/Product/Lot/stock levels                                  | ✅                       | ✅                 |
+| Manage Suppliers & Purchase Orders (Creation)                           | ❌ (Read POs to receive) | ✅                 |
 | Write Category/Product (master data)                                    | ❌                       | ❌                 |
 | Write Lot (receipt-time creation/correction)                            | ✅                       | ❌                 |
 | Append `INVENTORY_TRANSACTION` (RECEIPT/PICK/SALE/ADJUSTMENT/WRITE_OFF) | ✅                       | ❌                 |
@@ -71,9 +71,11 @@ Admin is a superuser and is omitted from the middle columns below — read it as
 - As a Purchasing Manager, I want a reorder alert that fires early for seasonal items (e.g. AC units), so that I never have to panic-order 3x normal volume.
 - As a Purchasing Manager, I want the system to suggest an EOQ-sized order, so that my order quantity is derived from cost, not guesswork.
 - As a Purchasing Manager, I want to configure reorder points and safety stock per SKU, so that alerts reflect real lead times without needing product/category edit access or physical stock access I don't need.
+- As a Purchasing Manager, I want to track Suppliers and generate Purchase Orders (POs) directly from reorder alerts, so that the replenishment lifecycle is fully managed within the system.
 - As an Admin, I want a variance report comparing recorded vs. physical counts, so that I can distinguish real shrinkage from a timing/oversell problem.
 - As an Admin, I want to manage user accounts and roles, so that access matches each employee's job function.
 - As an Admin, I want to view the full audit log of who changed what, so that I can investigate a discrepancy without doing day-to-day data entry myself.
+- As a Manager/Admin, I want visual graphs and smart analytics on my dashboard, so that I can digest complex trends (like turnover velocity and ABC distribution) at a glance without parsing raw tables.
 - As any authenticated user, I want to log in/out via a session that persists across page reloads, so that I don't have to re-authenticate constantly.
 
 ## 6. Functional Requirements
@@ -95,11 +97,14 @@ Admin is a superuser and is omitted from the middle columns below — read it as
 | FR-13 | System computes EOQ = √[(2 × annual demand × order cost) / holding cost per unit] for non-seasonal items.                                                                                                                                                                                                                                       | P1       |
 | FR-14 | For is_seasonal=true items, reorder trigger is shifted earlier by lead_time relative to last year's same-period demand (seasonal index), not a flat trailing average.                                                                                                                                                                           | P1       |
 | FR-15 | System classifies each product by ABC (value/turnover) and XYZ (demand variability).                                                                                                                                                                                                                                                            | P1       |
+| FR-15b| System supports full CRUD for Suppliers. Write restricted to Purchasing Manager & Admin; read access includes Warehouse Staff (for PO context).                                                                                                                                                                                                | P1       |
+| FR-15c| Purchasing Manager and Admin can create and manage Purchase Orders (POs) and PO Items. POs track status (`draft`, `ordered`, `received`). Warehouse Staff can view POs to record physical receipts against them.                                                                                                                                 | P1       |
 | FR-16 | Warehouse Staff can submit a physical cycle count / flag a discrepancy at the moment it's found, comparing it to qty_on_hand. Admin can view/run the resulting variance/shrinkage reconciliation report across SKUs, flagging variance beyond a configurable threshold (default >5%). 🚧 Submit-vs-view split inferred from role brief, see §9. | P1       |
 | FR-17 | Every write to Product/Lot/Category/User is recorded to an append-only `AUDIT_LOG` with actor, action, entity, old/new values.                                                                                                                                                                                                                  | P2       |
 | FR-18 | Admin can view variance/shrinkage and inventory-turnover-by-category reports.                                                                                                                                                                                                                                                                   | P2       |
 | FR-19 | Only Admin can view, create, update, or deactivate user accounts and change role assignments (beyond a user's own self-registration). Purchasing Manager and Warehouse Staff have no access to user management.                                                                                                                                 | P0       |
 | FR-20 | Only Admin can read the full `AUDIT_LOG`. Purchasing Manager and Warehouse Staff cannot view it, even for entities they can otherwise read.                                                                                                                                                                                                     | P2       |
+| FR-21 | Dashboards (Admin and Purchasing Manager) include smart analytics and interactive graphs/charts to visualize key metrics (shrinkage trends, turnover velocity, ABC/XYZ distribution, and PO lead times).                                                                                                                                        | P1       |
 
 ## 7. Non-Functional Requirements
 
@@ -130,7 +135,7 @@ Admin is a superuser and is omitted from the middle columns below — read it as
 - ✅ Resolved (2026-08-09): Normal Lot creation and update reject an `expiry_date` before today with 422 while retaining nullable expiry dates. Historical expired Lots require a separate explicitly authorized backfill/import workflow, which is not part of the normal receipt endpoint.
 - Open self-registration with role selection is accepted as a demo-only simplification, not a production security decision.
 - ✅ Resolved (2026-09-11, Sprint 4): EOQ cost inputs (`order_cost`, `holding_cost_per_unit`) are modeled as non-price operational cost fields on `REORDER_CONFIG`, not on Product — pricing/valuation remains out of scope (§3). EOQ is computed for non-seasonal SKUs only when both inputs are present and positive. ROP/safety stock (FR-12), EOQ (FR-13), seasonal trigger (FR-14), and ABC/XYZ classification (FR-15) are implemented and derive demand from the append-only ledger; reorder and expiry alerts (FR-10) are Purchasing-Manager/Admin only.
-- ✅ Resolved (2026-09-20, Sprint 5): Product catalog pricing enabled. Added `unit_cost` and `unit_price` (nullable decimal(12,2)) to `Product` (Admin write only). Unblocks true monetary ABC analysis (Annual Demand × unit_cost), inventory monetary valuation, and monetary shrinkage loss reporting.
+- ✅ Resolved (2026-09-27, Sprint 6): **Supplier and Purchase Order Management officially brought into scope.** Originally marked as a non-goal, the requirement was updated to include full Supplier CRUD and PO generation/tracking, assigned primarily to the Purchasing Manager role.
 
 ## 10. Risks
 
