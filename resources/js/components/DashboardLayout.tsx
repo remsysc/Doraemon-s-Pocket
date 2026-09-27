@@ -108,7 +108,9 @@ const Icons: Record<string, JSX.Element> = {
 export default function DashboardLayout() {
     const navigate = useNavigate();
     const [user, setUser] = useState<AuthUser | null>(null);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(
+        () => typeof window === "undefined" || window.innerWidth > 760,
+    );
     const [theme, setTheme] = useState<"dark" | "light">(getStoredTheme);
     const [profileMenuOpen, setProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -212,7 +214,10 @@ export default function DashboardLayout() {
 
     return (
         <div className="layout" data-theme={theme}>
-            <aside className={`sidebar ${sidebarOpen ? "" : "sidebar--collapsed"}`}>
+            <aside
+                id="primary-navigation"
+                className={`sidebar ${sidebarOpen ? "" : "sidebar--collapsed"}`}
+            >
                 {/* Brand header */}
                 <div className="sidebar__header">
                     {/* Doraemon face logomark */}
@@ -289,6 +294,11 @@ export default function DashboardLayout() {
                                     className={({ isActive }) =>
                                         `sidebar__link ${isActive ? "sidebar__link--active" : ""}`
                                     }
+                                    onClick={() => {
+                                        if (window.innerWidth <= 760) {
+                                            setSidebarOpen(false);
+                                        }
+                                    }}
                                 >
                                     <span className="sidebar__link-icon">
                                         {Icons[item.icon]}
@@ -302,12 +312,23 @@ export default function DashboardLayout() {
 
             </aside>
 
+            {sidebarOpen && (
+                <button
+                    type="button"
+                    className="sidebar-backdrop"
+                    aria-label="Close navigation menu"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             <div className="main-area">
                 <header className="topbar">
                     <button
                         className="topbar__toggle"
                         onClick={() => setSidebarOpen(!sidebarOpen)}
-                        aria-label="Toggle sidebar"
+                        aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+                        aria-controls="primary-navigation"
+                        aria-expanded={sidebarOpen}
                     >
                         {sidebarOpen ? (
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
