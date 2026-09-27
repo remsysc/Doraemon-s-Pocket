@@ -1935,3 +1935,111 @@ textarea:focus-visible {
         transition-duration: 0.01ms !important;
     }
 }
+
+
+/* ── Dashboard analytics charts ─────────────────────────────────────────── */
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.analytics-card {
+    min-width: 0;
+    overflow: hidden;
+    background: var(--wb-surface-1);
+    border: 1px solid var(--wb-border);
+    border-radius: var(--wb-radius-md);
+}
+
+.analytics-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--wb-border);
+}
+
+.analytics-card__header h2 {
+    color: var(--wb-text-primary);
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.analytics-card__header p {
+    margin-top: 3px;
+    color: var(--wb-text-muted);
+    font-size: 12px;
+}
+
+.analytics-chart {
+    width: 100%;
+    height: 270px;
+    padding: 12px 12px 12px 4px;
+}
+
+.analytics-chart--pie {
+    height: 240px;
+    padding: 2px 6px 8px;
+}
+
+.analytics-pie-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 12px 8px 4px;
+}
+
+.analytics-pie {
+    min-width: 0;
+}
+
+.analytics-pie h3 {
+    padding: 4px 8px 0;
+    color: var(--wb-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.analytics-empty {
+    display: grid;
+    min-height: 270px;
+    place-items: center;
+    padding: 24px;
+    color: var(--wb-text-muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.analytics-empty--notice {
+    color: var(--wb-text-secondary);
+    line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .analytics-pie-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-chart--pie {
+        height: 220px;
+    }
+}
+
+
+.analytics-loading {
+    display: grid;
+    min-height: 280px;
+    place-items: center;
+    color: var(--wb-text-muted);
+    font-size: 13px;
+}

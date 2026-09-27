@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import type {
     ReorderAlert,
@@ -5,6 +6,12 @@ import type {
     Classification,
     ReorderConfig,
 } from "../../lib/inventory-api";
+
+const PurchasingAnalyticsCharts = lazy(() =>
+    import("./DashboardCharts").then((module) => ({
+        default: module.PurchasingAnalyticsCharts,
+    })),
+);
 
 interface PurchasingDashboardProps {
     reorderAlerts: ReorderAlert[];
@@ -118,6 +125,10 @@ export default function PurchasingDashboardView({
                     </div>
                 </div>
             </section>
+
+            <Suspense fallback={<div className="analytics-loading">Loading analytics…</div>}>
+                <PurchasingAnalyticsCharts classifications={classifications} />
+            </Suspense>
 
             {/* Reorder Alerts */}
             <section className="table-section">
