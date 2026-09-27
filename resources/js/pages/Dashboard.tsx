@@ -174,9 +174,9 @@ export default function Dashboard() {
                         </span>
                     </div>
                     <p className="page-subtitle">
-                        {role === "admin" && "Executive control & system governance hub"}
-                        {role === "warehouse_staff" && "Floor receiving, movement tracking & cycle count verification"}
-                        {role === "purchasing_manager" && "Procurement planning, reorder alerts & stock replenishment"}
+                        {role === "admin" && "System governance & executive overview"}
+                        {role === "warehouse_staff" && "Receiving, movement tracking & cycle counts"}
+                        {role === "purchasing_manager" && "Reorder alerts, procurement & replenishment"}
                     </p>
                 </div>
 
@@ -184,7 +184,7 @@ export default function Dashboard() {
                     {(role === "admin" || role === "warehouse_staff") && (
                         <button
                             type="button"
-                            className="btn--primary"
+                            className="btn btn--primary"
                             onClick={() => setIsCountModalOpen(true)}
                         >
                             Submit Cycle Count
@@ -201,21 +201,21 @@ export default function Dashboard() {
                         className={`tab-btn ${activeView === "admin" ? "tab-btn--active" : ""}`}
                         onClick={() => setActiveView("admin")}
                     >
-                        Executive & Admin Overview
+                        Admin Overview
                     </button>
                     <button
                         type="button"
                         className={`tab-btn ${activeView === "warehouse" ? "tab-btn--active" : ""}`}
                         onClick={() => setActiveView("warehouse")}
                     >
-                        Warehouse Operations Lens
+                        Warehouse
                     </button>
                     <button
                         type="button"
                         className={`tab-btn ${activeView === "purchasing" ? "tab-btn--active" : ""}`}
                         onClick={() => setActiveView("purchasing")}
                     >
-                        Purchasing & Reorder Intelligence Lens
+                        Purchasing
                     </button>
                 </div>
             )}
