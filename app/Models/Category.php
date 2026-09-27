@@ -12,13 +12,15 @@ class Category extends Model
     use HasUuids;
     use SoftDeletes;
 
-    protected $primaryKey = "category_id";
-    protected $fillable = ["name", "slug", "description"];
+    protected $primaryKey = 'category_id';
+
+    protected $fillable = ['name', 'slug', 'description'];
+
     /**
      * @return HasMany<Product,Category>
      */
     public function products(): HasMany
     {
-        return $this->hasMany(Product::class, "category_id");
+        return $this->hasMany(Product::class, 'category_id');
     }
 }

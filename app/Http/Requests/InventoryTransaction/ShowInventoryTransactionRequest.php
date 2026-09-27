@@ -14,11 +14,11 @@ class ShowInventoryTransactionRequest extends FormRequest
         // If route-model binding resolved the model, check the instance-level
         // policy. Otherwise fall back to viewAny so unauthenticated/wrong-role
         // requests still get 401/403 correctly.
-        if ($transaction instanceof \App\Models\InventoryTransaction) {
+        if ($transaction instanceof InventoryTransaction) {
             return $this->user()->can('view', $transaction);
         }
 
-        return $this->user()->can('viewAny', \App\Models\InventoryTransaction::class);
+        return $this->user()->can('viewAny', InventoryTransaction::class);
     }
 
     public function rules(): array

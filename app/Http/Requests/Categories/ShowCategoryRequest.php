@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Categories;
 
+use App\Models\Category;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -12,10 +13,10 @@ class ShowCategoryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\Category $category */
-        $category = $this->route("category");
+        /** @var Category $category */
+        $category = $this->route('category');
 
-        return $this->user()->can("view", $category);
+        return $this->user()->can('view', $category);
     }
 
     /**

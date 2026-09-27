@@ -4,21 +4,21 @@ namespace App\Policies;
 
 use App\Models\Lot;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class LotPolicy
 {
-    public function before(User $user, string $ability): bool|null
+    public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === "admin") {
+        if ($user->role === 'admin') {
             return true;
         }
+
         return null;
     }
 
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ["purchasing_manager", "warehouse_staff"]);
+        return in_array($user->role, ['purchasing_manager', 'warehouse_staff']);
     }
 
     public function view(User $user, Lot $lot): bool
@@ -36,7 +36,7 @@ class LotPolicy
      */
     public function create(User $user): bool
     {
-        return $user->role === "warehouse_staff";
+        return $user->role === 'warehouse_staff';
     }
 
     /**
@@ -44,7 +44,7 @@ class LotPolicy
      */
     public function update(User $user, Lot $lot): bool
     {
-        return $user->role === "warehouse_staff";
+        return $user->role === 'warehouse_staff';
     }
 
     /**
@@ -52,7 +52,7 @@ class LotPolicy
      */
     public function delete(User $user, Lot $lot): bool
     {
-        return $user->role === "warehouse_staff";
+        return $user->role === 'warehouse_staff';
     }
 
     /**
