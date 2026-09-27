@@ -15,11 +15,11 @@ class AuditLogService
      * @var list<string>
      */
     private const PROTECTED_FIELDS = [
-        "password",
-        "remember_token",
-        "api_token",
-        "access_token",
-        "refresh_token",
+        'password',
+        'remember_token',
+        'api_token',
+        'access_token',
+        'refresh_token',
     ];
 
     public function record(
@@ -32,23 +32,23 @@ class AuditLogService
 
         if ($actorId === null) {
             throw new LogicException(
-                "Cannot create an audit without an authenticated actor",
+                'Cannot create an audit without an authenticated actor',
             );
         }
 
         return AuditLog::create([
-            "actor_id" => $actorId,
-            "action" => $action,
-            "entity_type" => class_basename($model),
-            "entity_id" => (string) $model->getKey(),
-            "old_values" => $this->sanitizeValues($oldValues),
-            "new_values" => $this->sanitizeValues($newValues),
-            "occurred_at" => now(),
+            'actor_id' => $actorId,
+            'action' => $action,
+            'entity_type' => class_basename($model),
+            'entity_id' => (string) $model->getKey(),
+            'old_values' => $this->sanitizeValues($oldValues),
+            'new_values' => $this->sanitizeValues($newValues),
+            'occurred_at' => now(),
         ]);
     }
 
     /**
-     * @param array<string, mixed>|null $values
+     * @param  array<string, mixed>|null  $values
      * @return array<string, mixed>|null
      */
     private function sanitizeValues(?array $values): ?array

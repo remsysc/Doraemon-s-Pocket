@@ -14,7 +14,7 @@ class IndexCategoryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can("viewAny", Category::class);
+        return $this->user()->can('viewAny', Category::class);
     }
 
     /**
@@ -26,24 +26,24 @@ class IndexCategoryRequest extends FormRequest
     {
         return [
             // 1. Pagination Protection
-            "per_page" => ["sometimes", "integer", "min:1", "max:100"],
-            "page" => ["sometimes", "integer", "min:1"],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'page' => ['sometimes', 'integer', 'min:1'],
 
             // 2. Filter Validation (Matches allowedFilters in QueryBuilder)
-            "filter" => ["sometimes", "array"],
-            "filter.name" => ["sometimes", "string", "max:255"],
-            "filter.description" => ["sometimes", "string", "max:255"],
-            "filter.is_active" => ["sometimes", "boolean"],
+            'filter' => ['sometimes', 'array'],
+            'filter.name' => ['sometimes', 'string', 'max:255'],
+            'filter.description' => ['sometimes', 'string', 'max:255'],
+            'filter.is_active' => ['sometimes', 'boolean'],
 
             // 3. Sorting Rules (Matches allowedSorts in QueryBuilder)
-            "sort" => [
-                "sometimes",
-                "string",
-                Rule::in(["name", "-name", "created_at", "-created_at"]),
+            'sort' => [
+                'sometimes',
+                'string',
+                Rule::in(['name', '-name', 'created_at', '-created_at']),
             ],
 
             // 4. Includes Rules (Matches allowedIncludes in QueryBuilder)
-            "include" => ["sometimes", "string", Rule::in(["products"])],
+            'include' => ['sometimes', 'string', Rule::in(['products'])],
         ];
     }
 
@@ -53,11 +53,11 @@ class IndexCategoryRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         // Converts "true"/"false" query string parameters into actual booleans
-        if ($this->has("filter.is_active")) {
+        if ($this->has('filter.is_active')) {
             $this->merge([
-                "filter" => array_merge($this->input("filter", []), [
-                    "is_active" => filter_var(
-                        $this->input("filter.is_active"),
+                'filter' => array_merge($this->input('filter', []), [
+                    'is_active' => filter_var(
+                        $this->input('filter.is_active'),
                         FILTER_VALIDATE_BOOLEAN,
                         FILTER_NULL_ON_FAILURE,
                     ),

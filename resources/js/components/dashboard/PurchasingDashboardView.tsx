@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import type {
     ReorderAlert,
@@ -23,148 +22,142 @@ export default function PurchasingDashboardView({
     totalProducts,
 }: PurchasingDashboardProps) {
     const classACount = classifications.filter((c) => c.abc === "A").length;
-    const [showGuide, setShowGuide] = useState(false);
 
     return (
         <div className="purchasing-dashboard space-y-6">
             {/* Quick Actions */}
             <section className="action-grid">
                 <Link to="/purchasing" className="action-tile">
-                    <div className="action-tile__icon">⚡</div>
-                    <div className="action-tile__title">Reorder Intelligence Hub</div>
-                    <div className="action-tile__desc">
-                        Configure supplier lead times, safety buffers, and EOQ batch sizes
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
                     </div>
+                    <div className="action-tile__title">Reorder Hub</div>
+                    <div className="action-tile__desc">EOQ, safety stock & lead times</div>
                 </Link>
 
                 <Link to="/stock" className="action-tile">
-                    <div className="action-tile__icon">📦</div>
-                    <div className="action-tile__title">Stock Availability Matrix</div>
-                    <div className="action-tile__desc">
-                        Inspect real-time on-hand, reserved, and available quantities
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
                     </div>
+                    <div className="action-tile__title">Stock Matrix</div>
+                    <div className="action-tile__desc">On-hand, reserved & available</div>
                 </Link>
 
                 <Link to="/products" className="action-tile">
-                    <div className="action-tile__icon">🏷️</div>
-                    <div className="action-tile__title">Product Catalog</div>
-                    <div className="action-tile__desc">
-                        Browse active master SKUs, units of measure, and shelf-life rules
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 8h14M5 12h14M5 16h6" /><rect x="3" y="4" width="18" height="16" rx="2" />
+                        </svg>
                     </div>
+                    <div className="action-tile__title">Product Catalog</div>
+                    <div className="action-tile__desc">Master SKUs & shelf-life rules</div>
                 </Link>
 
                 <Link to="/transactions" className="action-tile">
-                    <div className="action-tile__icon">📈</div>
-                    <div className="action-tile__title">Demand Outflow Trends</div>
-                    <div className="action-tile__desc">
-                        Analyze sales and pick outflows to calibrate replenishment schedules
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
                     </div>
+                    <div className="action-tile__title">Demand Trends</div>
+                    <div className="action-tile__desc">Sales & pick outflow history</div>
                 </Link>
             </section>
 
             {/* Purchasing Metrics */}
             <section className="stats-grid">
-                <div
-                    className={`stat-card ${
-                        reorderAlerts.length > 0 ? "stat-card--red" : "stat-card--blue"
-                    }`}
-                >
+                <div className={`stat-card ${reorderAlerts.length > 0 ? "stat-card--red" : "stat-card--blue"}`}>
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{reorderAlerts.length}</span>
-                        <span className="stat-card__label">SKUs Needing Reorder (Below Min)</span>
+                        <span className="stat-card__label">Reorder Alerts</span>
                     </div>
                 </div>
 
                 <div className="stat-card stat-card--green">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{classACount}</span>
-                        <span className="stat-card__label">Top-Priority SKUs (Class A • 80% Volume)</span>
+                        <span className="stat-card__label">Class A SKUs</span>
                     </div>
                 </div>
 
-                <div
-                    className={`stat-card ${
-                        expiryAlerts.length > 0 ? "stat-card--amber" : "stat-card--blue"
-                    }`}
-                >
+                <div className={`stat-card ${expiryAlerts.length > 0 ? "stat-card--amber" : "stat-card--blue"}`}>
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{expiryAlerts.length}</span>
-                        <span className="stat-card__label">Lots Near Expiry (30 Days)</span>
+                        <span className="stat-card__label">Expiring in 30d</span>
                     </div>
                 </div>
 
                 <div className="stat-card stat-card--purple">
+                    <div className="stat-card__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+                        </svg>
+                    </div>
                     <div className="stat-card__info">
-                        <span className="stat-card__value">{configs.length} / {totalProducts}</span>
-                        <span className="stat-card__label">Configured Reorder Rules</span>
+                        <span className="stat-card__value">{configs.length}<span style={{ fontSize: 14, fontWeight: 400, color: 'var(--wb-text-muted)' }}>/{totalProducts}</span></span>
+                        <span className="stat-card__label">Reorder Rules</span>
                     </div>
                 </div>
             </section>
 
-            {/* Reorder Alerts Priority Queue */}
+            {/* Reorder Alerts */}
             <section className="table-section">
                 <div className="table-section__header">
-                    <div>
-                        <h2>Critical Reorder Alerts (Stockout Risk)</h2>
-                        <p className="page-subtitle">
-                            Products whose available stock has fallen below the minimum safe threshold (Reorder Point / ROP)
-                        </p>
-                    </div>
-                    <Link to="/purchasing" className="audit-summary__link">
-                        Full intelligence hub
-                    </Link>
+                    <h2>Reorder Alerts</h2>
+                    <Link to="/purchasing" className="audit-summary__link">Full hub →</Link>
                 </div>
 
                 {reorderAlerts.length === 0 ? (
-                    <p className="empty-state">
-                        ✅ All inventory levels are currently above reorder thresholds. No stockouts imminent.
-                    </p>
+                    <p className="empty-state">✓ All SKUs are above their reorder thresholds.</p>
                 ) : (
                     <div className="table-wrapper">
                         <table className="data-table">
                             <thead>
                                 <tr>
                                     <th>Product</th>
-                                    <th>Available Stock</th>
-                                    <th>
-                                        Reorder Point (ROP)
-                                        <span className="block text-xs font-normal text-muted">
-                                            Min trigger level
-                                        </span>
-                                    </th>
-                                    <th>
-                                        Suggested Order (EOQ)
-                                        <span className="block text-xs font-normal text-muted">
-                                            Cost-optimal batch
-                                        </span>
-                                    </th>
-                                    <th>Demand Pattern</th>
+                                    <th>Available</th>
+                                    <th>ROP</th>
+                                    <th>Suggested Order</th>
+                                    <th>Demand</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {reorderAlerts.map((alert) => (
                                     <tr key={alert.sku_id}>
-                                        <td className="td-bold">
-                                            {alert.product?.name ?? alert.sku_id}
-                                        </td>
-                                        <td className="text-red font-semibold">
-                                            {alert.qty_available} units
-                                        </td>
+                                        <td className="td-bold">{alert.product?.name ?? alert.sku_id}</td>
+                                        <td className="text-red">{alert.qty_available} units</td>
                                         <td>{alert.reorder_point} units</td>
                                         <td>
                                             {alert.suggested_order_qty ? (
-                                                <span className="text-green font-semibold">
-                                                    {alert.suggested_order_qty} units
-                                                </span>
+                                                <span className="text-green">{alert.suggested_order_qty} units</span>
                                             ) : (
-                                                <span className="text-muted">Calculated on lead time</span>
+                                                <span className="text-muted">—</span>
                                             )}
                                         </td>
                                         <td>
                                             {alert.seasonal ? (
-                                                <span className="badge badge--sale">Seasonal Peak</span>
+                                                <span className="badge badge--sale">Seasonal</span>
                                             ) : (
-                                                <span className="badge badge--receipt">Steady Demand</span>
+                                                <span className="badge badge--receipt">Steady</span>
                                             )}
                                         </td>
                                     </tr>
@@ -175,102 +168,26 @@ export default function PurchasingDashboardView({
                 )}
             </section>
 
-            {/* Explanatory Guide Box for End Users */}
-            <div className="info-card">
-                <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowGuide(!showGuide)}>
-                    <div className="flex items-center gap-2">
-                        <span className="text-base">💡</span>
-                        <span className="font-semibold td-bold text-sm">
-                            What do ABC and XYZ classifications mean?
-                        </span>
-                        <span className="text-xs text-secondary ml-1">
-                            (Click to {showGuide ? "collapse" : "learn more"})
-                        </span>
-                    </div>
-                    <button
-                        type="button"
-                        className="text-xs text-blue font-medium"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setShowGuide(!showGuide);
-                        }}
-                    >
-                        {showGuide ? "Hide Guide ▲" : "Show Guide ▼"}
-                    </button>
-                </div>
-
-                {showGuide && (
-                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed">
-                        <div className="p-3 rounded bg-slate-100 dark:bg-white/5 space-y-1.5">
-                            <span className="font-semibold text-blue text-sm block mb-1">
-                                📊 ABC Analysis: Sales Volume Priority
-                            </span>
-                            <p className="text-secondary">
-                                Sorts your products by unit sales volume (Pareto 80/15/5 rule):
-                            </p>
-                            <ul className="list-disc list-inside space-y-1 text-secondary">
-                                <li>
-                                    <strong className="td-bold">Class A (Top ~80% of sales):</strong> Fast movers and revenue drivers. Never let these run out; review weekly.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">Class B (Next ~15% of sales):</strong> Moderate velocity items. Replenish with standard automated triggers.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">Class C (Bottom ~5% of sales):</strong> Slow movers. Keep lean inventory so cash isn't trapped on shelves.
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div className="p-3 rounded bg-slate-100 dark:bg-white/5 space-y-1.5">
-                            <span className="font-semibold text-blue text-sm block mb-1">
-                                📈 XYZ Analysis: Demand Predictability
-                            </span>
-                            <p className="text-secondary">
-                                Measures how stable or volatile daily customer orders are (Coefficient of Variation / CV):
-                            </p>
-                            <ul className="list-disc list-inside space-y-1 text-secondary">
-                                <li>
-                                    <strong className="td-bold">X (Steady Demand, CV &lt; 0.5):</strong> Constant, reliable sales. Easy to forecast; safe to keep low safety stock.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">Y (Fluctuating Demand, CV 0.5–1.0):</strong> Variable sales with occasional peaks. Maintain a moderate buffer.
-                                </li>
-                                <li>
-                                    <strong className="td-bold">Z (Erratic Demand, CV &gt; 1.0):</strong> Highly spiky or infrequent orders. Order on-demand to prevent excess inventory.
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Demand Classifications and Expiry Watchlist Grid */}
+            {/* Demand Classifications + Expiry Watchlist */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* ABC / XYZ Demand Classifications */}
+                {/* ABC / XYZ */}
                 <section className="table-section">
                     <div className="table-section__header">
-                        <div>
-                            <h2>Product Demand & Priority Matrix</h2>
-                            <p className="page-subtitle">
-                                ABC volume importance combined with XYZ order predictability
-                            </p>
-                        </div>
-                        <Link to="/purchasing" className="audit-summary__link">
-                            View full analysis
-                        </Link>
+                        <h2>Priority Matrix</h2>
+                        <Link to="/purchasing" className="audit-summary__link">Full analysis →</Link>
                     </div>
 
                     {classifications.length === 0 ? (
-                        <p className="empty-state">No classification data computed yet.</p>
+                        <p className="empty-state">No classifications computed yet.</p>
                     ) : (
                         <div className="table-wrapper">
                             <table className="data-table">
                                 <thead>
                                     <tr>
                                         <th>Product</th>
-                                        <th>Volume Priority (ABC)</th>
-                                        <th>Predictability (XYZ)</th>
-                                        <th>Annual Outflow</th>
+                                        <th>ABC</th>
+                                        <th>XYZ</th>
+                                        <th>Annual</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -280,41 +197,24 @@ export default function PurchasingDashboardView({
                                                 {item.product?.name ?? item.sku_id.slice(0, 8)}
                                             </td>
                                             <td>
-                                                <span
-                                                    className={`badge ${
-                                                        item.abc === "A"
-                                                            ? "badge--velocity-high"
-                                                            : item.abc === "B"
-                                                            ? "badge--velocity-medium"
-                                                            : "badge--velocity-low"
-                                                    }`}
-                                                >
-                                                    {item.abc === "A"
-                                                        ? "Class A • High Volume"
-                                                        : item.abc === "B"
-                                                        ? "Class B • Medium"
-                                                        : "Class C • Slow Mover"}
+                                                <span className={`badge ${
+                                                    item.abc === "A" ? "badge--velocity-high"
+                                                    : item.abc === "B" ? "badge--velocity-medium"
+                                                    : "badge--velocity-low"
+                                                }`}>
+                                                    {item.abc}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span
-                                                    className={`badge ${
-                                                        item.xyz === "X"
-                                                            ? "badge--velocity-high"
-                                                            : item.xyz === "Y"
-                                                            ? "badge--velocity-medium"
-                                                            : "badge--velocity-dead"
-                                                    }`}
-                                                >
-                                                    {item.xyz === "X"
-                                                        ? "X • Steady"
-                                                        : item.xyz === "Y"
-                                                        ? "Y • Fluctuating"
-                                                        : "Z • Erratic"}
-                                                    {item.cv != null ? ` (CV: ${item.cv.toFixed(2)})` : ""}
+                                                <span className={`badge ${
+                                                    item.xyz === "X" ? "badge--velocity-high"
+                                                    : item.xyz === "Y" ? "badge--velocity-medium"
+                                                    : "badge--velocity-dead"
+                                                }`}>
+                                                    {item.xyz}{item.cv != null ? ` · ${item.cv.toFixed(1)}` : ""}
                                                 </span>
                                             </td>
-                                            <td>{item.annual_demand} units/yr</td>
+                                            <td>{item.annual_demand}<span className="text-muted"> u/yr</span></td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -323,20 +223,15 @@ export default function PurchasingDashboardView({
                     )}
                 </section>
 
-                {/* Expiry Risk Lots */}
+                {/* Expiry Watchlist */}
                 <section className="table-section">
                     <div className="table-section__header">
-                        <div>
-                            <h2>Procurement Expiry Risk Watchlist</h2>
-                            <p className="page-subtitle">Lots needing supplier return or markdown</p>
-                        </div>
-                        <Link to="/lots" className="audit-summary__link">
-                            View all lots
-                        </Link>
+                        <h2>Expiry Watchlist</h2>
+                        <Link to="/lots" className="audit-summary__link">All lots →</Link>
                     </div>
 
                     {expiryAlerts.length === 0 ? (
-                        <p className="empty-state">No expiring lots detected within 30 days.</p>
+                        <p className="empty-state">No lots expiring within 30 days.</p>
                     ) : (
                         <div className="table-wrapper">
                             <table className="data-table">
@@ -345,7 +240,7 @@ export default function PurchasingDashboardView({
                                         <th>Product</th>
                                         <th>Lot</th>
                                         <th>Remaining</th>
-                                        <th>Units at Risk</th>
+                                        <th>Units</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -354,21 +249,13 @@ export default function PurchasingDashboardView({
                                             <td className="td-bold">
                                                 {lot.product?.name ?? lot.sku_id.slice(0, 8)}
                                             </td>
+                                            <td><code>{lot.lot_id.slice(0, 8)}</code></td>
                                             <td>
-                                                <code>{lot.lot_id.slice(0, 8)}</code>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    className={`badge ${
-                                                        lot.days_to_expiry <= 10
-                                                            ? "badge--flagged"
-                                                            : "badge--pending"
-                                                    }`}
-                                                >
-                                                    {lot.days_to_expiry} days
+                                                <span className={`badge ${lot.days_to_expiry <= 10 ? "badge--flagged" : "badge--pending"}`}>
+                                                    {lot.days_to_expiry}d
                                                 </span>
                                             </td>
-                                            <td className="td-bold">{lot.qty_on_hand} units</td>
+                                            <td className="td-bold">{lot.qty_on_hand}</td>
                                         </tr>
                                     ))}
                                 </tbody>

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Requests\AuditLogs;
 
 use App\Models\AuditLog;
@@ -8,7 +9,7 @@ class IndexAuditLogRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can("viewAny", AuditLog::class);
+        return $this->user()->can('viewAny', AuditLog::class);
     }
 
     public function rules(): array

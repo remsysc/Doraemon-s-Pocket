@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class SeededLoginTest extends TestCase
@@ -14,7 +15,6 @@ class SeededLoginTest extends TestCase
      * The User model's "hashed" cast handles hashing automatically,
      * so the seeder must pass plain-text passwords.
      */
-
     public static function seededAccountsProvider(): array
     {
         return [
@@ -24,7 +24,7 @@ class SeededLoginTest extends TestCase
         ];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('seededAccountsProvider')]
+    #[DataProvider('seededAccountsProvider')]
     public function test_seeded_account_can_login(string $email, string $password, string $expectedRole): void
     {
         $this->seed();

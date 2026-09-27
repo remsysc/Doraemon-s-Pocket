@@ -17,13 +17,13 @@ return [
     |
     */
 
-    "stateful" => explode(
-        ",",
+    'stateful' => explode(
+        ',',
         env(
-            "SANCTUM_STATEFUL_DOMAINS",
+            'SANCTUM_STATEFUL_DOMAINS',
             sprintf(
-                "%s%s",
-                "localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1",
+                '%s%s',
+                'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
                 Sanctum::currentApplicationUrlWithPort(),
                 // Sanctum::currentRequestHost(),
             ),
@@ -42,7 +42,7 @@ return [
     |
     */
 
-    "guard" => ["web"],
+    'guard' => ['web'],
 
     /*
     |--------------------------------------------------------------------------
@@ -55,7 +55,7 @@ return [
     |
     */
 
-    "expiration" => null,
+    'expiration' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -70,7 +70,7 @@ return [
     |
     */
 
-    "token_prefix" => env("SANCTUM_TOKEN_PREFIX", ""),
+    'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
 
     /*
     |--------------------------------------------------------------------------
@@ -83,9 +83,9 @@ return [
     |
     */
 
-    "middleware" => [
-        "authenticate_session" => AuthenticateSession::class,
-        "encrypt_cookies" => EncryptCookies::class,
-        "validate_csrf_token" => ValidateCsrfToken::class,
+    'middleware' => [
+        'authenticate_session' => AuthenticateSession::class,
+        'encrypt_cookies' => EncryptCookies::class,
+        'validate_csrf_token' => ValidateCsrfToken::class,
     ],
 ];

@@ -258,7 +258,7 @@ export default function CycleCountModal({
                     <div className="modal__actions">
                         <button
                             type="button"
-                            className="btn--secondary"
+                            className="btn btn--secondary"
                             onClick={onClose}
                             disabled={submitting}
                         >
@@ -266,7 +266,7 @@ export default function CycleCountModal({
                         </button>
                         <button
                             type="submit"
-                            className="btn--primary"
+                            className="btn btn--primary"
                             disabled={submitting}
                         >
                             {submitting ? "Submitting..." : "Submit Physical Count"}

@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,23 +19,23 @@ class AuditLogFactory extends Factory
     public function definition(): array
     {
         return [
-            "actor_id" => \App\Models\User::factory(),
-            "action" => fake()->randomElement([
-                "CREATE_PRODUCT",
-                "UPDATE_PRODUCT",
-                "CREATE_LOT",
-                "UPDATE_LOT",
+            'actor_id' => User::factory(),
+            'action' => fake()->randomElement([
+                'CREATE_PRODUCT',
+                'UPDATE_PRODUCT',
+                'CREATE_LOT',
+                'UPDATE_LOT',
             ]),
-            "entity_type" => fake()->randomElement([
-                "Product",
-                "Lot",
-                "Category",
-                "User",
+            'entity_type' => fake()->randomElement([
+                'Product',
+                'Lot',
+                'Category',
+                'User',
             ]),
-            "entity_id" => fake()->uuid(),
-            "old_values" => null,
-            "new_values" => ["status" => "active"],
-            "occurred_at" => now(),
+            'entity_id' => fake()->uuid(),
+            'old_values' => null,
+            'new_values' => ['status' => 'active'],
+            'occurred_at' => now(),
         ];
     }
 }

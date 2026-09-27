@@ -45,19 +45,19 @@ class InventoryTransactionTest extends TestCase
         ]);
 
         $product = Product::create([
-            'name'            => 'Portable AC',
-            'barcode'         => 'BC-AC-001',
+            'name' => 'Portable AC',
+            'barcode' => 'BC-AC-001',
             'unit_of_measure' => 'unit',
-            'is_seasonal'     => true,
-            'is_active'       => true,
-            'category_id'     => $category->category_id,
+            'is_seasonal' => true,
+            'is_active' => true,
+            'category_id' => $category->category_id,
         ]);
 
         return Lot::create([
-            'sku_id'        => $product->sku_id,
+            'sku_id' => $product->sku_id,
             'received_date' => now()->toDateTimeString(),
-            'expiry_date'   => now()->addYear()->toDateString(),
-            'bin_location'  => 'A1',
+            'expiry_date' => now()->addYear()->toDateString(),
+            'bin_location' => 'A1',
         ]);
     }
 
@@ -68,10 +68,10 @@ class InventoryTransactionTest extends TestCase
     private function makeTransaction(Lot $lot, User $actor, array $overrides = []): InventoryTransaction
     {
         return InventoryTransaction::create(array_merge([
-            'lot_id'     => $lot->lot_id,
-            'actor_id'   => $actor->id,
-            'txn_type'   => 'RECEIPT',
-            'qty_delta'  => 5,
+            'lot_id' => $lot->lot_id,
+            'actor_id' => $actor->id,
+            'txn_type' => 'RECEIPT',
+            'qty_delta' => 5,
             'occurred_at' => now(),
         ], $overrides));
     }
@@ -79,9 +79,9 @@ class InventoryTransactionTest extends TestCase
     private function validPayload(Lot $lot): array
     {
         return [
-            'lot_id'     => $lot->lot_id,
-            'txn_type'   => 'RECEIPT',
-            'qty_delta'  => 10,
+            'lot_id' => $lot->lot_id,
+            'txn_type' => 'RECEIPT',
+            'qty_delta' => 10,
             'occurred_at' => now()->toDateTimeString(),
         ];
     }
@@ -128,9 +128,9 @@ class InventoryTransactionTest extends TestCase
 
     public function test_warehouse_staff_can_view_a_transaction(): void
     {
-        $lot  = $this->makeLot();
+        $lot = $this->makeLot();
         $actor = $this->warehouseStaff();
-        $txn  = $this->makeTransaction($lot, $actor);
+        $txn = $this->makeTransaction($lot, $actor);
 
         $this->actingAs($this->warehouseStaff())
             ->getJson("/api/inventory-transactions/{$txn->txn_id}")
@@ -140,9 +140,9 @@ class InventoryTransactionTest extends TestCase
 
     public function test_purchasing_manager_can_view_a_transaction(): void
     {
-        $lot   = $this->makeLot();
+        $lot = $this->makeLot();
         $actor = $this->warehouseStaff();
-        $txn   = $this->makeTransaction($lot, $actor, ['txn_type' => 'SALE', 'qty_delta' => -3]);
+        $txn = $this->makeTransaction($lot, $actor, ['txn_type' => 'SALE', 'qty_delta' => -3]);
 
         $this->actingAs($this->purchasingManager())
             ->getJson("/api/inventory-transactions/{$txn->txn_id}")
@@ -152,9 +152,9 @@ class InventoryTransactionTest extends TestCase
 
     public function test_admin_can_view_a_transaction(): void
     {
-        $lot   = $this->makeLot();
+        $lot = $this->makeLot();
         $actor = $this->warehouseStaff();
-        $txn   = $this->makeTransaction($lot, $actor, ['qty_delta' => 20]);
+        $txn = $this->makeTransaction($lot, $actor, ['qty_delta' => 20]);
 
         $this->actingAs($this->admin())
             ->getJson("/api/inventory-transactions/{$txn->txn_id}")
@@ -169,7 +169,7 @@ class InventoryTransactionTest extends TestCase
 
     public function test_warehouse_staff_can_create_a_transaction(): void
     {
-        $lot  = $this->makeLot();
+        $lot = $this->makeLot();
         $user = $this->warehouseStaff();
 
         $response = $this->actingAs($user)
@@ -180,16 +180,16 @@ class InventoryTransactionTest extends TestCase
             ->assertJsonPath('data.quantity_delta', 10);
 
         $this->assertDatabaseHas('inventory_transactions', [
-            'lot_id'    => $lot->lot_id,
-            'txn_type'  => 'RECEIPT',
+            'lot_id' => $lot->lot_id,
+            'txn_type' => 'RECEIPT',
             'qty_delta' => 10,
-            'actor_id'  => $user->id,
+            'actor_id' => $user->id,
         ]);
     }
 
     public function test_admin_can_create_a_transaction(): void
     {
-        $lot  = $this->makeLot();
+        $lot = $this->makeLot();
         $user = $this->admin();
 
         $this->actingAs($user)
@@ -197,7 +197,7 @@ class InventoryTransactionTest extends TestCase
             ->assertCreated();
 
         $this->assertDatabaseHas('inventory_transactions', [
-            'lot_id'   => $lot->lot_id,
+            'lot_id' => $lot->lot_id,
             'actor_id' => $user->id,
         ]);
     }
@@ -227,8 +227,8 @@ class InventoryTransactionTest extends TestCase
 
     public function test_actor_id_is_set_from_authenticated_user_not_client(): void
     {
-        $lot      = $this->makeLot();
-        $user     = $this->warehouseStaff();
+        $lot = $this->makeLot();
+        $user = $this->warehouseStaff();
         $imposter = $this->admin();
 
         // Attempt to supply a different actor_id in the body — must be ignored.
@@ -239,11 +239,11 @@ class InventoryTransactionTest extends TestCase
             ->assertCreated();
 
         $this->assertDatabaseHas('inventory_transactions', [
-            'lot_id'   => $lot->lot_id,
+            'lot_id' => $lot->lot_id,
             'actor_id' => $user->id,   // authenticated user, not the imposter
         ]);
         $this->assertDatabaseMissing('inventory_transactions', [
-            'lot_id'   => $lot->lot_id,
+            'lot_id' => $lot->lot_id,
             'actor_id' => $imposter->id,
         ]);
     }
@@ -370,9 +370,9 @@ class InventoryTransactionTest extends TestCase
 
     public function test_update_route_does_not_exist(): void
     {
-        $lot  = $this->makeLot();
+        $lot = $this->makeLot();
         $user = $this->admin();
-        $txn  = $this->makeTransaction($lot, $user);
+        $txn = $this->makeTransaction($lot, $user);
 
         $this->actingAs($user)
             ->putJson("/api/inventory-transactions/{$txn->txn_id}", [])
@@ -385,9 +385,9 @@ class InventoryTransactionTest extends TestCase
 
     public function test_delete_route_does_not_exist(): void
     {
-        $lot  = $this->makeLot();
+        $lot = $this->makeLot();
         $user = $this->admin();
-        $txn  = $this->makeTransaction($lot, $user);
+        $txn = $this->makeTransaction($lot, $user);
 
         $this->actingAs($user)
             ->deleteJson("/api/inventory-transactions/{$txn->txn_id}")
@@ -400,7 +400,7 @@ class InventoryTransactionTest extends TestCase
 
     public function test_store_response_shape(): void
     {
-        $lot  = $this->makeLot();
+        $lot = $this->makeLot();
         $user = $this->warehouseStaff();
 
         $this->actingAs($user)
@@ -419,7 +419,7 @@ class InventoryTransactionTest extends TestCase
 
     public function test_index_returns_paginated_collection(): void
     {
-        $lot  = $this->makeLot();
+        $lot = $this->makeLot();
         $user = $this->warehouseStaff();
 
         $this->makeTransaction($lot, $user, ['qty_delta' => 5]);

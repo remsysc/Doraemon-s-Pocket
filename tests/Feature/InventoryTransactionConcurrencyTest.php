@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\InventoryTransactionException;
 use App\Models\Category;
 use App\Models\InventorySnapshot;
 use App\Models\InventoryTransaction;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Services\InventoryTransactionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -28,9 +30,9 @@ class InventoryTransactionConcurrencyTest extends TestCase
     {
         parent::setUp();
 
-        if (DB::getDriverName() !== "pgsql") {
+        if (DB::getDriverName() !== 'pgsql') {
             $this->markTestSkipped(
-                "Row-level lock concurrency is PostgreSQL-specific.",
+                'Row-level lock concurrency is PostgreSQL-specific.',
             );
         }
     }
@@ -45,8 +47,8 @@ class InventoryTransactionConcurrencyTest extends TestCase
         // competing request that has already entered its locked section.
         $blocker = DB::connection();
         $blocker->beginTransaction();
-        $blocker->table("inventory_snapshots")
-            ->where("sku_id", $lot->sku_id)
+        $blocker->table('inventory_snapshots')
+            ->where('sku_id', $lot->sku_id)
             ->lockForUpdate()
             ->first();
 
@@ -55,22 +57,22 @@ class InventoryTransactionConcurrencyTest extends TestCase
         $firstSucceeded = false;
         try {
             // Simulate the blocker committing its own sale of the final unit.
-            $blocker->table("inventory_snapshots")
-                ->where("sku_id", $lot->sku_id)
+            $blocker->table('inventory_snapshots')
+                ->where('sku_id', $lot->sku_id)
                 ->update([
-                    "qty_on_hand" => 0,
-                    "qty_available" => 0,
-                    "updated_at" => now(),
+                    'qty_on_hand' => 0,
+                    'qty_available' => 0,
+                    'updated_at' => now(),
                 ]);
-            $blocker->table("inventory_transactions")->insert([
-                "txn_id" => (string) \Illuminate\Support\Str::uuid(),
-                "lot_id" => $lot->lot_id,
-                "actor_id" => $actorId,
-                "txn_type" => "SALE",
-                "qty_delta" => -1,
-                "occurred_at" => now(),
-                "created_at" => now(),
-                "updated_at" => now(),
+            $blocker->table('inventory_transactions')->insert([
+                'txn_id' => (string) Str::uuid(),
+                'lot_id' => $lot->lot_id,
+                'actor_id' => $actorId,
+                'txn_type' => 'SALE',
+                'qty_delta' => -1,
+                'occurred_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
             $blocker->commit();
             $firstSucceeded = true;
@@ -86,17 +88,17 @@ class InventoryTransactionConcurrencyTest extends TestCase
         $secondFailed = false;
         try {
             $service->record([
-                "lot_id" => $lot->lot_id,
-                "txn_type" => "SALE",
-                "qty_delta" => -1,
-                "occurred_at" => now()->toDateTimeString(),
+                'lot_id' => $lot->lot_id,
+                'txn_type' => 'SALE',
+                'qty_delta' => -1,
+                'occurred_at' => now()->toDateTimeString(),
             ], $actorId);
-        } catch (\App\Exceptions\InventoryTransactionException $e) {
+        } catch (InventoryTransactionException $e) {
             $secondFailed = true;
-            $this->assertSame("INSUFFICIENT_STOCK", $e->errorCode);
+            $this->assertSame('INSUFFICIENT_STOCK', $e->errorCode);
         }
 
-        $this->assertTrue($secondFailed, "The second decrement must be rejected.");
+        $this->assertTrue($secondFailed, 'The second decrement must be rejected.');
 
         $snapshot = InventorySnapshot::query()->find($lot->sku_id);
         $this->assertSame(0, $snapshot->qty_available);
@@ -107,8 +109,8 @@ class InventoryTransactionConcurrencyTest extends TestCase
         $this->assertSame(
             1,
             InventoryTransaction::query()
-                ->where("lot_id", $lot->lot_id)
-                ->where("txn_type", "SALE")
+                ->where('lot_id', $lot->lot_id)
+                ->where('txn_type', 'SALE')
                 ->count(),
         );
     }
@@ -116,29 +118,29 @@ class InventoryTransactionConcurrencyTest extends TestCase
     private function makeLotWithAvailableStock(int $units): Lot
     {
         $category = Category::create([
-            "name" => "Concurrency Category",
-            "slug" => "concurrency-category-" . fake()->unique()->numerify("####"),
+            'name' => 'Concurrency Category',
+            'slug' => 'concurrency-category-'.fake()->unique()->numerify('####'),
         ]);
         $product = Product::create([
-            "name" => "Concurrency Product",
-            "barcode" => "CONC-" . fake()->unique()->numerify("####"),
-            "unit_of_measure" => "unit",
-            "is_seasonal" => false,
-            "is_active" => true,
-            "category_id" => $category->category_id,
+            'name' => 'Concurrency Product',
+            'barcode' => 'CONC-'.fake()->unique()->numerify('####'),
+            'unit_of_measure' => 'unit',
+            'is_seasonal' => false,
+            'is_active' => true,
+            'category_id' => $category->category_id,
         ]);
         $lot = Lot::create([
-            "sku_id" => $product->sku_id,
-            "received_date" => now()->toDateTimeString(),
-            "expiry_date" => now()->addYear()->toDateString(),
-            "bin_location" => "A1",
+            'sku_id' => $product->sku_id,
+            'received_date' => now()->toDateTimeString(),
+            'expiry_date' => now()->addYear()->toDateString(),
+            'bin_location' => 'A1',
         ]);
 
         InventorySnapshot::create([
-            "sku_id" => $product->sku_id,
-            "qty_on_hand" => $units,
-            "qty_reserved" => 0,
-            "qty_available" => $units,
+            'sku_id' => $product->sku_id,
+            'qty_on_hand' => $units,
+            'qty_reserved' => 0,
+            'qty_available' => $units,
         ]);
 
         return $lot;

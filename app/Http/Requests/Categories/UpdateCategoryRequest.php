@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Categories;
 
+use App\Models\Category;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,10 +14,10 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\Category $category */
-        $category = $this->route("category");
+        /** @var Category $category */
+        $category = $this->route('category');
 
-        return $this->user()->can("update", $category);
+        return $this->user()->can('update', $category);
     }
 
     /**
@@ -26,17 +27,17 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $category = $this->route("category");
+        $category = $this->route('category');
 
         return [
-            "name" => ["sometimes", "string", "max:255"],
-            "slug" => [
-                "sometimes",
-                "string",
-                "max:255",
-                Rule::unique("categories", "slug")->ignore($category),
+            'name' => ['sometimes', 'string', 'max:255'],
+            'slug' => [
+                'sometimes',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'slug')->ignore($category),
             ],
-            "description" => ["sometimes", "nullable", "string", "max:255"],
+            'description' => ['sometimes', 'nullable', 'string', 'max:255'],
         ];
     }
 }

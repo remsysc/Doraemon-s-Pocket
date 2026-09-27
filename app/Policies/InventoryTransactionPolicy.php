@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\InventoryTransaction;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class InventoryTransactionPolicy
 {
@@ -15,9 +14,10 @@ class InventoryTransactionPolicy
     */
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === "admin") {
+        if ($user->role === 'admin') {
             return true;
         }
+
         return null;
     }
 
@@ -26,7 +26,7 @@ class InventoryTransactionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ["purchasing_manager", "warehouse_staff"]);
+        return in_array($user->role, ['purchasing_manager', 'warehouse_staff']);
     }
 
     /**

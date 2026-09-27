@@ -12,7 +12,7 @@ class InventorySnapshotPolicy
      */
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === "admin") {
+        if ($user->role === 'admin') {
             return true;
         }
 
@@ -24,7 +24,7 @@ class InventorySnapshotPolicy
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ["purchasing_manager", "warehouse_staff"], true);
+        return in_array($user->role, ['purchasing_manager', 'warehouse_staff'], true);
     }
 
     public function view(User $user, InventorySnapshot $inventorySnapshot): bool

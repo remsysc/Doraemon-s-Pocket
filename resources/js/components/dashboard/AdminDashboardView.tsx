@@ -20,6 +20,15 @@ interface AdminDashboardProps {
     onOpenCountModal: () => void;
 }
 
+/* Inline SVG icon helper — avoids an icon library dependency */
+function Icon({ d, children }: { d?: string; children?: React.ReactNode }) {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            {d ? <path d={d} /> : children}
+        </svg>
+    );
+}
+
 export default function AdminDashboardView({
     stats,
     recentTxns,
@@ -29,127 +38,162 @@ export default function AdminDashboardView({
 }: AdminDashboardProps) {
     return (
         <div className="admin-dashboard space-y-6">
-            {/* Quick Action Hub */}
-            <section className="action-grid">
-                <Link to="/cycle-counts" className="action-tile">
-                    <div className="action-tile__icon">⚖️</div>
-                    <div className="action-tile__title">
-                        Reconciliation Queue
-                        {stats.pendingReconciliations > 0 && (
-                            <span className="badge badge--flagged ml-2">
-                                {stats.pendingReconciliations} pending
-                            </span>
-                        )}
-                    </div>
-                    <div className="action-tile__desc">
-                        Review physical floor counts & authorize atomic stock adjustments
-                    </div>
-                </Link>
 
-                <Link to="/reports" className="action-tile">
-                    <div className="action-tile__icon">📊</div>
-                    <div className="action-tile__title">Variance & Turnover Reports</div>
-                    <div className="action-tile__desc">
-                        Analyze shrinkage by SKU and category unit-velocity ratios
-                    </div>
-                </Link>
-
-                <Link to="/users" className="action-tile">
-                    <div className="action-tile__icon">👥</div>
-                    <div className="action-tile__title">User Management & Access</div>
-                    <div className="action-tile__desc">
-                        Manage team accounts, assign roles, and handle deactivations
-                    </div>
-                </Link>
-
-                <Link to="/audit-logs" className="action-tile">
-                    <div className="action-tile__icon">🛡️</div>
-                    <div className="action-tile__title">Audit Trail & Security</div>
-                    <div className="action-tile__desc">
-                        Inspect immutable system logs of all entity updates and mutations
-                    </div>
-                </Link>
-            </section>
-
-            {/* Admin Metric Cards */}
+            {/* ── Stat Cards ── */}
             <section className="stats-grid">
                 <div className="stat-card stat-card--blue">
+                    <div className="stat-card__icon">
+                        <Icon>
+                            <path d="M4 6h16M4 12h16M4 18h16" />
+                        </Icon>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{stats.categories}</span>
-                        <span className="stat-card__label">Catalog Categories</span>
+                        <span className="stat-card__label">Categories</span>
                     </div>
                 </div>
 
                 <div className="stat-card stat-card--green">
+                    <div className="stat-card__icon">
+                        <Icon>
+                            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </Icon>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{stats.products}</span>
-                        <span className="stat-card__label">Master Products (SKUs)</span>
+                        <span className="stat-card__label">Products</span>
                     </div>
                 </div>
 
-                <div
-                    className={`stat-card ${
-                        stats.pendingReconciliations > 0
-                            ? "stat-card--amber"
-                            : "stat-card--blue"
-                    }`}
-                >
+                <div className="stat-card stat-card--blue">
+                    <div className="stat-card__icon">
+                        <Icon>
+                            <path d="M5 8h14M5 12h14M5 16h6" /><rect x="3" y="4" width="18" height="16" rx="2" />
+                        </Icon>
+                    </div>
                     <div className="stat-card__info">
-                        <span className="stat-card__value">
-                            {stats.pendingReconciliations}
-                        </span>
-                        <span className="stat-card__label">Pending Count Reconciliations</span>
+                        <span className="stat-card__value">{stats.lots}</span>
+                        <span className="stat-card__label">Lots</span>
+                    </div>
+                </div>
+
+                <div className={`stat-card ${stats.pendingReconciliations > 0 ? "stat-card--amber" : "stat-card--blue"}`}>
+                    <div className="stat-card__icon">
+                        <Icon>
+                            <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                        </Icon>
+                    </div>
+                    <div className="stat-card__info">
+                        <span className="stat-card__value">{stats.pendingReconciliations}</span>
+                        <span className="stat-card__label">Pending Counts</span>
                     </div>
                 </div>
 
                 <div className="stat-card stat-card--purple">
+                    <div className="stat-card__icon">
+                        <Icon>
+                            <polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                            <polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                        </Icon>
+                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{stats.transactions}</span>
-                        <span className="stat-card__label">Ledger Transactions</span>
+                        <span className="stat-card__label">Transactions</span>
                     </div>
                 </div>
             </section>
 
-            {/* Pending Reconciliation Queue Highlight */}
+            {/* ── Quick Actions ── */}
+            <section className="action-grid">
+                <Link to="/cycle-counts" className="action-tile">
+                    <div className="action-tile__icon">
+                        <Icon>
+                            <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                        </Icon>
+                    </div>
+                    <div className="action-tile__title">
+                        Reconciliation Queue
+                        {stats.pendingReconciliations > 0 && (
+                            <span className="badge badge--flagged" style={{ marginLeft: 8 }}>
+                                {stats.pendingReconciliations}
+                            </span>
+                        )}
+                    </div>
+                    <div className="action-tile__desc">Review floor counts & approve adjustments</div>
+                </Link>
+
+                <Link to="/reports" className="action-tile">
+                    <div className="action-tile__icon">
+                        <Icon>
+                            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+                        </Icon>
+                    </div>
+                    <div className="action-tile__title">Reports & Analytics</div>
+                    <div className="action-tile__desc">Variance, shrinkage & turnover reports</div>
+                </Link>
+
+                <Link to="/users" className="action-tile">
+                    <div className="action-tile__icon">
+                        <Icon>
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </Icon>
+                    </div>
+                    <div className="action-tile__title">User Management</div>
+                    <div className="action-tile__desc">Manage accounts, roles & access</div>
+                </Link>
+
+                <Link to="/audit-logs" className="action-tile">
+                    <div className="action-tile__icon">
+                        <Icon>
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+                        </Icon>
+                    </div>
+                    <div className="action-tile__title">Audit Logs</div>
+                    <div className="action-tile__desc">Immutable system event trail</div>
+                </Link>
+            </section>
+
+            {/* ── Reconciliation Queue ── */}
             <section className="table-section">
                 <div className="table-section__header">
-                    <div>
-                        <h2>Cycle Count Discrepancy & Reconciliation Queue</h2>
-                        <p className="page-subtitle">
-                            Floor count verifications awaiting supervisor review and adjustment
-                        </p>
-                    </div>
+                    <h2>
+                        Reconciliation Queue
+                        {stats.pendingReconciliations > 0 && (
+                            <span className="badge badge--flagged" style={{ marginLeft: 8 }}>
+                                {stats.pendingReconciliations} pending
+                            </span>
+                        )}
+                    </h2>
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
-                            className="btn--secondary btn--sm"
+                            className="btn btn--secondary btn--sm"
                             onClick={onOpenCountModal}
                         >
                             + Log Count
                         </button>
                         <Link to="/cycle-counts" className="audit-summary__link">
-                            Open full queue
+                            Full queue →
                         </Link>
                     </div>
                 </div>
 
                 {pendingCounts.length === 0 ? (
-                    <p className="empty-state">
-                        ✅ No pending cycle count discrepancies awaiting reconciliation. Inventory is balanced.
-                    </p>
+                    <p className="empty-state">All counts reconciled — inventory is balanced.</p>
                 ) : (
                     <div className="table-wrapper">
                         <table className="data-table">
                             <thead>
                                 <tr>
                                     <th>Product</th>
-                                    <th>Staff Counter</th>
-                                    <th>Expected Qty</th>
-                                    <th>Counted Qty</th>
-                                    <th>Variance Delta</th>
-                                    <th>Variance %</th>
-                                    <th>Priority</th>
-                                    <th>Action</th>
+                                    <th>Counter</th>
+                                    <th>Expected</th>
+                                    <th>Counted</th>
+                                    <th>Variance</th>
+                                    <th>Flag</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -160,36 +204,25 @@ export default function AdminDashboardView({
                                         </td>
                                         <td>{count.counter_name}</td>
                                         <td>{count.expected_qty}</td>
-                                        <td className="font-semibold">{count.counted_qty}</td>
-                                        <td
-                                            className={
-                                                count.variance_qty < 0
-                                                    ? "text-red font-semibold"
-                                                    : count.variance_qty > 0
-                                                    ? "text-green font-semibold"
-                                                    : ""
-                                            }
-                                        >
-                                            {count.variance_qty > 0 ? "+" : ""}
-                                            {count.variance_qty}
+                                        <td>{count.counted_qty}</td>
+                                        <td className={
+                                            count.variance_qty < 0 ? "text-red" :
+                                            count.variance_qty > 0 ? "text-green" : ""
+                                        }>
+                                            {count.variance_qty > 0 ? "+" : ""}{count.variance_qty}
+                                            <span className="text-muted" style={{ fontSize: 11, marginLeft: 4 }}>
+                                                ({Math.abs(count.variance_pct).toFixed(1)}%)
+                                            </span>
                                         </td>
-                                        <td>{Math.abs(count.variance_pct).toFixed(1)}%</td>
                                         <td>
                                             {count.is_flagged ? (
-                                                <span className="badge badge--flagged">
-                                                    Flagged (&gt;5%)
-                                                </span>
+                                                <span className="badge badge--flagged">Flagged</span>
                                             ) : (
-                                                <span className="badge badge--pending">
-                                                    Normal Check
-                                                </span>
+                                                <span className="badge badge--pending">Normal</span>
                                             )}
                                         </td>
                                         <td>
-                                            <Link
-                                                to="/cycle-counts"
-                                                className="btn--primary btn--sm inline-flex"
-                                            >
+                                            <Link to="/cycle-counts" className="btn btn--primary btn--sm">
                                                 Review
                                             </Link>
                                         </td>
@@ -201,21 +234,16 @@ export default function AdminDashboardView({
                 )}
             </section>
 
-            {/* Split Feeds: Recent Ledger & Audit Trail */}
+            {/* ── Split: Ledger + Audit ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Ledger Transactions */}
+                {/* Recent Transactions */}
                 <section className="table-section">
                     <div className="table-section__header">
-                        <div>
-                            <h2>Recent Ledger Activity</h2>
-                            <p className="page-subtitle">Stock movements & adjustments</p>
-                        </div>
-                        <Link to="/transactions" className="audit-summary__link">
-                            View ledger
-                        </Link>
+                        <h2>Recent Transactions</h2>
+                        <Link to="/transactions" className="audit-summary__link">View all →</Link>
                     </div>
                     {recentTxns.length === 0 ? (
-                        <p className="empty-state">No transactions recorded yet.</p>
+                        <p className="empty-state">No transactions yet.</p>
                     ) : (
                         <div className="table-wrapper">
                             <table className="data-table">
@@ -224,36 +252,25 @@ export default function AdminDashboardView({
                                         <th>Type</th>
                                         <th>Delta</th>
                                         <th>Product</th>
-                                        <th>Actor</th>
+                                        <th>By</th>
                                         <th>Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {recentTxns.slice(0, 5).map((txn) => (
+                                    {recentTxns.slice(0, 6).map((txn) => (
                                         <tr key={txn.id}>
                                             <td>
-                                                <span
-                                                    className={`badge badge--${txn.type.toLowerCase()}`}
-                                                >
+                                                <span className={`badge badge--${txn.type.toLowerCase()}`}>
                                                     {txn.type}
                                                 </span>
                                             </td>
-                                            <td
-                                                className={
-                                                    txn.quantity_delta >= 0
-                                                        ? "text-green font-medium"
-                                                        : "text-red font-medium"
-                                                }
-                                            >
-                                                {txn.quantity_delta >= 0 ? "+" : ""}
-                                                {txn.quantity_delta}
+                                            <td className={txn.quantity_delta >= 0 ? "text-green" : "text-red"}>
+                                                {txn.quantity_delta >= 0 ? "+" : ""}{txn.quantity_delta}
                                             </td>
                                             <td>{txn.lot?.product?.name ?? "—"}</td>
                                             <td>{txn.actor?.name ?? "System"}</td>
-                                            <td>
-                                                {new Date(
-                                                    txn.occurred_at,
-                                                ).toLocaleDateString()}
+                                            <td className="text-muted">
+                                                {new Date(txn.occurred_at).toLocaleDateString()}
                                             </td>
                                         </tr>
                                     ))}
@@ -266,16 +283,11 @@ export default function AdminDashboardView({
                 {/* Audit Logs */}
                 <section className="table-section">
                     <div className="table-section__header">
-                        <div>
-                            <h2>System Audit Activity</h2>
-                            <p className="page-subtitle">Governance & security logs</p>
-                        </div>
-                        <Link to="/audit-logs" className="audit-summary__link">
-                            View all logs
-                        </Link>
+                        <h2>Audit Trail</h2>
+                        <Link to="/audit-logs" className="audit-summary__link">View all →</Link>
                     </div>
                     {recentAuditLogs.length === 0 ? (
-                        <p className="empty-state">No audit logs recorded yet.</p>
+                        <p className="empty-state">No audit events yet.</p>
                     ) : (
                         <div className="table-wrapper">
                             <table className="data-table">
@@ -284,11 +296,11 @@ export default function AdminDashboardView({
                                         <th>Action</th>
                                         <th>Entity</th>
                                         <th>User</th>
-                                        <th>Timestamp</th>
+                                        <th>Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {recentAuditLogs.slice(0, 5).map((log) => (
+                                    {recentAuditLogs.slice(0, 6).map((log) => (
                                         <tr key={log.id}>
                                             <td>
                                                 <span className="badge badge--adjustment">
@@ -299,10 +311,8 @@ export default function AdminDashboardView({
                                                 {log.entity_type.split("\\").pop()}
                                             </td>
                                             <td>{log.actor?.name ?? "System"}</td>
-                                            <td>
-                                                {new Date(
-                                                    log.occurred_at,
-                                                ).toLocaleDateString()}
+                                            <td className="text-muted">
+                                                {new Date(log.occurred_at).toLocaleDateString()}
                                             </td>
                                         </tr>
                                     ))}
@@ -313,48 +323,54 @@ export default function AdminDashboardView({
                 </section>
             </div>
 
-            {/* Architecture & Roadmap Capabilities Status */}
-            <section className="table-section">
-                <div className="table-section__header">
-                    <div>
-                        <h2>WalangBrownout Platform Roadmap & Capability Status</h2>
-                        <p className="page-subtitle">
-                            System architecture, implemented milestone modules, and upcoming plans
-                        </p>
-                    </div>
-                </div>
-                <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="info-card">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="text-green font-bold">✓ Complete</span>
-                            <span className="font-semibold td-bold">Sprints 1–4: Core Foundation</span>
+            {/* ── Platform Status ── */}
+            <section>
+                <div style={{ display: 'flex', gap: 12 }}>
+                    {/* Sprint card */}
+                    {[
+                        {
+                            status: 'done',
+                            label: 'Sprints 1–5',
+                            desc: 'Core ledger, ABC/XYZ, EOQ/ROP, cycle counts, reconciliation',
+                        },
+                        {
+                            status: 'active',
+                            label: 'Sprint 6',
+                            desc: 'Hardening, RBAC regression, performance & demo readiness',
+                        },
+                        {
+                            status: 'next',
+                            label: 'Upcoming',
+                            desc: 'Multi-warehouse, supplier portal & financial invoice tracking',
+                        },
+                    ].map(({ status, label, desc }) => (
+                        <div
+                            key={label}
+                            className="info-card"
+                            style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{
+                                    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                                    background: status === 'done' ? 'var(--wb-success)' : status === 'active' ? 'var(--wb-accent)' : 'var(--wb-text-muted)',
+                                    boxShadow: status === 'active' ? '0 0 6px var(--wb-accent)' : undefined,
+                                }} />
+                                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wb-text-primary)' }}>
+                                    {label}
+                                </span>
+                                <span className={`badge ${status === 'done' ? 'badge--active' : status === 'active' ? 'badge--receipt' : 'badge--inactive'}`}
+                                    style={{ marginLeft: 'auto' }}>
+                                    {status === 'done' ? 'Complete' : status === 'active' ? 'Active' : 'Planned'}
+                                </span>
+                            </div>
+                            <p style={{ fontSize: 12, color: 'var(--wb-text-muted)', lineHeight: 1.5, margin: 0 }}>
+                                {desc}
+                            </p>
                         </div>
-                        <p className="text-xs text-secondary leading-relaxed">
-                            Append-only ledger, PostgreSQL row-level locks, real-time snapshot projections, ABC/XYZ classification, and EOQ/ROP reorder intelligence alerts.
-                        </p>
-                    </div>
-
-                    <div className="info-card border-blue-500/40">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="text-blue font-bold">● Active</span>
-                            <span className="font-semibold td-bold">Sprint 5: Reconciliation & Reports</span>
-                        </div>
-                        <p className="text-xs text-secondary leading-relaxed">
-                            Warehouse staff physical cycle counts, Admin reconciliation queue with atomic adjustment generation, variance/shrinkage reports, and user governance.
-                        </p>
-                    </div>
-
-                    <div className="info-card">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="text-amber font-bold">◻ Next</span>
-                            <span className="font-semibold td-bold">Sprint 6: Hardening & Demo</span>
-                        </div>
-                        <p className="text-xs text-secondary leading-relaxed">
-                            End-to-end symptom mitigations demo flow, complete RBAC regression matrix, performance optimizations, and production deployment readiness.
-                        </p>
-                    </div>
+                    ))}
                 </div>
             </section>
+
         </div>
     );
 }
