@@ -12,6 +12,8 @@ import {
     getReorderConfigs,
     getClassifications,
     getCycleCounts,
+    getTurnoverReport,
+    getVarianceReport,
     type InventoryTransaction,
     type AuditLog,
     type ExpiryAlert,
@@ -19,6 +21,8 @@ import {
     type ReorderConfig,
     type Classification,
     type CycleCount,
+    type TurnoverReportItem,
+    type VarianceReportItem,
 } from "../lib/inventory-api";
 import AdminDashboardView from "../components/dashboard/AdminDashboardView";
 import WarehouseDashboardView from "../components/dashboard/WarehouseDashboardView";
@@ -48,6 +52,8 @@ export default function Dashboard() {
     const [reorderAlerts, setReorderAlerts] = useState<ReorderAlert[]>([]);
     const [reorderConfigs, setReorderConfigs] = useState<ReorderConfig[]>([]);
     const [classifications, setClassifications] = useState<Classification[]>([]);
+    const [turnoverData, setTurnoverData] = useState<TurnoverReportItem[] | null>(null);
+    const [varianceData, setVarianceData] = useState<VarianceReportItem[] | null>(null);
 
     async function loadData() {
         setLoading(true);
@@ -143,6 +149,19 @@ export default function Dashboard() {
                     getAuditLogs(1, 8)
                         .then((res) => setRecentAuditLogs(res.data.data))
                         .catch(() => setRecentAuditLogs([])),
+                );
+            }
+
+            if (currentUser.role === "admin") {
+                promises.push(
+                    getTurnoverReport({ window_days: 90 })
+                        .then((res) => setTurnoverData(res.data.data))
+                        .catch(() => setTurnoverData(null)),
+                );
+                promises.push(
+                    getVarianceReport()
+                        .then((res) => setVarianceData(res.data.data))
+                        .catch(() => setVarianceData(null)),
                 );
             }
 
@@ -263,6 +282,8 @@ export default function Dashboard() {
                             recentTxns={recentTxns}
                             recentAuditLogs={recentAuditLogs}
                             pendingCounts={pendingCounts}
+                            turnoverData={turnoverData}
+                            shrinkageData={varianceData}
                             onOpenCountModal={() => setIsCountModalOpen(true)}
                         />
                     )}

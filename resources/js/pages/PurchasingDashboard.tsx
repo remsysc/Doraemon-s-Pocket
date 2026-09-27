@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
     getReorderAlerts,
     getExpiryAlerts,
@@ -10,6 +9,12 @@ import {
     type ReorderConfig,
     type Classification,
 } from "../lib/inventory-api";
+
+const PurchasingAnalyticsCharts = lazy(() =>
+    import("../components/dashboard/DashboardCharts").then((module) => ({
+        default: module.PurchasingAnalyticsCharts,
+    })),
+);
 
 export default function PurchasingDashboard() {
     const [reorderAlerts, setReorderAlerts] = useState<ReorderAlert[]>([]);
@@ -200,6 +205,10 @@ export default function PurchasingDashboard() {
                             </div>
                         )}
                     </section>
+
+                    <Suspense fallback={<div className="analytics-loading">Loading analytics…</div>}>
+                        <PurchasingAnalyticsCharts classifications={classifications} />
+                    </Suspense>
 
                     {/* ABC / XYZ Classification */}
                     <section className="table-section mb-6">

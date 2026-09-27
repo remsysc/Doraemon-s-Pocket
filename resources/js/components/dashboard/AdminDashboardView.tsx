@@ -1,9 +1,18 @@
+import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import type {
     InventoryTransaction,
     AuditLog,
     CycleCount,
+    TurnoverReportItem,
+    VarianceReportItem,
 } from "../../lib/inventory-api";
+
+const AdminAnalyticsCharts = lazy(() =>
+    import("./DashboardCharts").then((module) => ({
+        default: module.AdminAnalyticsCharts,
+    })),
+);
 
 interface AdminDashboardProps {
     stats: {
@@ -17,6 +26,8 @@ interface AdminDashboardProps {
     recentTxns: InventoryTransaction[];
     recentAuditLogs: AuditLog[];
     pendingCounts: CycleCount[];
+    turnoverData: TurnoverReportItem[] | null;
+    shrinkageData: VarianceReportItem[] | null;
     onOpenCountModal: () => void;
 }
 
@@ -34,6 +45,8 @@ export default function AdminDashboardView({
     recentTxns,
     recentAuditLogs,
     pendingCounts,
+    turnoverData,
+    shrinkageData,
     onOpenCountModal,
 }: AdminDashboardProps) {
     return (
@@ -154,6 +167,13 @@ export default function AdminDashboardView({
                     <div className="action-tile__desc">Immutable system event trail</div>
                 </Link>
             </section>
+
+            <Suspense fallback={<div className="analytics-loading">Loading analytics…</div>}>
+                <AdminAnalyticsCharts
+                    turnoverData={turnoverData}
+                    shrinkageData={shrinkageData}
+                />
+            </Suspense>
 
             {/* ── Reconciliation Queue ── */}
             <section className="table-section">
@@ -322,54 +342,6 @@ export default function AdminDashboardView({
                     )}
                 </section>
             </div>
-
-            {/* ── Platform Status ── */}
-            <section>
-                <div style={{ display: 'flex', gap: 12 }}>
-                    {/* Sprint card */}
-                    {[
-                        {
-                            status: 'done',
-                            label: 'Sprints 1–5',
-                            desc: 'Core ledger, ABC/XYZ, EOQ/ROP, cycle counts, reconciliation',
-                        },
-                        {
-                            status: 'active',
-                            label: 'Sprint 6',
-                            desc: 'Hardening, RBAC regression, performance & demo readiness',
-                        },
-                        {
-                            status: 'next',
-                            label: 'Upcoming',
-                            desc: 'Multi-warehouse, supplier portal & financial invoice tracking',
-                        },
-                    ].map(({ status, label, desc }) => (
-                        <div
-                            key={label}
-                            className="info-card"
-                            style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{
-                                    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                                    background: status === 'done' ? 'var(--wb-success)' : status === 'active' ? 'var(--wb-accent)' : 'var(--wb-text-muted)',
-                                    boxShadow: status === 'active' ? '0 0 6px var(--wb-accent)' : undefined,
-                                }} />
-                                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wb-text-primary)' }}>
-                                    {label}
-                                </span>
-                                <span className={`badge ${status === 'done' ? 'badge--active' : status === 'active' ? 'badge--receipt' : 'badge--inactive'}`}
-                                    style={{ marginLeft: 'auto' }}>
-                                    {status === 'done' ? 'Complete' : status === 'active' ? 'Active' : 'Planned'}
-                                </span>
-                            </div>
-                            <p style={{ fontSize: 12, color: 'var(--wb-text-muted)', lineHeight: 1.5, margin: 0 }}>
-                                {desc}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </section>
 
         </div>
     );
