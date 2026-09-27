@@ -270,7 +270,7 @@ export default function CycleCounts() {
             });
             setActionMessage({
                 type: "success",
-                text: `Reconciled ${reconcileTarget.product?.name ?? "SKU"} — ADJUSTMENT transaction recorded.`,
+                text: `Successfully reconciled ${reconcileTarget.product?.name ?? "SKU"}. An atomic ADJUSTMENT ledger transaction was recorded.`,
             });
             setReconcileTarget(null);
             setReconcileNotes("");
@@ -299,7 +299,7 @@ export default function CycleCounts() {
 
             setActionMessage({
                 type: "success",
-                text: `Reconciled ${reconcileTarget.product?.name ?? "SKU"} — ADJUSTMENT transaction recorded.`,
+                text: `Reconciled ${reconcileTarget.product?.name ?? "SKU"}. Atomic ADJUSTMENT transaction recorded in audit ledger.`,
             });
             setReconcileTarget(null);
             setReconcileNotes("");
@@ -318,7 +318,7 @@ export default function CycleCounts() {
             await dismissCycleCount(dismissTarget.id);
             setActionMessage({
                 type: "success",
-                text: "Discrepancy dismissed — no ledger adjustment made.",
+                text: "Cycle count discrepancy was dismissed without ledger adjustment.",
             });
             setDismissTarget(null);
             fetchCounts();
@@ -327,7 +327,10 @@ export default function CycleCounts() {
             const allCounts = getStoredLocalCounts();
             const updated = allCounts.map((c) => {
                 if (c.id === dismissTarget.id) {
-                    return { ...c, status: "dismissed" as const };
+                    return {
+                        ...c,
+                        status: "dismissed" as const,
+                    };
                 }
                 return c;
             });
@@ -339,7 +342,7 @@ export default function CycleCounts() {
 
             setActionMessage({
                 type: "success",
-                text: "Discrepancy dismissed — no ledger adjustment made.",
+                text: "Count discrepancy dismissed without ledger adjustment.",
             });
             setDismissTarget(null);
             fetchCounts();
@@ -356,131 +359,174 @@ export default function CycleCounts() {
 
     return (
         <>
-            {/* ── Header ── */}
             <div className="page-header">
                 <div>
                     <div className="flex items-center gap-3">
-                        <h1>Cycle Counts</h1>
+                        <h1>Cycle Counts & Inventory Reconciliation</h1>
                         {isDemoMode && (
-                            <span className="badge badge--pill badge--receipt">
+                            <span className="badge badge--pill badge--receipt" title="Sprint 5 reconciliation pipeline is active in local interactive preview">
                                 Interactive Preview
                             </span>
                         )}
                     </div>
                     <p className="page-subtitle">
                         {isAdmin
-                            ? "Review discrepancies & authorize stock adjustments"
-                            : "Submit physical counts & track reconciliation status"}
+                            ? "Audit warehouse floor counts, review flagged discrepancies, and authorize atomic stock adjustments"
+                            : "Submit physical count verifications and track reconciliation status"}
                     </p>
                 </div>
                 <button
                     type="button"
-                    className="btn btn--primary"
+                    className="btn--primary"
                     onClick={() => setIsCountModalOpen(true)}
                 >
-                    + Submit Count
+                    + Submit New Count
                 </button>
             </div>
 
-            {/* ── Action Message ── */}
             {actionMessage && (
-                <div className={`alert-banner ${actionMessage.type === "success" ? "alert-banner--info" : "alert-banner--danger"}`}>
+                <div
+                    className={`alert-banner ${
+                        actionMessage.type === "success"
+                            ? "alert-banner--info"
+                            : "alert-banner--danger"
+                    }`}
+                >
                     {actionMessage.text}
                 </div>
             )}
 
-            {/* ── Stat Cards ── */}
+            {/* Quick Metrics */}
             <section className="stats-grid">
                 <div className="stat-card stat-card--blue">
-                    <div className="stat-card__icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                        </svg>
-                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">
                             {isDemoMode ? allStoredCounts.length : (meta?.total ?? safeCounts.length)}
                         </span>
-                        <span className="stat-card__label">Total Counts</span>
+                        <span className="stat-card__label">Total Physical Counts</span>
                     </div>
                 </div>
 
-                <div className={`stat-card ${pendingCount > 0 ? "stat-card--amber" : "stat-card--green"}`}>
-                    <div className="stat-card__icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                        </svg>
-                    </div>
+                <div
+                    className={`stat-card ${
+                        pendingCount > 0 ? "stat-card--amber" : "stat-card--green"
+                    }`}
+                >
                     <div className="stat-card__info">
                         <span className="stat-card__value">{pendingCount}</span>
-                        <span className="stat-card__label">Pending Review</span>
+                        <span className="stat-card__label">Pending Reconciliation</span>
                     </div>
                 </div>
 
-                <div className={`stat-card ${flaggedCount > 0 ? "stat-card--red" : "stat-card--blue"}`}>
-                    <div className="stat-card__icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-                        </svg>
-                    </div>
+                <div
+                    className={`stat-card ${
+                        flaggedCount > 0 ? "stat-card--red" : "stat-card--blue"
+                    }`}
+                >
                     <div className="stat-card__info">
                         <span className="stat-card__value">{flaggedCount}</span>
-                        <span className="stat-card__label">Flagged (&gt;5%)</span>
+                        <span className="stat-card__label">Flagged Discrepancies (&gt;5%)</span>
                     </div>
                 </div>
 
                 <div className="stat-card stat-card--green">
-                    <div className="stat-card__icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                    </div>
                     <div className="stat-card__info">
                         <span className="stat-card__value">{reconciledCount}</span>
-                        <span className="stat-card__label">Reconciled</span>
+                        <span className="stat-card__label">Reconciled & Balanced</span>
                     </div>
                 </div>
             </section>
 
-            {/* ── Filters ── */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="tab-bar" style={{ marginBottom: 0, borderBottom: 'none' }}>
-                    {(["all", "pending", "reconciled", "dismissed"] as const).map((s) => (
-                        <button
-                            key={s}
-                            type="button"
-                            className={`tab-btn ${statusFilter === s ? "tab-btn--active" : ""}`}
-                            onClick={() => { setStatusFilter(s); setPage(1); }}
-                        >
-                            {s === "all" ? "All" : s === "pending" ? `Pending (${pendingCount})` : s.charAt(0).toUpperCase() + s.slice(1)}
-                        </button>
-                    ))}
+            {/* Reconciliation Process Explanation Banner */}
+            <div className="info-card mb-6 text-xs text-secondary leading-relaxed">
+                <div className="flex items-start gap-3">
+                    
+                    <div className="space-y-1">
+                        <p className="font-semibold text-primary td-bold">
+                            Cycle Count & Ledger Reconciliation Workflow
+                        </p>
+                        <p>
+                            Physical shelf counts submitted by <strong>Warehouse Staff</strong> are compared directly against the system snapshot on-hand quantity. Discrepancies exceeding <strong>±5.0%</strong> are automatically flagged. Only <strong>Admins</strong> can authorize a stock reconciliation, which atomically records an immutable <code>ADJUSTMENT</code> transaction in the ledger under row-level database lock.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <div className="tab-bar mb-0 border-b-0">
+                    <button
+                        type="button"
+                        className={`tab-btn ${statusFilter === "all" ? "tab-btn--active" : ""}`}
+                        onClick={() => {
+                            setStatusFilter("all");
+                            setPage(1);
+                        }}
+                    >
+                        All Counts
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${statusFilter === "pending" ? "tab-btn--active" : ""}`}
+                        onClick={() => {
+                            setStatusFilter("pending");
+                            setPage(1);
+                        }}
+                    >
+                        Pending Review ({pendingCount})
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${statusFilter === "reconciled" ? "tab-btn--active" : ""}`}
+                        onClick={() => {
+                            setStatusFilter("reconciled");
+                            setPage(1);
+                        }}
+                    >
+                        Reconciled
+                    </button>
+                    <button
+                        type="button"
+                        className={`tab-btn ${statusFilter === "dismissed" ? "tab-btn--active" : ""}`}
+                        onClick={() => {
+                            setStatusFilter("dismissed");
+                            setPage(1);
+                        }}
+                    >
+                        Dismissed
+                    </button>
                 </div>
 
-                <label className="flex items-center gap-2 text-xs font-medium cursor-pointer" style={{ color: 'var(--wb-text-secondary)' }}>
+                <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
                     <input
                         type="checkbox"
                         checked={flaggedOnly}
-                        onChange={(e) => { setFlaggedOnly(e.target.checked); setPage(1); }}
+                        onChange={(e) => {
+                            setFlaggedOnly(e.target.checked);
+                            setPage(1);
+                        }}
                         className="rounded"
                     />
-                    Flagged only
+                    <span>Show Flagged Discrepancies Only (&gt;5% Variance)</span>
                 </label>
             </div>
 
-            {/* ── Main Table ── */}
+            {/* Main Table */}
             <section className="table-section">
                 {loading ? (
-                    <div className="page-loading">Loading cycle counts…</div>
+                    <div className="page-loading">Loading cycle counts & discrepancies...</div>
                 ) : safeCounts.length === 0 ? (
-                    <div className="empty-state" style={{ textAlign: 'center', padding: '40px 0' }}>
-                        <p style={{ marginBottom: 12 }}>No counts match the selected filter.</p>
+                    <div className="empty-state py-12 text-center">
+                        <p className="text-base font-medium mb-2">No cycle counts match the selected filter</p>
+                        <p className="text-secondary text-xs mb-4">
+                            Physical shelf counts submitted by warehouse staff will appear here for review.
+                        </p>
                         <button
                             type="button"
-                            className="btn btn--primary btn--sm"
+                            className="btn--primary btn--sm inline-flex"
                             onClick={() => setIsCountModalOpen(true)}
                         >
-                            + Submit Count
+                            + Submit Physical Count
                         </button>
                     </div>
                 ) : (
@@ -489,14 +535,15 @@ export default function CycleCounts() {
                             <thead>
                                 <tr>
                                     <th>Product</th>
-                                    <th>Lot</th>
-                                    <th>By</th>
-                                    <th>Expected</th>
-                                    <th>Counted</th>
-                                    <th>Variance</th>
+                                    <th>Lot / Bin</th>
+                                    <th>Staff Counter</th>
+                                    <th>Expected Qty</th>
+                                    <th>Counted Qty</th>
+                                    <th>Variance Delta</th>
+                                    <th>Variance %</th>
                                     <th>Status</th>
-                                    <th>Date</th>
-                                    {isAdmin && <th></th>}
+                                    <th>Counted Date</th>
+                                    {isAdmin && <th>Actions</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -511,69 +558,86 @@ export default function CycleCounts() {
                                     return (
                                         <tr key={c.id}>
                                             <td className="td-bold">
-                                                {productName}
+                                                <div>{productName}</div>
                                                 {c?.notes && (
-                                                    <div
-                                                        className="text-muted"
-                                                        style={{ fontSize: 11, fontWeight: 400, marginTop: 2, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                                                        title={c.notes}
-                                                    >
+                                                    <div className="text-xs text-muted font-normal mt-0.5 max-w-xs truncate" title={c.notes}>
                                                         {c.notes}
                                                     </div>
                                                 )}
                                             </td>
                                             <td>
-                                                {lotDisplay
-                                                    ? <code>{lotDisplay}</code>
-                                                    : <span className="text-muted">—</span>
-                                                }
+                                                {lotDisplay ? (
+                                                    <code>{lotDisplay}</code>
+                                                ) : (
+                                                    <span className="text-muted">General SKU</span>
+                                                )}
                                             </td>
-                                            <td>{c?.counter_name ?? "—"}</td>
+                                            <td>{c?.counter_name ?? "Warehouse Staff"}</td>
                                             <td>{c?.expected_qty ?? 0}</td>
-                                            <td>{c?.counted_qty ?? 0}</td>
+                                            <td className="font-semibold">{c?.counted_qty ?? 0}</td>
+                                            <td
+                                                className={
+                                                    varianceQty < 0
+                                                        ? "text-red font-semibold"
+                                                        : varianceQty > 0
+                                                        ? "text-green font-semibold"
+                                                        : ""
+                                                }
+                                            >
+                                                {varianceQty > 0 ? "+" : ""}
+                                                {varianceQty}
+                                            </td>
                                             <td>
-                                                <span className={
-                                                    varianceQty < 0 ? "text-red" :
-                                                    varianceQty > 0 ? "text-green" : "text-muted"
-                                                }>
-                                                    {varianceQty > 0 ? "+" : ""}{varianceQty}
-                                                </span>
-                                                <span className="text-muted" style={{ fontSize: 11, marginLeft: 4 }}>
-                                                    ({variancePctNum.toFixed(1)}%)
+                                                <span
+                                                    className={`badge ${
+                                                        isFlagged
+                                                            ? "badge--flagged"
+                                                            : "badge--receipt"
+                                                    }`}
+                                                >
+                                                    {variancePctNum.toFixed(1)}%
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className={`badge ${
-                                                    c?.status === "reconciled" ? "badge--reconciled"
-                                                    : c?.status === "dismissed" ? "badge--dismissed"
-                                                    : isFlagged ? "badge--flagged"
-                                                    : "badge--pending"
-                                                }`}>
-                                                    {c?.status === "pending" && isFlagged ? "Flagged" : c?.status ?? "pending"}
+                                                <span
+                                                    className={`badge ${
+                                                        c?.status === "reconciled"
+                                                            ? "badge--reconciled"
+                                                            : c?.status === "dismissed"
+                                                            ? "badge--dismissed"
+                                                            : isFlagged
+                                                            ? "badge--flagged"
+                                                            : "badge--pending"
+                                                    }`}
+                                                >
+                                                    {c?.status ?? "pending"}
                                                 </span>
                                             </td>
-                                            <td className="text-muted">{countedDateStr}</td>
+                                            <td>{countedDateStr}</td>
                                             {isAdmin && (
                                                 <td>
                                                     {c?.status === "pending" ? (
                                                         <div className="flex items-center gap-2">
                                                             <button
                                                                 type="button"
-                                                                className="btn btn--success btn--sm"
-                                                                onClick={() => { setReconcileTarget(c); setReconcileNotes(c?.notes ?? ""); }}
+                                                                className="btn--success btn--sm"
+                                                                onClick={() => {
+                                                                    setReconcileTarget(c);
+                                                                    setReconcileNotes(c?.notes ?? "");
+                                                                }}
                                                             >
                                                                 Reconcile
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                className="btn btn--danger btn--sm"
+                                                                className="btn--danger btn--sm"
                                                                 onClick={() => setDismissTarget(c)}
                                                             >
                                                                 Dismiss
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-muted" style={{ fontSize: 11 }}>
+                                                        <span className="text-muted text-xs">
                                                             {c?.status === "reconciled" ? "Adjusted" : "Closed"}
                                                         </span>
                                                     )}
@@ -590,13 +654,13 @@ export default function CycleCounts() {
                 {/* Pagination */}
                 {meta && meta.last_page > 1 && (
                     <div className="pagination p-4">
-                        <span className="pagination__info text-xs" style={{ color: 'var(--wb-text-muted)' }}>
-                            Page {meta.current_page} of {meta.last_page} · {meta.total} counts
+                        <span className="pagination__info text-xs text-secondary">
+                            Page {meta.current_page} of {meta.last_page} ({meta.total} counts)
                         </span>
                         <div className="flex gap-2">
                             <button
                                 type="button"
-                                className="btn btn--secondary btn--sm"
+                                className="btn--secondary btn--sm"
                                 disabled={meta.current_page <= 1}
                                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                             >
@@ -604,7 +668,7 @@ export default function CycleCounts() {
                             </button>
                             <button
                                 type="button"
-                                className="btn btn--secondary btn--sm"
+                                className="btn--secondary btn--sm"
                                 disabled={meta.current_page >= meta.last_page}
                                 onClick={() => setPage((p) => p + 1)}
                             >
@@ -615,46 +679,62 @@ export default function CycleCounts() {
                 )}
             </section>
 
-            {/* ── Reconcile Modal ── */}
+            {/* Reconcile Modal */}
             {reconcileTarget && (
                 <div className="modal-overlay" onClick={() => setReconcileTarget(null)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal__header">
                             <div>
-                                <h2>Authorize Reconciliation</h2>
-                                <p className="page-subtitle">{reconcileTarget.product?.name ?? "SKU"}</p>
+                                <h2>Authorize Stock Reconciliation</h2>
+                                <p className="page-subtitle">
+                                    Reconcile {reconcileTarget.product?.name ?? "SKU"}
+                                </p>
                             </div>
-                            <button className="modal__close" onClick={() => setReconcileTarget(null)}>
+                            <button
+                                className="modal__close"
+                                onClick={() => setReconcileTarget(null)}
+                            >
                                 &times;
                             </button>
                         </div>
 
                         <div className="space-y-4">
-                            {/* Variance summary */}
-                            <div className="info-card" style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-                                {[
-                                    { label: "Expected", value: `${reconcileTarget.expected_qty} u` },
-                                    { label: "Counted", value: `${reconcileTarget.counted_qty} u` },
-                                    {
-                                        label: "Adjustment",
-                                        value: `${reconcileTarget.variance_qty > 0 ? "+" : ""}${reconcileTarget.variance_qty} u`,
-                                        color: reconcileTarget.variance_qty < 0 ? "var(--wb-danger)" : "var(--wb-success)",
-                                    },
-                                ].map(({ label, value, color }) => (
-                                    <div key={label} style={{ textAlign: 'center', flex: 1 }}>
-                                        <div style={{ fontSize: 11, color: 'var(--wb-text-muted)', marginBottom: 4 }}>{label}</div>
-                                        <div style={{ fontSize: 18, fontWeight: 700, color: color ?? 'var(--wb-text-primary)' }}>{value}</div>
-                                    </div>
-                                ))}
+                            <div className="info-card text-xs space-y-1">
+                                <div className="flex justify-between">
+                                    <span className="text-secondary">System Expected:</span>
+                                    <span className="font-semibold td-bold">{reconcileTarget.expected_qty} units</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-secondary">Physical Counted:</span>
+                                    <span className="font-semibold td-bold">{reconcileTarget.counted_qty} units</span>
+                                </div>
+                                <div className="flex justify-between border-t border-slate-200 dark:border-white/10 pt-1 mt-1">
+                                    <span className="text-secondary">Required Adjustment Delta:</span>
+                                    <span
+                                        className={
+                                            reconcileTarget.variance_qty < 0
+                                                ? "text-red font-bold"
+                                                : "text-green font-bold"
+                                        }
+                                    >
+                                        {reconcileTarget.variance_qty > 0 ? "+" : ""}
+                                        {reconcileTarget.variance_qty} units
+                                    </span>
+                                </div>
                             </div>
 
+                            <p className="text-xs text-secondary leading-relaxed">
+                                Authorizing this reconciliation will atomically record an{" "}
+                                <strong className="td-bold">ADJUSTMENT</strong> transaction in the immutable ledger, updating the on-hand snapshot balance under row-level database lock.
+                            </p>
+
                             <div className="form-group">
-                                <label htmlFor="reconcile-notes">Justification / Notes</label>
+                                <label htmlFor="reconcile-notes">Reconciliation Justification / Notes</label>
                                 <textarea
                                     id="reconcile-notes"
                                     value={reconcileNotes}
                                     onChange={(e) => setReconcileNotes(e.target.value)}
-                                    placeholder="e.g. Authorized write-down due to verified shrinkage in morning cycle count"
+                                    placeholder="e.g. Authorized write-down due to verified physical shrinkage during morning cycle count"
                                     rows={3}
                                 />
                             </div>
@@ -662,7 +742,7 @@ export default function CycleCounts() {
                             <div className="modal__actions">
                                 <button
                                     type="button"
-                                    className="btn btn--secondary"
+                                    className="btn--secondary"
                                     onClick={() => setReconcileTarget(null)}
                                     disabled={actionLoading}
                                 >
@@ -670,11 +750,11 @@ export default function CycleCounts() {
                                 </button>
                                 <button
                                     type="button"
-                                    className="btn btn--success"
+                                    className="btn--success"
                                     onClick={handleConfirmReconcile}
                                     disabled={actionLoading}
                                 >
-                                    {actionLoading ? "Adjusting…" : "Authorize & Adjust"}
+                                    {actionLoading ? "Adjusting Ledger..." : "Authorize & Adjust Ledger"}
                                 </button>
                             </div>
                         </div>
@@ -682,28 +762,37 @@ export default function CycleCounts() {
                 </div>
             )}
 
-            {/* ── Dismiss Modal ── */}
+            {/* Dismiss Modal */}
             {dismissTarget && (
                 <div className="modal-overlay" onClick={() => setDismissTarget(null)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal__header">
                             <div>
-                                <h2>Dismiss Discrepancy</h2>
-                                <p className="page-subtitle">{dismissTarget.product?.name ?? "SKU"}</p>
+                                <h2>Dismiss Count Discrepancy</h2>
+                                <p className="page-subtitle">
+                                    Close without modifying ledger balances
+                                </p>
                             </div>
-                            <button className="modal__close" onClick={() => setDismissTarget(null)}>
+                            <button
+                                className="modal__close"
+                                onClick={() => setDismissTarget(null)}
+                            >
                                 &times;
                             </button>
                         </div>
 
-                        <p style={{ fontSize: 13, color: 'var(--wb-text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
-                            Mark this count as dismissed — no <code>ADJUSTMENT</code> transaction will be recorded in the ledger.
+                        <p className="text-xs text-secondary leading-relaxed mb-4">
+                            Are you sure you want to dismiss this count for{" "}
+                            <strong className="td-bold">
+                                {dismissTarget.product?.name ?? "SKU"}
+                            </strong>
+                            ? The count status will be marked as <em>dismissed</em> and no stock adjustment transaction will be recorded.
                         </p>
 
                         <div className="modal__actions">
                             <button
                                 type="button"
-                                className="btn btn--secondary"
+                                className="btn--secondary"
                                 onClick={() => setDismissTarget(null)}
                                 disabled={actionLoading}
                             >
@@ -711,11 +800,11 @@ export default function CycleCounts() {
                             </button>
                             <button
                                 type="button"
-                                className="btn btn--danger"
+                                className="btn--danger"
                                 onClick={handleConfirmDismiss}
                                 disabled={actionLoading}
                             >
-                                {actionLoading ? "Dismissing…" : "Dismiss"}
+                                {actionLoading ? "Dismissing..." : "Dismiss Discrepancy"}
                             </button>
                         </div>
                     </div>

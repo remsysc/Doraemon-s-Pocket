@@ -196,39 +196,37 @@ export default function Reports() {
         <>
             <div className="page-header">
                 <div>
-                    <h1>Reports & Analytics</h1>
-                    <p className="page-subtitle">Variance, shrinkage & turnover analysis</p>
+                    <h1>Inventory & Operational Reports</h1>
+                    <p className="page-subtitle">
+                        Administrative intelligence on physical shrinkage discrepancies and unit inventory turnover velocity
+                    </p>
                 </div>
             </div>
 
-            {/* ── Tab Switching ── */}
+            {/* Tab Switching */}
             <div className="tab-bar">
                 <button
                     type="button"
                     className={`tab-btn ${activeTab === "variance" ? "tab-btn--active" : ""}`}
                     onClick={() => setActiveTab("variance")}
                 >
-                    Variance & Shrinkage
+                    Variance & Shrinkage Report
                 </button>
                 <button
                     type="button"
                     className={`tab-btn ${activeTab === "turnover" ? "tab-btn--active" : ""}`}
                     onClick={() => setActiveTab("turnover")}
                 >
-                    Inventory Turnover
+                    Category Inventory Turnover Report
                 </button>
             </div>
 
-            {/* ── Variance & Shrinkage Tab ── */}
+            {/* Variance & Shrinkage Tab */}
             {activeTab === "variance" && (
                 <div className="space-y-6">
+                    {/* Variance KPIs */}
                     <section className="stats-grid">
                         <div className="stat-card stat-card--blue">
-                            <div className="stat-card__icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                            </div>
                             <div className="stat-card__info">
                                 <span className="stat-card__value">
                                     {varianceMeta?.total_audited_skus ?? varianceData.length}
@@ -237,46 +235,58 @@ export default function Reports() {
                             </div>
                         </div>
 
-                        <div className={`stat-card ${(varianceMeta?.total_discrepancies ?? 0) > 0 ? "stat-card--amber" : "stat-card--green"}`}>
-                            <div className="stat-card__icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-                                </svg>
-                            </div>
+                        <div
+                            className={`stat-card ${
+                                (varianceMeta?.total_discrepancies ?? 0) > 0
+                                    ? "stat-card--amber"
+                                    : "stat-card--green"
+                            }`}
+                        >
                             <div className="stat-card__info">
                                 <span className="stat-card__value">
                                     {varianceMeta?.total_discrepancies ?? 0}
                                 </span>
-                                <span className="stat-card__label">Discrepancies</span>
+                                <span className="stat-card__label">Discrepancy Instances</span>
                             </div>
                         </div>
 
-                        <div className={`stat-card ${(varianceMeta?.net_shrinkage_units ?? 0) < 0 ? "stat-card--red" : "stat-card--blue"}`}>
-                            <div className="stat-card__icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                                </svg>
-                            </div>
+                        <div
+                            className={`stat-card ${
+                                (varianceMeta?.net_shrinkage_units ?? 0) < 0
+                                    ? "stat-card--red"
+                                    : "stat-card--blue"
+                            }`}
+                        >
                             <div className="stat-card__info">
                                 <span className="stat-card__value">
                                     {varianceMeta?.net_shrinkage_units ?? 0}
                                 </span>
-                                <span className="stat-card__label">Shrinkage (Units)</span>
+                                <span className="stat-card__label">Net Shrinkage Units</span>
                             </div>
                         </div>
 
-                        <div className={`stat-card ${(varianceMeta?.net_shrinkage_value ?? 0) < 0 ? "stat-card--red" : "stat-card--blue"}`}>
-                            <div className="stat-card__icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                                </svg>
-                            </div>
+                        <div
+                            className={`stat-card ${
+                                (varianceMeta?.net_shrinkage_value ?? 0) < 0
+                                    ? "stat-card--red"
+                                    : "stat-card--blue"
+                            }`}
+                        >
                             <div className="stat-card__info">
                                 <span className="stat-card__value">
-                                    ₱{Math.abs(varianceMeta?.net_shrinkage_value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    ₱{Math.abs(varianceMeta?.net_shrinkage_value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     {(varianceMeta?.net_shrinkage_value ?? 0) < 0 ? " Loss" : ""}
                                 </span>
-                                <span className="stat-card__label">Value Loss</span>
+                                <span className="stat-card__label">Financial Impact</span>
+                            </div>
+                        </div>
+
+                        <div className="stat-card stat-card--purple">
+                            <div className="stat-card__info">
+                                <span className="stat-card__value">
+                                    {varianceMeta?.threshold_percentage ?? 5.0}%
+                                </span>
+                                <span className="stat-card__label">Alert Threshold</span>
                             </div>
                         </div>
                     </section>
@@ -285,7 +295,7 @@ export default function Reports() {
                     <div className="filter-bar">
                         <div className="flex items-center gap-4">
                             <label className="text-xs font-medium text-secondary">
-                                Category:
+                                Filter by Category:
                             </label>
                             <select
                                 value={selectedCategory}
@@ -301,41 +311,46 @@ export default function Reports() {
                             </select>
                         </div>
 
-                        <label className="flex items-center gap-2 text-xs font-medium cursor-pointer" style={{ color: 'var(--wb-text-secondary)' }}>
+                        <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={flaggedOnly}
                                 onChange={(e) => setFlaggedOnly(e.target.checked)}
                                 className="rounded"
                             />
-                            <span>Flagged only</span>
+                            <span>Show Flagged Discrepancies Only</span>
                         </label>
                     </div>
 
+                    {/* Table */}
                     <section className="table-section">
                         <div className="table-section__header">
                             <div>
-                                <h2>Audited SKU Variances</h2>
-                                <p className="page-subtitle">Shelf count vs expected balance</p>
+                                <h2>Audited SKU Discrepancies & Floor Variances</h2>
+                                <p className="page-subtitle">
+                                    Comparison of physical shelf count vs ledger expected balance
+                                </p>
                             </div>
                         </div>
 
                         {loading ? (
                             <div className="page-loading">Calculating shrinkage metrics...</div>
                         ) : varianceData.length === 0 ? (
-                            <p className="empty-state">No records match the selected filters.</p>
+                            <p className="empty-state">
+                                No discrepancy records match the selected filters.
+                            </p>
                         ) : (
                             <div className="table-wrapper">
                                 <table className="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Product</th>
+                                            <th>Product SKU</th>
                                             <th>Category</th>
-                                            <th>On-Hand</th>
-                                            <th>Counts</th>
-                                            <th>Variance</th>
-                                            <th>Value</th>
-                                            <th>Flagged</th>
+                                            <th>Current On-Hand</th>
+                                            <th>Total Counts</th>
+                                            <th>Net Variance</th>
+                                            <th>Financial Impact</th>
+                                            <th>Flagged Counts</th>
                                             <th>Last Audited</th>
                                         </tr>
                                     </thead>
@@ -346,29 +361,46 @@ export default function Reports() {
                                                 <td>{row.category_name}</td>
                                                 <td>{row.current_qty_on_hand}</td>
                                                 <td>{row.total_counts}</td>
-                                                <td className={
-                                                    row.net_variance_qty < 0 ? "text-red font-semibold"
-                                                    : row.net_variance_qty > 0 ? "text-green font-semibold" : ""
-                                                }>
-                                                    {row.net_variance_qty > 0 ? "+" : ""}{row.net_variance_qty}
+                                                <td
+                                                    className={
+                                                        row.net_variance_qty < 0
+                                                            ? "text-red font-semibold"
+                                                            : row.net_variance_qty > 0
+                                                            ? "text-green font-semibold"
+                                                            : ""
+                                                    }
+                                                >
+                                                    {row.net_variance_qty > 0 ? "+" : ""}
+                                                    {row.net_variance_qty} units
                                                 </td>
-                                                <td className={
-                                                    (row.net_variance_value ?? 0) < 0 ? "text-red font-semibold"
-                                                    : (row.net_variance_value ?? 0) > 0 ? "text-green font-semibold" : ""
-                                                }>
+                                                <td
+                                                    className={
+                                                        (row.net_variance_value ?? 0) < 0
+                                                            ? "text-red font-semibold"
+                                                            : (row.net_variance_value ?? 0) > 0
+                                                            ? "text-green font-semibold"
+                                                            : ""
+                                                    }
+                                                >
                                                     {(row.net_variance_value ?? 0) < 0 ? "-" : ((row.net_variance_value ?? 0) > 0 ? "+" : "")}₱{Math.abs(row.net_variance_value ?? 0).toFixed(2)}
                                                 </td>
                                                 <td>
                                                     {row.flagged_discrepancy_count > 0 ? (
                                                         <span className="badge badge--flagged">
-                                                            {row.flagged_discrepancy_count}
+                                                            {row.flagged_discrepancy_count} flagged
                                                         </span>
                                                     ) : (
-                                                        <span className="text-muted">—</span>
+                                                        <span className="badge badge--receipt">
+                                                            0 flagged
+                                                        </span>
                                                     )}
                                                 </td>
-                                                <td className="text-muted">
-                                                    {row.last_counted_at ? new Date(row.last_counted_at).toLocaleDateString() : "Never"}
+                                                <td>
+                                                    {row.last_counted_at
+                                                        ? new Date(
+                                                              row.last_counted_at,
+                                                          ).toLocaleDateString()
+                                                        : "Never"}
                                                 </td>
                                             </tr>
                                         ))}
@@ -380,20 +412,25 @@ export default function Reports() {
                 </div>
             )}
 
-            {/* ── Inventory Turnover Tab ── */}
+            {/* Inventory Turnover Tab */}
             {activeTab === "turnover" && (
                 <div className="space-y-6">
+                    {/* Turnover Controls */}
                     <div className="filter-bar">
                         <div className="flex items-center gap-3">
                             <span className="text-xs font-medium text-secondary">
-                                Time Window:
+                                Trailing Analysis Window:
                             </span>
                             <div className="flex gap-2">
                                 {[30, 60, 90, 180, 365].map((days) => (
                                     <button
                                         key={days}
                                         type="button"
-                                        className={`btn btn--sm ${windowDays === days ? "btn--primary" : "btn--secondary"}`}
+                                        className={`btn--sm ${
+                                            windowDays === days
+                                                ? "btn--primary"
+                                                : "btn--secondary"
+                                        }`}
                                         onClick={() => setWindowDays(days)}
                                     >
                                         {days} Days
@@ -401,52 +438,70 @@ export default function Reports() {
                                 ))}
                             </div>
                         </div>
+
+                        {turnoverMeta?.generated_at && (
+                            <span className="text-xs text-secondary">
+                                Generated: {new Date(turnoverMeta.generated_at).toLocaleString()}
+                            </span>
+                        )}
                     </div>
 
+                    {/* Table */}
                     <section className="table-section">
                         <div className="table-section__header">
                             <div>
-                                <h2>Category Turnover Velocity</h2>
-                                <p className="page-subtitle">Outflows (sales & picks) vs average stock</p>
+                                <h2>Category Unit Turnover Velocity</h2>
+                                <p className="page-subtitle">
+                                    Ratio of ledger outflow units (SALE + PICK) relative to average on-hand stock
+                                </p>
                             </div>
                         </div>
 
                         {loading ? (
                             <div className="page-loading">Computing category turnover ratios...</div>
                         ) : turnoverData.length === 0 ? (
-                            <p className="empty-state">No turnover data for this window.</p>
+                            <p className="empty-state">
+                                No inventory turnover data recorded for the selected window.
+                            </p>
                         ) : (
                             <div className="table-wrapper">
                                 <table className="data-table">
                                     <thead>
                                         <tr>
                                             <th>Category</th>
-                                            <th>Products</th>
-                                            <th>Outflow</th>
-                                            <th>Avg On-Hand</th>
-                                            <th>Valuation</th>
-                                            <th>Turnover</th>
-                                            <th>Velocity</th>
+                                            <th>Products Count</th>
+                                            <th>Outflow Units</th>
+                                            <th>Average On-Hand</th>
+                                            <th>Inventory Valuation</th>
+                                            <th>Turnover Ratio</th>
+                                            <th>Velocity Tier</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {turnoverData.map((row) => (
                                             <tr key={row.category_id}>
                                                 <td className="td-bold">{row.category_name}</td>
-                                                <td>{row.product_count}</td>
-                                                <td className="font-semibold">{row.outflow_units}</td>
-                                                <td>{row.avg_on_hand.toFixed(1)}</td>
-                                                <td>₱{(row.inventory_valuation ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                                                <td>{row.product_count} SKUs</td>
+                                                <td className="font-semibold">
+                                                    {row.outflow_units} units
+                                                </td>
+                                                <td>{row.avg_on_hand.toFixed(1)} units</td>
+                                                <td>₱{(row.inventory_valuation ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                 <td className="font-semibold text-blue">
                                                     {row.turnover_ratio.toFixed(2)}x
                                                 </td>
                                                 <td>
-                                                    <span className={`badge ${
-                                                        row.velocity_tier === "High" ? "badge--velocity-high"
-                                                        : row.velocity_tier === "Medium" ? "badge--velocity-medium"
-                                                        : row.velocity_tier === "Low" ? "badge--velocity-low"
-                                                        : "badge--velocity-dead"
-                                                    }`}>
+                                                    <span
+                                                        className={`badge ${
+                                                            row.velocity_tier === "High"
+                                                                ? "badge--velocity-high"
+                                                                : row.velocity_tier === "Medium"
+                                                                ? "badge--velocity-medium"
+                                                                : row.velocity_tier === "Low"
+                                                                ? "badge--velocity-low"
+                                                                : "badge--velocity-dead"
+                                                        }`}
+                                                    >
                                                         {row.velocity_tier}
                                                     </span>
                                                 </td>
