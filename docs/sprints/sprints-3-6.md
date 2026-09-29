@@ -53,13 +53,17 @@
 
 ## Sprint 6 — Hardening & Demo
 
+> Detailed plan: [`sprint-6.md`](sprint-6.md) | Status: ✅ Complete
+
 | Item                                                              | Owner | Status         |
 | ----------------------------------------------------------------- | ----- | -------------- |
-| End-to-end demo flow (all three symptom mitigations demoable)     | —     | ⬜ not started |
-| Role-guard test coverage for FR-32–FR-38                          | —     | ⬜ not started |
-| Seed realistic demo data                                          | —     | ✅ BASELINE DONE — 26 repeatable ledger transactions (Sprint 2 baseline + Sprint 3 snapshot rebuild); final demo-flow expansion remains Sprint 6 |
-| Performance review (N+1 checks, eager loading audit)              | —     | ⬜ not started |
-| Auth hardening notes / tech debt doc for real deployment          | —     | ⬜ not started |
+| End-to-end demo flow (all three symptom mitigations demoable)     | Rem   | ✅ done — `docs/demo/DEMO_FLOW.md` |
+| Role-guard test coverage for FR-32–FR-43                          | Rem   | ✅ done — `RbacSprintSixTest.php` & `DataManagementTest.php` |
+| Seed realistic demo data                                          | Rem   | ✅ done — CatalogSeeder, CycleCountSeeder, PurchaseOrderSeeder |
+| Performance review (N+1 checks, eager loading audit)              | Rem   | ✅ done — eager-loaded relations on all list queries |
+| Auth hardening notes & tech debt doc for real deployment          | Rem   | ✅ done — `docs/tech-debt.md` & `auth-hardening.md` |
+| Supplier & Purchase Order Management (FR-39, FR-40, FR-41)        | Rem   | ✅ done — CRUD + receiving endpoint + UI |
+| System-Wide Data Management (CSV Import/Export)                   | Rem   | ✅ done — DataManagementService + `/data-management` UI |
 
 ---
 

@@ -6,12 +6,15 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClassificationController;
 use App\Http\Controllers\CycleCountController;
+use App\Http\Controllers\DataManagementController;
 use App\Http\Controllers\InventorySnapshotController;
 use App\Http\Controllers\InventoryTransactionController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReorderConfigController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -145,5 +148,34 @@ Route::middleware('auth:sanctum')->group(function () {
             'index',
             'show',
         ]);
+    });
+
+    // ---- Data Management (Sprint 6, DATA-6.1) ----
+    // Admin only: Bulk CSV export and import for Master Data (Categories, Products)
+    Route::middleware('role:admin')->prefix('data')->group(function () {
+        Route::get('export/categories', [DataManagementController::class, 'exportCategories']);
+        Route::post('import/categories', [DataManagementController::class, 'importCategories']);
+        Route::get('export/products', [DataManagementController::class, 'exportProducts']);
+        Route::post('import/products', [DataManagementController::class, 'importProducts']);
+    });
+
+    // ---- Suppliers (Sprint 6, FR-39) ----
+    // Read: all authenticated roles (Warehouse Staff needs supplier info for PO context).
+    // Write (create/update/delete): Purchasing Manager + Admin only.
+    Route::apiResource('suppliers', SupplierController::class)->only(['index', 'show']);
+    Route::middleware('role:purchasing_manager,admin')->group(function () {
+        Route::apiResource('suppliers', SupplierController::class)->except(['index', 'show']);
+    });
+
+    // ---- Purchase Orders (Sprint 6, FR-40, FR-41) ----
+    // Read: all authenticated roles.
+    // Write (create/update/delete): Purchasing Manager + Admin only.
+    // Receive: Warehouse Staff + Admin (physical stock receipt).
+    Route::apiResource('purchase-orders', PurchaseOrderController::class)->only(['index', 'show']);
+    Route::middleware('role:purchasing_manager,admin')->group(function () {
+        Route::apiResource('purchase-orders', PurchaseOrderController::class)->except(['index', 'show']);
+    });
+    Route::middleware('role:warehouse_staff,admin')->group(function () {
+        Route::post('purchase-orders/{purchase_order}/receive', [PurchaseOrderController::class, 'receive']);
     });
 });
