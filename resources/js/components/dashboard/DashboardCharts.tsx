@@ -321,13 +321,24 @@ function PurchaseOrderTrendsPlaceholder() {
         <article className="analytics-card">
             <header className="analytics-card__header">
                 <div>
-                    <h2>Purchase order trends</h2>
-                    <p>Order volume and status over time</p>
+                    <h2>Procurement & Fulfillment Hub</h2>
+                    <p>Order volumes, supplier lead times & physical receipts</p>
                 </div>
             </header>
             <div className="analytics-empty analytics-empty--notice" role="status">
-                Purchase order records are not available yet. This chart will populate
-                once the supplier and purchase order workflow is implemented.
+                <div style={{ maxWidth: 360, margin: "0 auto", textAlign: "center" }}>
+                    <p style={{ marginBottom: 12 }}>
+                        Track and issue replenishment orders directly with active suppliers through the procurement hub.
+                    </p>
+                    <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+                        <a href="/purchase-orders" className="btn btn--secondary btn--sm">
+                            View Purchase Orders →
+                        </a>
+                        <a href="/suppliers" className="btn btn--secondary btn--sm">
+                            Manage Suppliers →
+                        </a>
+                    </div>
+                </div>
             </div>
         </article>
     );

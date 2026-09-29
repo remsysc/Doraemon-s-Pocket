@@ -11,6 +11,9 @@ import AuditLogs from "./pages/AuditLogs";
 import CycleCounts from "./pages/CycleCounts";
 import Reports from "./pages/Reports";
 import UserManagement from "./pages/UserManagement";
+import Suppliers from "./pages/Suppliers";
+import PurchaseOrders from "./pages/PurchaseOrders";
+import DataManagement from "./pages/DataManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -78,6 +81,16 @@ export default function App() {
                                 </RoleRoute>
                             }
                         />
+                        <Route
+                            path="/data-management"
+                            element={
+                                <RoleRoute allowedRoles={["admin"]}>
+                                    <DataManagement />
+                                </RoleRoute>
+                            }
+                        />
+                        <Route path="/suppliers" element={<Suppliers />} />
+                        <Route path="/purchase-orders" element={<PurchaseOrders />} />
 
                         {/* Redirect root to dashboard */}
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />

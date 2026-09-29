@@ -44,6 +44,30 @@ export default function PurchasingDashboardView({
                     <div className="action-tile__desc">EOQ, safety stock & lead times</div>
                 </Link>
 
+                <Link to="/purchase-orders" className="action-tile">
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                    </div>
+                    <div className="action-tile__title">Purchase Orders</div>
+                    <div className="action-tile__desc">Manage procurement & deliveries</div>
+                </Link>
+
+                <Link to="/suppliers" className="action-tile">
+                    <div className="action-tile__icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                        </svg>
+                    </div>
+                    <div className="action-tile__title">Suppliers</div>
+                    <div className="action-tile__desc">Vendor master data & lead times</div>
+                </Link>
+
                 <Link to="/stock" className="action-tile">
                     <div className="action-tile__icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -62,16 +86,6 @@ export default function PurchasingDashboardView({
                     </div>
                     <div className="action-tile__title">Product Catalog</div>
                     <div className="action-tile__desc">Master SKUs & shelf-life rules</div>
-                </Link>
-
-                <Link to="/transactions" className="action-tile">
-                    <div className="action-tile__icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-                        </svg>
-                    </div>
-                    <div className="action-tile__title">Demand Trends</div>
-                    <div className="action-tile__desc">Sales & pick outflow history</div>
                 </Link>
             </section>
 
