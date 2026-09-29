@@ -63,6 +63,21 @@ const Icons: Record<string, JSX.Element> = {
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
         </svg>
     ),
+    suppliers: (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+        </svg>
+    ),
+    purchaseOrders: (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+        </svg>
+    ),
     reports: (
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" />
@@ -80,6 +95,13 @@ const Icons: Record<string, JSX.Element> = {
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
             <line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+        </svg>
+    ),
+    dataManagement: (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3" />
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
         </svg>
     ),
     signOut: (
@@ -194,10 +216,21 @@ export default function DashboardLayout() {
             ? [
                   {
                       label: "Purchasing",
-                      items: [{ to: "/purchasing", label: "Purchasing Analytics", icon: "purchasing" }],
+                      items: [
+                          { to: "/purchasing", label: "Purchasing Analytics", icon: "purchasing" },
+                          { to: "/suppliers", label: "Suppliers", icon: "suppliers" },
+                          { to: "/purchase-orders", label: "Purchase Orders", icon: "purchaseOrders" },
+                      ],
                   },
               ]
-            : []),
+            : user?.role === "warehouse_staff"
+              ? [
+                    {
+                        label: "Purchasing",
+                        items: [{ to: "/purchase-orders", label: "Purchase Orders", icon: "purchaseOrders" }],
+                    },
+                ]
+              : []),
         ...(user?.role === "admin"
             ? [
                   {
@@ -206,6 +239,7 @@ export default function DashboardLayout() {
                           { to: "/reports", label: "Reports & Analytics", icon: "reports" },
                           { to: "/users", label: "User Management", icon: "users" },
                           { to: "/audit-logs", label: "Audit Logs", icon: "auditLogs" },
+                          { to: "/data-management", label: "Data Management", icon: "dataManagement" },
                       ],
                   },
               ]
@@ -341,7 +375,7 @@ export default function DashboardLayout() {
                         )}
                     </button>
                     <div className="topbar__right">
-                        {user && (user.role === "admin" || user.role === "warehouse_staff") && (
+                        {user && (user.role === "admin" || user.role === "warehouse_staff" || user.role === "purchasing_manager") && (
                             <div className="topbar__profile-wrapper" ref={quickAddRef}>
                                 <button
                                     className="topbar__theme-toggle"
@@ -360,12 +394,26 @@ export default function DashboardLayout() {
                                                 New Product
                                             </button>
                                         )}
-                                        <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/lots"); }}>
-                                            Receive Lot
-                                        </button>
-                                        <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/cycle-counts"); }}>
-                                            Log Cycle Count
-                                        </button>
+                                        {(user.role === "admin" || user.role === "purchasing_manager") && (
+                                            <>
+                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/purchase-orders"); }}>
+                                                    New Purchase Order
+                                                </button>
+                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/suppliers"); }}>
+                                                    New Supplier
+                                                </button>
+                                            </>
+                                        )}
+                                        {(user.role === "admin" || user.role === "warehouse_staff") && (
+                                            <>
+                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/lots"); }}>
+                                                    Receive Lot
+                                                </button>
+                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/cycle-counts"); }}>
+                                                    Log Cycle Count
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>

@@ -542,3 +542,175 @@ export async function deactivateUser(id: number) {
     return api.post<{ data: ManagedUser }>(`/api/users/${id}/deactivate`);
 }
 
+// ─── Suppliers (Sprint 6, FR-39) ─────────────────────────────────────────────
+
+export interface Supplier {
+    id: string;
+    name: string;
+    contact_name: string | null;
+    contact_email: string | null;
+    contact_phone: string | null;
+    address: string | null;
+    lead_time_days: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StoreSupplierPayload {
+    name: string;
+    contact_name?: string;
+    contact_email?: string;
+    contact_phone?: string;
+    address?: string;
+    lead_time_days?: number;
+    is_active?: boolean;
+}
+
+export function getSuppliers(page = 1, perPage = 15) {
+    return api.get<PaginatedResponse<Supplier>>("/api/suppliers", {
+        params: { page, per_page: perPage },
+    });
+}
+
+export function getSupplier(id: string) {
+    return api.get<{ data: Supplier }>(`/api/suppliers/${id}`);
+}
+
+export async function createSupplier(payload: StoreSupplierPayload) {
+    await getCsrfCookie();
+    return api.post<{ data: Supplier }>("/api/suppliers", payload);
+}
+
+export async function updateSupplier(id: string, payload: Partial<StoreSupplierPayload>) {
+    await getCsrfCookie();
+    return api.put<{ data: Supplier }>(`/api/suppliers/${id}`, payload);
+}
+
+export async function deleteSupplier(id: string) {
+    await getCsrfCookie();
+    return api.delete(`/api/suppliers/${id}`);
+}
+
+// ─── Purchase Orders (Sprint 6, FR-40, FR-41) ────────────────────────────────
+
+export interface PurchaseOrderItem {
+    id: string;
+    sku_id: string;
+    quantity_ordered: number;
+    quantity_received: number;
+    unit_cost: string | null;
+    total_cost: string | null;
+    product?: Product;
+}
+
+export interface PurchaseOrder {
+    id: string;
+    po_number: string;
+    supplier_id: string;
+    status: "draft" | "ordered" | "received";
+    order_date: string | null;
+    expected_delivery_date: string | null;
+    notes: string | null;
+    total_amount: string;
+    created_by: number;
+    supplier?: Supplier;
+    items?: PurchaseOrderItem[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StorePurchaseOrderPayload {
+    supplier_id: string;
+    order_date?: string;
+    expected_delivery_date?: string;
+    notes?: string;
+    items?: Array<{
+        sku_id: string;
+        quantity_ordered: number;
+        unit_cost?: number;
+    }>;
+}
+
+export interface ReceivePurchaseOrderPayload {
+    items: Array<{
+        sku_id: string;
+        qty_received: number;
+        lot_id?: string;
+    }>;
+}
+
+export function getPurchaseOrders(page = 1, perPage = 15) {
+    return api.get<PaginatedResponse<PurchaseOrder>>("/api/purchase-orders", {
+        params: { page, per_page: perPage },
+    });
+}
+
+export function getPurchaseOrder(id: string) {
+    return api.get<{ data: PurchaseOrder }>(`/api/purchase-orders/${id}`);
+}
+
+export async function createPurchaseOrder(payload: StorePurchaseOrderPayload) {
+    await getCsrfCookie();
+    return api.post<{ data: PurchaseOrder }>("/api/purchase-orders", payload);
+}
+
+export async function updatePurchaseOrder(
+    id: string,
+    payload: Partial<StorePurchaseOrderPayload> & { status?: string },
+) {
+    await getCsrfCookie();
+    return api.put<{ data: PurchaseOrder }>(`/api/purchase-orders/${id}`, payload);
+}
+
+export async function deletePurchaseOrder(id: string) {
+    await getCsrfCookie();
+    return api.delete(`/api/purchase-orders/${id}`);
+}
+
+export async function receivePurchaseOrder(id: string, payload: ReceivePurchaseOrderPayload) {
+    await getCsrfCookie();
+    return api.post<{ data: PurchaseOrder }>(`/api/purchase-orders/${id}/receive`, payload);
+}
+
+// ---------------------------------------------------------------------------
+// System-Wide Data Management (Sprint 6, DATA-6.1)
+// ---------------------------------------------------------------------------
+
+export interface ImportDataResponse {
+    message: string;
+    imported_count: number;
+    updated_count: number;
+    errors: string[];
+}
+
+export async function exportCategoriesCsv(): Promise<Blob> {
+    const res = await api.get('/api/data/export/categories', { responseType: 'blob' });
+    return res.data;
+}
+
+export async function exportProductsCsv(): Promise<Blob> {
+    const res = await api.get('/api/data/export/products', { responseType: 'blob' });
+    return res.data;
+}
+
+export async function importCategoriesCsv(file: File): Promise<ImportDataResponse> {
+    await getCsrfCookie();
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post<ImportDataResponse>('/api/data/import/categories', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+}
+
+export async function importProductsCsv(file: File): Promise<ImportDataResponse> {
+    await getCsrfCookie();
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post<ImportDataResponse>('/api/data/import/products', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+}
+
