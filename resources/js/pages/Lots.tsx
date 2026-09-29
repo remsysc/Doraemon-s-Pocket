@@ -7,12 +7,15 @@ import {
     createLot,
     updateLot,
     deleteLot,
+    exportLotsCsv,
+    importLotsCsv,
     type Lot,
     type Product,
     type StoreLotPayload,
     type UpdateLotPayload,
     type PaginatedResponse,
 } from "../lib/inventory-api";
+import BulkImportModal from "../components/BulkImportModal";
 
 type ModalMode = "create" | "edit" | null;
 
@@ -140,6 +143,28 @@ export default function Lots() {
         }
     }
 
+    const [importModalOpen, setImportModalOpen] = useState(false);
+    const [exporting, setExporting] = useState(false);
+
+    const handleExportCsv = async () => {
+        setExporting(true);
+        try {
+            const blob = await exportLotsCsv();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `lots_export_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch {
+            alert("Failed to export lots CSV.");
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <>
             <div className="page-header">
@@ -147,12 +172,41 @@ export default function Lots() {
                     <h1>Lots</h1>
                     <p className="page-subtitle">Manage stock receipt lots</p>
                 </div>
-                {canWrite && (
-                    <button className="btn btn--primary" onClick={openCreate}>
-                        + New Lot
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={handleExportCsv}
+                        disabled={exporting}
+                    >
+                        {exporting ? "Exporting..." : "Export CSV"}
                     </button>
-                )}
+                    {canWrite && (
+                        <>
+                            <button
+                                type="button"
+                                className="btn btn--secondary btn--sm"
+                                onClick={() => setImportModalOpen(true)}
+                            >
+                                Import CSV
+                            </button>
+                            <button className="btn btn--primary btn--sm" onClick={openCreate}>
+                                + New Lot
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
+
+            <BulkImportModal
+                isOpen={importModalOpen}
+                onClose={() => setImportModalOpen(false)}
+                title="Bulk Import Lots & Batches"
+                templateType="lots"
+                onImport={importLotsCsv}
+                onSuccess={fetchLots}
+                helperText="Synchronized Onboarding: Creating lot batches will automatically record an INBOUND_RECEIPT and increment inventory snapshots."
+            />
 
             {loading ? (
                 <div className="page-loading">Loading lots…</div>

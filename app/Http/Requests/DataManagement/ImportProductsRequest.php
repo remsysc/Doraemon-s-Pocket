@@ -21,6 +21,7 @@ class ImportProductsRequest extends FormRequest
     {
         return [
             'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+            'dry_run' => ['nullable', 'boolean'],
         ];
     }
 }

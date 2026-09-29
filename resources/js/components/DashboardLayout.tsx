@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import { getCurrentUser, logout, type AuthUser } from "../lib/api";
 import "../../css/dashboard.css";
@@ -19,7 +19,7 @@ function getStoredTheme(): "dark" | "light" {
 }
 
 /** Inline SVG icon set — avoids an icon library dependency. */
-const Icons: Record<string, JSX.Element> = {
+const Icons: Record<string, React.ReactElement> = {
     dashboard: (
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />

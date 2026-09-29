@@ -4,10 +4,13 @@ import {
     createSupplier,
     updateSupplier,
     deleteSupplier,
+    exportSuppliersCsv,
+    importSuppliersCsv,
     type Supplier,
     type StoreSupplierPayload,
 } from "../lib/inventory-api";
 import { getCurrentUser, type AuthUser } from "../lib/api";
+import BulkImportModal from "../components/BulkImportModal";
 
 type ModalMode = "create" | "edit";
 
@@ -138,6 +141,28 @@ export default function Suppliers() {
         ? Math.round(suppliers.reduce((acc, s) => acc + s.lead_time_days, 0) / suppliers.length)
         : 0;
 
+    const [importModalOpen, setImportModalOpen] = useState(false);
+    const [exporting, setExporting] = useState(false);
+
+    const handleExportCsv = async () => {
+        setExporting(true);
+        try {
+            const blob = await exportSuppliersCsv();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `suppliers_export_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch {
+            setError("Failed to export suppliers CSV.");
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="page-header">
@@ -145,12 +170,41 @@ export default function Suppliers() {
                     <h1>Suppliers</h1>
                     <p className="page-subtitle">Manage supplier master data for procurement and POs</p>
                 </div>
-                {canWrite && (
-                    <button className="btn btn--primary" onClick={openCreate}>
-                        + Add Supplier
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={handleExportCsv}
+                        disabled={exporting}
+                    >
+                        {exporting ? "Exporting..." : "Export CSV"}
                     </button>
-                )}
+                    {canWrite && (
+                        <>
+                            <button
+                                type="button"
+                                className="btn btn--secondary btn--sm"
+                                onClick={() => setImportModalOpen(true)}
+                            >
+                                Import CSV
+                            </button>
+                            <button className="btn btn--primary btn--sm" onClick={openCreate}>
+                                + Add Supplier
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
+
+            <BulkImportModal
+                isOpen={importModalOpen}
+                onClose={() => setImportModalOpen(false)}
+                title="Bulk Import Suppliers"
+                templateType="suppliers"
+                onImport={importSuppliersCsv}
+                onSuccess={load}
+                helperText="Upload CSV of supplier records. Matching existing name or ID will update the record."
+            />
 
             {error && (
                 <div className="alert-banner alert-banner--danger" role="alert">

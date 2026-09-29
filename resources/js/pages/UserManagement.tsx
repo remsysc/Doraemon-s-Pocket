@@ -15,6 +15,33 @@ import {
 
 type ModalMode = "create" | "edit" | null;
 
+function formatRoleLabel(role: string): string {
+    switch (role) {
+        case "admin":
+            return "Admin";
+        case "purchasing_manager":
+            return "Purchasing Manager";
+        case "warehouse_staff":
+            return "Warehouse Staff";
+        default:
+            return role.replace(/_/g, " ");
+    }
+}
+
+function getRoleBadgeClass(role: string): string {
+    switch (role) {
+        case "admin":
+            return "badge--admin";
+        case "purchasing_manager":
+            return "badge--purchasing-manager";
+        case "warehouse_staff":
+            return "badge--warehouse-staff";
+        default:
+            return "badge--inactive";
+    }
+}
+
+
 export default function UserManagement() {
     const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
     const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -312,7 +339,7 @@ export default function UserManagement() {
                 <div className="table-section__header">
                     <div>
                         <h2>System Users</h2>
-                        <p className="page-subtitle">Authorized accounts</p>
+                        <p className="page-subtitle">Authorized accounts and role assignments</p>
                     </div>
                 </div>
 
@@ -330,34 +357,34 @@ export default function UserManagement() {
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th>Registered</th>
-                                    <th></th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {users.map((u) => (
                                     <tr key={u.id}>
-                                        <td className="td-bold">
+                                        <td className="td-bold whitespace-nowrap">
                                             {u.name}
-                                            {u.id === currentUser?.id && <span className="text-muted ml-2">(You)</span>}
+                                            {u.id === currentUser?.id && (
+                                                <span className="text-muted ml-2 font-normal text-xs">(You)</span>
+                                            )}
                                         </td>
-                                        <td>{u.email}</td>
-                                        <td>
-                                            <span className={`badge ${
-                                                u.role === "admin" ? "badge--sale"
-                                                : u.role === "purchasing_manager" ? "badge--receipt"
-                                                : "badge--adjustment"
-                                            }`}>
-                                                {u.role.replace(/_/g, " ")}
+                                        <td className="text-secondary whitespace-nowrap">{u.email}</td>
+                                        <td className="whitespace-nowrap">
+                                            <span className={`badge ${getRoleBadgeClass(u.role)}`}>
+                                                {formatRoleLabel(u.role)}
                                             </span>
                                         </td>
-                                        <td>
+                                        <td className="whitespace-nowrap">
                                             <span className={`badge ${u.is_active ? "badge--active" : "badge--inactive"}`}>
                                                 {u.is_active ? "Active" : "Deactivated"}
                                             </span>
                                         </td>
-                                        <td className="text-muted">{new Date(u.created_at).toLocaleDateString()}</td>
-                                        <td>
-                                            <div className="flex items-center gap-2">
+                                        <td className="text-muted text-xs whitespace-nowrap">
+                                            {new Date(u.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="whitespace-nowrap">
+                                            <div className="action-btns">
                                                 <button
                                                     type="button"
                                                     className="btn btn--secondary btn--sm"
@@ -392,6 +419,32 @@ export default function UserManagement() {
                     </div>
                 )}
             </section>
+
+            {meta && meta.last_page > 1 && (
+                <div className="pagination p-4">
+                    <span className="pagination__info text-xs text-secondary">
+                        Page {meta.current_page} of {meta.last_page} · {meta.total} users
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            className="btn btn--secondary btn--sm"
+                            disabled={page <= 1}
+                            onClick={() => setPage(page - 1)}
+                        >
+                            Previous
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn--secondary btn--sm"
+                            disabled={page >= meta.last_page}
+                            onClick={() => setPage(page + 1)}
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* ── Modal ── */}
             {modalMode && (
@@ -477,10 +530,10 @@ export default function UserManagement() {
                                 </div>
                             )}
 
-                            <div className="modal__actions">
+                            <div className="modal__actions flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2">
                                 <button
                                     type="button"
-                                    className="btn btn--secondary"
+                                    className="btn btn--secondary w-full sm:w-auto min-h-[38px] touch-manipulation"
                                     onClick={closeModal}
                                     disabled={submitting}
                                 >
@@ -488,7 +541,7 @@ export default function UserManagement() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn btn--primary"
+                                    className="btn btn--primary w-full sm:w-auto min-h-[38px] touch-manipulation"
                                     disabled={submitting}
                                 >
                                     {submitting ? "Saving..." : modalMode === "create" ? "Create User" : "Save Changes"}

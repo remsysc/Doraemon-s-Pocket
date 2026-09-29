@@ -7,11 +7,14 @@ import {
     receivePurchaseOrder,
     getSuppliers,
     getProducts,
+    exportPurchaseOrdersCsv,
+    importPurchaseOrdersCsv,
     type PurchaseOrder,
     type Supplier,
     type Product,
 } from "../lib/inventory-api";
 import { getCurrentUser, type AuthUser } from "../lib/api";
+import BulkImportModal from "../components/BulkImportModal";
 
 type StatusBadgeClass = {
     draft: string;
@@ -179,6 +182,28 @@ export default function PurchaseOrders() {
     const orderedCount = orders.filter((po) => po.status === "ordered").length;
     const receivedCount = orders.filter((po) => po.status === "received").length;
 
+    const [importModalOpen, setImportModalOpen] = useState(false);
+    const [exporting, setExporting] = useState(false);
+
+    const handleExportCsv = async () => {
+        setExporting(true);
+        try {
+            const blob = await exportPurchaseOrdersCsv();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `purchase_orders_export_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch {
+            setError("Failed to export purchase orders CSV.");
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="page-header">
@@ -186,18 +211,47 @@ export default function PurchaseOrders() {
                     <h1>Purchase Orders</h1>
                     <p className="page-subtitle">Track supplier POs and record physical warehouse receipts</p>
                 </div>
-                {canWrite && (
+                <div className="flex items-center gap-2">
                     <button
-                        className="btn btn--primary"
-                        onClick={() => {
-                            setCreateForm(emptyCreateForm());
-                            setCreateOpen(true);
-                        }}
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={handleExportCsv}
+                        disabled={exporting}
                     >
-                        + New PO
+                        {exporting ? "Exporting..." : "Export CSV"}
                     </button>
-                )}
+                    {canWrite && (
+                        <>
+                            <button
+                                type="button"
+                                className="btn btn--secondary btn--sm"
+                                onClick={() => setImportModalOpen(true)}
+                            >
+                                Import CSV
+                            </button>
+                            <button
+                                className="btn btn--primary btn--sm"
+                                onClick={() => {
+                                    setCreateForm(emptyCreateForm());
+                                    setCreateOpen(true);
+                                }}
+                            >
+                                + New PO
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
+
+            <BulkImportModal
+                isOpen={importModalOpen}
+                onClose={() => setImportModalOpen(false)}
+                title="Bulk Import Purchase Orders"
+                templateType="purchase_orders"
+                onImport={importPurchaseOrdersCsv}
+                onSuccess={load}
+                helperText="Upload flattened line-item CSV. Rows with the same po_number are consolidated into draft POs."
+            />
 
             {error && (
                 <div className="alert-banner alert-banner--danger" role="alert">

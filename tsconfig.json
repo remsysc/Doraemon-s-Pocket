@@ -8,9 +8,8 @@
         "strict": true,
         "skipLibCheck": true,
         "noEmit": true,
-        "baseUrl": ".",
         "paths": {
-            "@/*": ["resources/js/*"]
+            "@/*": ["./resources/js/*"]
         }
     },
     "include": ["resources/js/**/*"],
