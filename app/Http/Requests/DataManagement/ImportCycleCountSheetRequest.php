@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\DataManagement;
 
-use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ImportCategoriesRequest extends FormRequest
+class ImportCycleCountSheetRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role === 'admin' || (bool) $this->user()?->can('create', Category::class);
+        $role = $this->user()?->role;
+
+        return in_array($role, ['admin', 'warehouse_staff'], true);
     }
 
     /**

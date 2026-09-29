@@ -5,10 +5,13 @@ import {
     getCycleCounts,
     reconcileCycleCount,
     dismissCycleCount,
+    exportCycleCountsCsv,
+    importCycleCountsCsv,
     type CycleCount,
     type PaginatedResponse,
 } from "../lib/inventory-api";
 import CycleCountModal from "../components/CycleCountModal";
+import BulkImportModal from "../components/BulkImportModal";
 
 const LOCAL_STORAGE_KEY = "wb_local_cycle_counts";
 
@@ -354,6 +357,28 @@ export default function CycleCounts() {
     const flaggedCount = (isDemoMode ? allStoredCounts : safeCounts).filter((c) => Boolean(c?.is_flagged)).length;
     const reconciledCount = (isDemoMode ? allStoredCounts : safeCounts).filter((c) => c?.status === "reconciled").length;
 
+    const [isSheetModalOpen, setIsSheetModalOpen] = useState(false);
+    const [exporting, setExporting] = useState(false);
+
+    const handleExportVariances = async () => {
+        setExporting(true);
+        try {
+            const blob = await exportCycleCountsCsv();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `cycle_counts_export_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch {
+            setActionMessage({ type: "error", text: "Failed to export cycle counts CSV." });
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <>
             {/* ── Header ── */}
@@ -373,14 +398,41 @@ export default function CycleCounts() {
                             : "Submit physical counts & track reconciliation status"}
                     </p>
                 </div>
-                <button
-                    type="button"
-                    className="btn btn--primary"
-                    onClick={() => setIsCountModalOpen(true)}
-                >
-                    + Submit Count
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={handleExportVariances}
+                        disabled={exporting}
+                    >
+                        {exporting ? "Exporting..." : "Export Variances"}
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={() => setIsSheetModalOpen(true)}
+                    >
+                        Upload Sheet
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn--primary btn--sm"
+                        onClick={() => setIsCountModalOpen(true)}
+                    >
+                        + Submit Count
+                    </button>
+                </div>
             </div>
+
+            <BulkImportModal
+                isOpen={isSheetModalOpen}
+                onClose={() => setIsSheetModalOpen(false)}
+                title="Upload Physical Count Sheet"
+                templateType="cycle_count_sheet"
+                onImport={importCycleCountsCsv}
+                onSuccess={fetchCounts}
+                helperText="Upload CSV of counted items (barcode, counted_quantity). The system evaluates variances against current snapshot stock."
+            />
 
             {/* ── Action Message ── */}
             {actionMessage && (

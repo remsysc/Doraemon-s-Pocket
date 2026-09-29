@@ -150,13 +150,35 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
     });
 
-    // ---- Data Management (Sprint 6, DATA-6.1) ----
-    // Admin only: Bulk CSV export and import for Master Data (Categories, Products)
-    Route::middleware('role:admin')->prefix('data')->group(function () {
-        Route::get('export/categories', [DataManagementController::class, 'exportCategories']);
-        Route::post('import/categories', [DataManagementController::class, 'importCategories']);
-        Route::get('export/products', [DataManagementController::class, 'exportProducts']);
-        Route::post('import/products', [DataManagementController::class, 'importProducts']);
+    // ---- Data Management (Sprint 6, DATA-6.1 Expanded) ----
+    Route::prefix('data')->group(function () {
+        // Sample CSV Templates (all authenticated roles can download templates)
+        Route::get('templates/{type}', [DataManagementController::class, 'downloadTemplate']);
+
+        // Admin-only: Master Data (Categories, Products) & Inventory Ledger Export
+        Route::middleware('role:admin')->group(function () {
+            Route::get('export/categories', [DataManagementController::class, 'exportCategories']);
+            Route::post('import/categories', [DataManagementController::class, 'importCategories']);
+            Route::get('export/products', [DataManagementController::class, 'exportProducts']);
+            Route::post('import/products', [DataManagementController::class, 'importProducts']);
+            Route::get('export/inventory-transactions', [DataManagementController::class, 'exportInventoryTransactions']);
+        });
+
+        // Purchasing Manager + Admin: Suppliers & Purchase Orders
+        Route::middleware('role:purchasing_manager,admin')->group(function () {
+            Route::get('export/suppliers', [DataManagementController::class, 'exportSuppliers']);
+            Route::post('import/suppliers', [DataManagementController::class, 'importSuppliers']);
+            Route::get('export/purchase-orders', [DataManagementController::class, 'exportPurchaseOrders']);
+            Route::post('import/purchase-orders', [DataManagementController::class, 'importPurchaseOrders']);
+        });
+
+        // Warehouse Staff + Admin: Lots & Cycle Counts
+        Route::middleware('role:warehouse_staff,admin')->group(function () {
+            Route::get('export/lots', [DataManagementController::class, 'exportLots']);
+            Route::post('import/lots', [DataManagementController::class, 'importLots']);
+            Route::get('export/cycle-counts', [DataManagementController::class, 'exportCycleCounts']);
+            Route::post('import/cycle-counts', [DataManagementController::class, 'importCycleCounts']);
+        });
     });
 
     // ---- Suppliers (Sprint 6, FR-39) ----

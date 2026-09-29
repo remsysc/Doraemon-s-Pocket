@@ -13,18 +13,21 @@ export interface Category {
 
 export interface Product {
     id: string;
+    sku_id?: string;
     name: string;
-    description: string | null;
-    barcode: string | null;
+    description?: string | null;
+    barcode?: string | null;
     unit_of_measure: string;
     unit_cost?: number | null;
     unit_price?: number | null;
-    category: Category;
-    metadata: {
+    category?: Category;
+    category_id?: string;
+    metadata?: {
         is_seasonal: boolean;
         shelf_life_days: number | null;
     };
-    status: "active" | "inactive";
+    status?: "active" | "inactive";
+    is_active?: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -360,7 +363,8 @@ export interface CycleCount {
     sku_id: string;
     lot_id: string | null;
     product?: Product;
-    counted_by: number;
+    counted_by?: number;
+    counter_id?: number;
     counter_name: string;
     expected_qty: number;
     counted_qty: number;
@@ -674,7 +678,7 @@ export async function receivePurchaseOrder(id: string, payload: ReceivePurchaseO
 }
 
 // ---------------------------------------------------------------------------
-// System-Wide Data Management (Sprint 6, DATA-6.1)
+// System-Wide Data Management (Sprint 6, DATA-6.1 Expanded)
 // ---------------------------------------------------------------------------
 
 export interface ImportDataResponse {
@@ -682,6 +686,7 @@ export interface ImportDataResponse {
     imported_count: number;
     updated_count: number;
     errors: string[];
+    dry_run?: boolean;
 }
 
 export async function exportCategoriesCsv(): Promise<Blob> {
@@ -694,23 +699,100 @@ export async function exportProductsCsv(): Promise<Blob> {
     return res.data;
 }
 
-export async function importCategoriesCsv(file: File): Promise<ImportDataResponse> {
+export async function importCategoriesCsv(file: File, dryRun: boolean = false): Promise<ImportDataResponse> {
     await getCsrfCookie();
     const formData = new FormData();
     formData.append('file', file);
+    if (dryRun) formData.append('dry_run', '1');
     const res = await api.post<ImportDataResponse>('/api/data/import/categories', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
     return res.data;
 }
 
-export async function importProductsCsv(file: File): Promise<ImportDataResponse> {
+export async function importProductsCsv(file: File, dryRun: boolean = false): Promise<ImportDataResponse> {
     await getCsrfCookie();
     const formData = new FormData();
     formData.append('file', file);
+    if (dryRun) formData.append('dry_run', '1');
     const res = await api.post<ImportDataResponse>('/api/data/import/products', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return res.data;
+}
+
+export async function exportSuppliersCsv(): Promise<Blob> {
+    const res = await api.get('/api/data/export/suppliers', { responseType: 'blob' });
+    return res.data;
+}
+
+export async function importSuppliersCsv(file: File, dryRun: boolean = false): Promise<ImportDataResponse> {
+    await getCsrfCookie();
+    const formData = new FormData();
+    formData.append('file', file);
+    if (dryRun) formData.append('dry_run', '1');
+    const res = await api.post<ImportDataResponse>('/api/data/import/suppliers', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+}
+
+export async function exportLotsCsv(): Promise<Blob> {
+    const res = await api.get('/api/data/export/lots', { responseType: 'blob' });
+    return res.data;
+}
+
+export async function importLotsCsv(file: File, dryRun: boolean = false): Promise<ImportDataResponse> {
+    await getCsrfCookie();
+    const formData = new FormData();
+    formData.append('file', file);
+    if (dryRun) formData.append('dry_run', '1');
+    const res = await api.post<ImportDataResponse>('/api/data/import/lots', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+}
+
+export async function exportPurchaseOrdersCsv(): Promise<Blob> {
+    const res = await api.get('/api/data/export/purchase-orders', { responseType: 'blob' });
+    return res.data;
+}
+
+export async function importPurchaseOrdersCsv(file: File, dryRun: boolean = false): Promise<ImportDataResponse> {
+    await getCsrfCookie();
+    const formData = new FormData();
+    formData.append('file', file);
+    if (dryRun) formData.append('dry_run', '1');
+    const res = await api.post<ImportDataResponse>('/api/data/import/purchase-orders', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+}
+
+export async function exportCycleCountsCsv(status?: string): Promise<Blob> {
+    const params = status ? { status } : {};
+    const res = await api.get('/api/data/export/cycle-counts', { params, responseType: 'blob' });
+    return res.data;
+}
+
+export async function importCycleCountsCsv(file: File, dryRun: boolean = false): Promise<ImportDataResponse> {
+    await getCsrfCookie();
+    const formData = new FormData();
+    formData.append('file', file);
+    if (dryRun) formData.append('dry_run', '1');
+    const res = await api.post<ImportDataResponse>('/api/data/import/cycle-counts', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+}
+
+export async function exportInventoryTransactionsCsv(params?: { from_date?: string; to_date?: string; txn_type?: string }): Promise<Blob> {
+    const res = await api.get('/api/data/export/inventory-transactions', { params, responseType: 'blob' });
+    return res.data;
+}
+
+export async function downloadSampleTemplate(type: string): Promise<Blob> {
+    const res = await api.get(`/api/data/templates/${type}`, { responseType: 'blob' });
     return res.data;
 }
 

@@ -87,8 +87,8 @@ export default function Products() {
         setFormUnitCost(product.unit_cost?.toString() ?? "");
         setFormUnitPrice(product.unit_price?.toString() ?? "");
         setFormCategoryId(product.category?.id ?? "");
-        setFormIsSeasonal(product.metadata.is_seasonal);
-        setFormShelfLife(product.metadata.shelf_life_days?.toString() ?? "");
+        setFormIsSeasonal(product.metadata?.is_seasonal ?? false);
+        setFormShelfLife(product.metadata?.shelf_life_days?.toString() ?? "");
         setFormError("");
         setEditTarget(product);
         setModalMode("edit");
@@ -207,9 +207,9 @@ export default function Products() {
                                                 <td>{prod.category?.name ?? "—"}</td>
                                                 <td>{prod.unit_of_measure}</td>
                                                 <td>
-                                                    {prod.unit_cost !== null || prod.unit_price !== null ? (
+                                                    {prod.unit_cost != null || prod.unit_price != null ? (
                                                         <span>
-                                                            {prod.unit_cost !== null ? `₱${prod.unit_cost.toFixed(2)}` : "—"} / {prod.unit_price !== null ? `₱${prod.unit_price.toFixed(2)}` : "—"}
+                                                            {prod.unit_cost != null ? `₱${prod.unit_cost.toFixed(2)}` : "—"} / {prod.unit_price != null ? `₱${prod.unit_price.toFixed(2)}` : "—"}
                                                         </span>
                                                     ) : "—"}
                                                 </td>
