@@ -242,14 +242,13 @@ export async function createTransaction(payload: StoreTransactionPayload) {
 
 export interface AuditLog {
     id: string;
-    user_id: number;
+    actor?: { id: number; name: string; email: string; role: string };
     action: string;
-    auditable_type: string;
-    auditable_id: string;
+    entity_type: string;
+    entity_id: string;
     old_values: Record<string, unknown> | null;
     new_values: Record<string, unknown> | null;
-    created_at: string;
-    user?: { id: number; name: string; email: string };
+    occurred_at: string;
 }
 
 export function getAuditLogs(page = 1, perPage = 15) {
