@@ -4,6 +4,7 @@ import type {
     ReorderAlert,
     ExpiryAlert,
     Classification,
+    PurchaseOrder,
     ReorderConfig,
 } from "../../lib/inventory-api";
 
@@ -18,6 +19,8 @@ interface PurchasingDashboardProps {
     expiryAlerts: ExpiryAlert[];
     configs: ReorderConfig[];
     classifications: Classification[];
+    purchaseOrders: PurchaseOrder[] | null;
+    purchaseOrdersLoading: boolean;
     totalProducts: number;
 }
 
@@ -26,6 +29,8 @@ export default function PurchasingDashboardView({
     expiryAlerts,
     configs,
     classifications,
+    purchaseOrders,
+    purchaseOrdersLoading,
     totalProducts,
 }: PurchasingDashboardProps) {
     const classACount = classifications.filter((c) => c.abc === "A").length;
@@ -141,7 +146,11 @@ export default function PurchasingDashboardView({
             </section>
 
             <Suspense fallback={<div className="analytics-loading">Loading analytics…</div>}>
-                <PurchasingAnalyticsCharts classifications={classifications} />
+                <PurchasingAnalyticsCharts
+                    classifications={classifications}
+                    purchaseOrders={purchaseOrders}
+                    purchaseOrdersLoading={purchaseOrdersLoading}
+                />
             </Suspense>
 
             {/* Reorder Alerts */}

@@ -2,14 +2,14 @@
 
 > This is the canonical status overview for Sprints 1–6. Sprint 1 is done with documentation follow-ups; Sprints 2–5 are complete; Sprint 6's main scope is implemented with follow-ups still open. Per-sprint files preserve detailed implementation notes and contracts; use this document for overall status.
 
-| Sprint | Scope                                     | Status                                                                                           | Detailed record              |
-| ------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------- |
-| 1      | Foundation & Auth                         | 🟡 Done with documentation follow-ups                                                            | [`sprint-1.md`](sprint-1.md) |
-| 2      | Core Ledger                               | ✅ Complete                                                                                      | [`sprint-2.md`](sprint-2.md) |
-| 3      | Inventory Snapshots & Concurrency         | ✅ Complete                                                                                      | [`sprint-3.md`](sprint-3.md) |
-| 4      | Classification & Reorder Intelligence     | ✅ Complete                                                                                      | [`sprint-4.md`](sprint-4.md) |
-| 5      | Reconciliation, Reports & User Management | ✅ Complete                                                                                      | [`sprint-5.md`](sprint-5.md) |
-| 6      | Hardening, Data Management & Demo         | ⚠️ Main scope implemented; PO-trends chart, demo-seed fidelity, and deployment follow-ups remain | [`sprint-6.md`](sprint-6.md) |
+| Sprint | Scope                                     | Status                                                                         | Detailed record              |
+| ------ | ----------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------- |
+| 1      | Foundation & Auth                         | 🟡 Done with documentation follow-ups                                          | [`sprint-1.md`](sprint-1.md) |
+| 2      | Core Ledger                               | ✅ Complete                                                                    | [`sprint-2.md`](sprint-2.md) |
+| 3      | Inventory Snapshots & Concurrency         | ✅ Complete                                                                    | [`sprint-3.md`](sprint-3.md) |
+| 4      | Classification & Reorder Intelligence     | ✅ Complete                                                                    | [`sprint-4.md`](sprint-4.md) |
+| 5      | Reconciliation, Reports & User Management | ✅ Complete                                                                    | [`sprint-5.md`](sprint-5.md) |
+| 6      | Hardening, Data Management & Demo         | ⚠️ Main scope implemented; demo-seed fidelity and deployment follow-ups remain | [`sprint-6.md`](sprint-6.md) |
 
 ---
 
@@ -88,7 +88,7 @@
 | Auth hardening notes & target deployment guidance                    | Rem   | ✅ docs exist; deployment/migration remains outstanding                                                        |
 | Supplier & Purchase Order Management (FR-39, FR-40, FR-41)           | Rem   | ✅ done — CRUD + receiving endpoint + UI                                                                       |
 | Admin turnover/shrinkage and PM ABC/XYZ charts                       | Rem   | ✅ done                                                                                                        |
-| PM purchase-order trends / supplier lead-time chart                  | Rem   | ⬜ follow-up — current component is a placeholder                                                              |
+| PM purchase-order trends / supplier lead-time chart                  | Rem   | ✅ done — 12-month placed/received PO volume and configured active-supplier lead-time estimates                |
 | CSV Data Management                                                  | Rem   | ✅ Categories, Products, Lots, Suppliers, POs, Cycle Counts import/export; ledger export-only                  |
 
 ---
@@ -100,10 +100,10 @@
 | ~~EOQ computation (FR-29)~~ ✅ resolved          | OQ-6 resolved 2026-09-11 — operational cost inputs modeled on `reorder_configs`, not Product.                   |
 | ~~Seasonal reorder trigger (FR-28)~~ ✅ baseline | Implemented as a seasonal flag + basis; richer decomposition improves the number as ledger history accumulates. |
 | Cycle-count split (FR-30, FR-36)                 | ✅ Resolved 2026-09-20 — WS submits real-time counts, Admin reconciles via ledger adjustments.                  |
-| PO-trends chart (CHART-6.1 / PRD FR-21)          | ⬜ Not implemented — Purchasing dashboard shows a placeholder.                                                  |
-| Demo seed fidelity                               | ⬜ The thermostat snapshot is 28 (not 45); filter lots expire in 180/365 days, not 14/180.                      |
-| FEFO pick allocation                             | ⬜ No dedicated pick-list/allocation workflow; only expiry sorting and alerts are available.                    |
-| Railway-to-EC2 migration                         | ⬜ Deployment TODO; `docs/tech-debt.md` describes a target architecture.                                        |
+
+| Demo seed fidelity | ⬜ The thermostat snapshot is 28 (not 45); filter lots expire in 180/365 days, not 14/180. |
+| FEFO pick allocation | ⬜ No dedicated pick-list/allocation workflow; only expiry sorting and alerts are available. |
+| Railway-to-EC2 migration | ⬜ Deployment TODO; `docs/tech-debt.md` describes a target architecture. |
 
 ---
 

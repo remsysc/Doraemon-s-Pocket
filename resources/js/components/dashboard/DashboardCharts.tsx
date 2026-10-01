@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import type {
     Classification,
+    PurchaseOrder,
     TurnoverReportItem,
     VarianceReportItem,
 } from "../../lib/inventory-api";
@@ -198,10 +199,14 @@ export function AdminAnalyticsCharts({
 
 interface PurchasingAnalyticsChartsProps {
     classifications: Classification[];
+    purchaseOrders: PurchaseOrder[] | null;
+    purchaseOrdersLoading: boolean;
 }
 
 export function PurchasingAnalyticsCharts({
     classifications,
+    purchaseOrders,
+    purchaseOrdersLoading,
 }: PurchasingAnalyticsChartsProps) {
     const abcData = (["A", "B", "C"] as const)
         .map((grade) => ({
@@ -230,7 +235,10 @@ export function PurchasingAnalyticsCharts({
                         No classification data is available yet.
                     </p>
                 </article>
-                <PurchaseOrderTrendsPlaceholder />
+                <PurchaseOrderTrendsCard
+                    purchaseOrders={purchaseOrders}
+                    loading={purchaseOrdersLoading}
+                />
             </section>
         );
     }
@@ -311,35 +319,282 @@ export function PurchasingAnalyticsCharts({
                     </div>
                 </div>
             </article>
-            <PurchaseOrderTrendsPlaceholder />
+            <PurchaseOrderTrendsCard
+                    purchaseOrders={purchaseOrders}
+                    loading={purchaseOrdersLoading}
+                />
         </section>
     );
 }
 
-function PurchaseOrderTrendsPlaceholder() {
+interface MonthlyPurchaseOrderPoint {
+    key: string;
+    month: string;
+    fullMonth: string;
+    orderCount: number;
+    orderValue: number;
+}
+
+interface SupplierLeadTimePoint {
+    supplier: string;
+    leadTimeDays: number;
+}
+
+function buildMonthlyPurchaseOrderData(
+    purchaseOrders: PurchaseOrder[],
+): MonthlyPurchaseOrderPoint[] {
+    const today = new Date();
+    const firstMonth = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+    const monthlyData = Array.from({ length: 12 }, (_, index) => {
+        const date = new Date(firstMonth.getFullYear(), firstMonth.getMonth() + index, 1);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+        return {
+            key,
+            month: date.toLocaleDateString("en", { month: "short" }),
+            fullMonth: date.toLocaleDateString("en", { month: "long", year: "numeric" }),
+            orderCount: 0,
+            orderValue: 0,
+        };
+    });
+    const pointsByMonth = new Map(monthlyData.map((point) => [point.key, point] as const));
+
+    for (const order of purchaseOrders) {
+        if (order.status === "draft" || !order.order_date) {
+            continue;
+        }
+
+        const point = pointsByMonth.get(order.order_date.slice(0, 7));
+        if (!point) {
+            continue;
+        }
+
+        point.orderCount += 1;
+        const orderValue = Number(order.total_amount);
+        if (Number.isFinite(orderValue)) {
+            point.orderValue += orderValue;
+        }
+    }
+
+    return monthlyData;
+}
+
+function buildSupplierLeadTimeData(
+    purchaseOrders: PurchaseOrder[],
+): SupplierLeadTimePoint[] {
+    const suppliers = new Map<string, SupplierLeadTimePoint>();
+
+    for (const order of purchaseOrders) {
+        const supplier = order.supplier;
+        if (order.status === "draft" || !supplier?.is_active) {
+            continue;
+        }
+
+        const leadTimeDays = Number(supplier.lead_time_days);
+        if (Number.isFinite(leadTimeDays)) {
+            suppliers.set(supplier.id, {
+                supplier: supplier.name,
+                leadTimeDays,
+            });
+        }
+    }
+
+    return [...suppliers.values()]
+        .sort(
+            (first, second) =>
+                second.leadTimeDays - first.leadTimeDays ||
+                first.supplier.localeCompare(second.supplier),
+        )
+        .slice(0, 6);
+}
+
+function PurchaseOrderTrendsCard({
+    purchaseOrders,
+    loading,
+}: {
+    purchaseOrders: PurchaseOrder[] | null;
+    loading: boolean;
+}) {
+    const monthlyData = purchaseOrders
+        ? buildMonthlyPurchaseOrderData(purchaseOrders)
+        : [];
+    const supplierLeadTimes = purchaseOrders
+        ? buildSupplierLeadTimeData(purchaseOrders)
+        : [];
+    const orderCount = monthlyData.reduce(
+        (total, point) => total + point.orderCount,
+        0,
+    );
+    const orderValue = monthlyData.reduce(
+        (total, point) => total + point.orderValue,
+        0,
+    );
+
     return (
         <article className="analytics-card">
             <header className="analytics-card__header">
                 <div>
-                    <h2>Procurement & Fulfillment Hub</h2>
-                    <p>Order volumes, supplier lead times & physical receipts</p>
-                </div>
-            </header>
-            <div className="analytics-empty analytics-empty--notice" role="status">
-                <div style={{ maxWidth: 360, margin: "0 auto", textAlign: "center" }}>
-                    <p style={{ marginBottom: 12 }}>
-                        Track and issue replenishment orders directly with active suppliers through the procurement hub.
+                    <h2>Purchase order trends</h2>
+                    <p>
+                        Recent order activity and current configured supplier lead times
                     </p>
-                    <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
-                        <a href="/purchase-orders" className="btn btn--secondary btn--sm">
-                            View Purchase Orders →
-                        </a>
-                        <a href="/suppliers" className="btn btn--secondary btn--sm">
-                            Manage Suppliers →
-                        </a>
-                    </div>
                 </div>
-            </div>
+                <a href="/purchase-orders" className="audit-summary__link">
+                    View POs →
+                </a>
+            </header>
+
+            {loading ? (
+                <p className="analytics-empty" role="status">
+                    Loading procurement analytics…
+                </p>
+            ) : purchaseOrders === null ? (
+                <p className="analytics-empty" role="status">
+                    Purchase-order analytics could not be loaded.
+                </p>
+            ) : (
+                <div className="procurement-chart-grid">
+                    <section
+                        className="procurement-chart-panel"
+                        aria-label="Purchase-order volume"
+                    >
+                        <div className="procurement-chart-panel__header">
+                            <h3>Placed and received orders</h3>
+                            <p>By order date · past 12 months</p>
+                        </div>
+                        <div className="procurement-chart-summary">
+                            <div>
+                                <span>Orders</span>
+                                <strong>{orderCount}</strong>
+                            </div>
+                            <div>
+                                <span>Ordered value</span>
+                                <strong>{pesoFormatter.format(orderValue)}</strong>
+                            </div>
+                        </div>
+                        {orderCount === 0 ? (
+                            <p className="analytics-empty analytics-empty--compact">
+                                No placed or received purchase orders in the past 12 months.
+                            </p>
+                        ) : (
+                            <div className="analytics-chart analytics-chart--compact">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={monthlyData}
+                                        title="Purchase orders placed or received by month over the past 12 months"
+                                        margin={{ top: 8, right: 8, bottom: 4, left: -18 }}
+                                    >
+                                        <CartesianGrid
+                                            stroke="var(--wb-border)"
+                                            strokeDasharray="3 3"
+                                            vertical={false}
+                                        />
+                                        <XAxis
+                                            dataKey="month"
+                                            tick={{ fill: "var(--wb-text-muted)", fontSize: 10 }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <YAxis
+                                            allowDecimals={false}
+                                            width={34}
+                                            tick={{ fill: "var(--wb-text-muted)", fontSize: 10 }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <Tooltip
+                                            contentStyle={tooltipContentStyle}
+                                            labelStyle={tooltipLabelStyle}
+                                            itemStyle={tooltipItemStyle}
+                                            labelFormatter={(label) =>
+                                                monthlyData.find(
+                                                    (point) => point.month === String(label),
+                                                )?.fullMonth ?? String(label)
+                                            }
+                                            formatter={(value) => [
+                                                Number(value),
+                                                "Purchase orders",
+                                            ]}
+                                        />
+                                        <Bar
+                                            dataKey="orderCount"
+                                            name="Purchase orders"
+                                            fill="var(--wb-accent)"
+                                            radius={[4, 4, 0, 0]}
+                                            maxBarSize={22}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
+                    </section>
+
+                    <section
+                        className="procurement-chart-panel"
+                        aria-label="Supplier lead-time estimates"
+                    >
+                        <div className="procurement-chart-panel__header">
+                            <h3>Supplier lead-time estimates</h3>
+                            <p>Configured days · active suppliers with orders</p>
+                        </div>
+                        {supplierLeadTimes.length === 0 ? (
+                            <p className="analytics-empty analytics-empty--compact">
+                                No active suppliers with placed or received purchase orders.
+                            </p>
+                        ) : (
+                            <div className="analytics-chart analytics-chart--compact">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={supplierLeadTimes}
+                                        layout="vertical"
+                                        title="Configured supplier lead-time estimates in days"
+                                        margin={{ top: 4, right: 12, bottom: 4, left: 0 }}
+                                    >
+                                        <CartesianGrid
+                                            stroke="var(--wb-border)"
+                                            strokeDasharray="3 3"
+                                            horizontal={false}
+                                        />
+                                        <XAxis
+                                            type="number"
+                                            allowDecimals={false}
+                                            tick={{ fill: "var(--wb-text-muted)", fontSize: 10 }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickFormatter={(value: number) => `${value}d`}
+                                        />
+                                        <YAxis
+                                            type="category"
+                                            dataKey="supplier"
+                                            width={104}
+                                            interval={0}
+                                            tick={{ fill: "var(--wb-text-secondary)", fontSize: 10 }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <Tooltip
+                                            contentStyle={tooltipContentStyle}
+                                            labelStyle={tooltipLabelStyle}
+                                            itemStyle={tooltipItemStyle}
+                                            formatter={(value) => [
+                                                `${Number(value)} days`,
+                                                "Configured lead time",
+                                            ]}
+                                        />
+                                        <Bar
+                                            dataKey="leadTimeDays"
+                                            name="Configured lead time"
+                                            fill="var(--wb-warning)"
+                                            radius={[0, 4, 4, 0]}
+                                            maxBarSize={22}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
+                    </section>
+                </div>
+            )}
         </article>
     );
 }
