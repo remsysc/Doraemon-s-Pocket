@@ -2,6 +2,7 @@
 
 > Status: ✅ Complete
 > Depends on: Sprint 3 Inventory Snapshots & Concurrency ✅ complete
+> Overall sprint status is maintained in [`sprints.md`](sprints.md); this file is the detailed implementation record.
 
 ## Goal
 
@@ -68,19 +69,19 @@ change.
 
 ## Scope checklist
 
-| Item | Status |
-| --- | --- |
-| `reorder_configs` schema (ROP/safety_stock/lead_time_days + operational costs + Z) | ✅ Implemented |
-| `ReorderConfig` model, relationships, non-standard PK handling | ✅ Implemented |
-| Reorder config CRUD endpoints (PM + admin write; WS no access) | ✅ Implemented |
+| Item                                                                                  | Status         |
+| ------------------------------------------------------------------------------------- | -------------- |
+| `reorder_configs` schema (ROP/safety_stock/lead_time_days + operational costs + Z)    | ✅ Implemented |
+| `ReorderConfig` model, relationships, non-standard PK handling                        | ✅ Implemented |
+| Reorder config CRUD endpoints (PM + admin write; WS no access)                        | ✅ Implemented |
 | `ReorderService`: ROP, statistical safety stock, EOQ (non-seasonal), seasonal trigger | ✅ Implemented |
-| `ClassificationService`: ABC by volume, XYZ by CV | ✅ Implemented |
-| Reorder alert endpoint (available ≤ ROP), PM + admin only | ✅ Implemented |
-| Expiry alert endpoint (lot expiry ≤ window, qty_on_hand > 0), PM + admin only | ✅ Implemented |
-| Classification read + recompute endpoints | ✅ Implemented |
-| Demo reorder-config seed data | ✅ Implemented |
-| Frontend purchasing dashboard (alerts + reorder configs + classifications) | ✅ Implemented |
-| RBAC + math + edge-case tests | ✅ Implemented |
+| `ClassificationService`: ABC by volume, XYZ by CV                                     | ✅ Implemented |
+| Reorder alert endpoint (available ≤ ROP), PM + admin only                             | ✅ Implemented |
+| Expiry alert endpoint (lot expiry ≤ window, qty_on_hand > 0), PM + admin only         | ✅ Implemented |
+| Classification read + recompute endpoints                                             | ✅ Implemented |
+| Demo reorder-config seed data                                                         | ✅ Implemented |
+| Frontend purchasing dashboard (alerts + reorder configs + classifications)            | ✅ Implemented |
+| RBAC + math + edge-case tests                                                         | ✅ Implemented |
 
 ## API contracts (written before implementation per SPEC §4 process rule)
 

@@ -1,24 +1,25 @@
 # Sprint 2 — Core Ledger
 
 > Status: ✅ Complete | Completed: 2026-08-23
+> Overall sprint status is maintained in [`sprints.md`](sprints.md); this file is the detailed implementation record.
 
 Sprint 2 delivers the catalog, lot, append-only inventory ledger, audit read path, automatic model-write auditing, frontend ledger/catalog screens, and repeatable demo inventory data.
 
-| Item | Owner | Status |
-| --- | --- | --- |
-| Category table + CRUD endpoints | Rem | ✅ Done — `CategoryProductLotCrudTest` |
-| Category restore endpoint | Rem | ✅ Done — Admin-only restore |
-| Product table + CRUD endpoints | Rem | ✅ Done — `CategoryProductLotCrudTest` |
-| Lot table + CRUD endpoints | Rem | ✅ Done — `CategoryProductLotCrudTest` |
-| Lot validation decisions and regression coverage | Rem | ✅ Done — OQ-7/OQ-8 resolved |
-| Inventory transaction table + append-only write endpoint | Rem | ✅ Done — all six transaction types |
-| Audit-log schema + Admin-only read API | Rem | ✅ Done — `AuditLogTest` |
-| Automatic audit logging | Rem | ✅ Done — `AuditObserver` + `AuditLogService` for Product, Lot, Category, and User |
-| Frontend Category/Product/Lot screens | Lyll & Larce | ✅ Done |
-| Frontend transaction ledger UI | Lyll & Larce | ✅ Done |
-| Repeatable realistic inventory seed data | Rem | ✅ Done — 24 deterministic transactions across 8 products (extended to 26 in Sprint 3 to seed snapshots) |
-| Transaction append-only regression coverage | Rem | ✅ Done — no PUT/PATCH/DELETE routes |
-| Audit generation and redaction regression coverage | Rem | ✅ Done — authenticated writes audited; sensitive User fields excluded |
+| Item                                                     | Owner        | Status                                                                                                   |
+| -------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------- |
+| Category table + CRUD endpoints                          | Rem          | ✅ Done — `CategoryProductLotCrudTest`                                                                   |
+| Category restore endpoint                                | Rem          | ✅ Done — Admin-only restore                                                                             |
+| Product table + CRUD endpoints                           | Rem          | ✅ Done — `CategoryProductLotCrudTest`                                                                   |
+| Lot table + CRUD endpoints                               | Rem          | ✅ Done — `CategoryProductLotCrudTest`                                                                   |
+| Lot validation decisions and regression coverage         | Rem          | ✅ Done — OQ-7/OQ-8 resolved                                                                             |
+| Inventory transaction table + append-only write endpoint | Rem          | ✅ Done — all six transaction types                                                                      |
+| Audit-log schema + Admin-only read API                   | Rem          | ✅ Done — `AuditLogTest`                                                                                 |
+| Automatic audit logging                                  | Rem          | ✅ Done — `AuditObserver` + `AuditLogService` for Product, Lot, Category, and User                       |
+| Frontend Category/Product/Lot screens                    | Lyll & Larce | ✅ Done                                                                                                  |
+| Frontend transaction ledger UI                           | Lyll & Larce | ✅ Done                                                                                                  |
+| Repeatable realistic inventory seed data                 | Rem          | ✅ Done — 24 deterministic transactions across 8 products (extended to 26 in Sprint 3 to seed snapshots) |
+| Transaction append-only regression coverage              | Rem          | ✅ Done — no PUT/PATCH/DELETE routes                                                                     |
+| Audit generation and redaction regression coverage       | Rem          | ✅ Done — authenticated writes audited; sensitive User fields excluded                                   |
 
 ## Seed data
 

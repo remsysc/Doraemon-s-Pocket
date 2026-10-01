@@ -2,6 +2,7 @@
 
 > Status: ✅ Complete
 > Depends on: Sprint 2 Core Ledger ✅ complete
+> Overall sprint status is maintained in [`sprints.md`](sprints.md); this file is the detailed implementation record.
 
 ## Goal
 
@@ -20,33 +21,33 @@ qty_available = qty_on_hand - qty_reserved
 
 Transaction side effects use the signed `qty_delta` from the append-only ledger:
 
-| Transaction | `qty_on_hand` | `qty_reserved` | `qty_available` |
-| --- | ---: | ---: | ---: |
-| `RECEIPT +N` | `+N` | unchanged | `+N` |
-| `ADJUSTMENT ±N` | `±N` | unchanged | `±N` |
-| `RESERVE -N` | unchanged | `+N` | `-N` |
-| `RESERVE +N` | unchanged | `-N` | `+N` |
-| `PICK -N` | `-N` | `-N` | unchanged |
-| `SALE -N` | `-N` | unchanged | `-N` |
-| `WRITE_OFF -N` | `-N` | unchanged | `-N` |
+| Transaction     | `qty_on_hand` | `qty_reserved` | `qty_available` |
+| --------------- | ------------: | -------------: | --------------: |
+| `RECEIPT +N`    |          `+N` |      unchanged |            `+N` |
+| `ADJUSTMENT ±N` |          `±N` |      unchanged |            `±N` |
+| `RESERVE -N`    |     unchanged |           `+N` |            `-N` |
+| `RESERVE +N`    |     unchanged |           `-N` |            `+N` |
+| `PICK -N`       |          `-N` |           `-N` |       unchanged |
+| `SALE -N`       |          `-N` |      unchanged |            `-N` |
+| `WRITE_OFF -N`  |          `-N` |      unchanged |            `-N` |
 
 A negative `RESERVE` creates a reservation; a positive `RESERVE` releases one. `PICK` consumes reserved stock. Each ledger row still references one Lot, while the snapshot aggregates the affected Lot's Product SKU. Any operation that would violate an invariant is rejected with HTTP 422 and rolls back both the snapshot update and ledger insert.
 
 ## Scope checklist
 
-| Item | Status |
-| --- | --- |
+| Item                                                                                               | Status                    |
+| -------------------------------------------------------------------------------------------------- | ------------------------- |
 | Define `inventory_snapshots` schema for `qty_on_hand`, `qty_reserved`, and `qty_available` per SKU | ✅ Foundation implemented |
-| Add snapshot model, relationships, and non-standard primary-key handling | ✅ Foundation implemented |
-| Implement transaction side effects in a database transaction | ✅ Implemented |
-| Lock the affected snapshot row with `lockForUpdate()` before calculating availability | ✅ Implemented |
-| Apply `RECEIPT` and `ADJUSTMENT` quantity changes | ✅ Implemented |
-| Apply `RESERVE` and release semantics without negative availability | ✅ Implemented |
-| Apply `PICK`, `SALE`, and `WRITE_OFF` decrements | ✅ Implemented |
-| Reject insufficient stock with a documented 422 error and roll back the ledger insert | ✅ Implemented |
-| Add concurrency tests proving only one competing decrement succeeds | ✅ Implemented |
-| Add snapshot read endpoints for authenticated roles | ✅ Implemented |
-| Add frontend stock overview / on-hand display | ✅ Implemented |
+| Add snapshot model, relationships, and non-standard primary-key handling                           | ✅ Foundation implemented |
+| Implement transaction side effects in a database transaction                                       | ✅ Implemented            |
+| Lock the affected snapshot row with `lockForUpdate()` before calculating availability              | ✅ Implemented            |
+| Apply `RECEIPT` and `ADJUSTMENT` quantity changes                                                  | ✅ Implemented            |
+| Apply `RESERVE` and release semantics without negative availability                                | ✅ Implemented            |
+| Apply `PICK`, `SALE`, and `WRITE_OFF` decrements                                                   | ✅ Implemented            |
+| Reject insufficient stock with a documented 422 error and roll back the ledger insert              | ✅ Implemented            |
+| Add concurrency tests proving only one competing decrement succeeds                                | ✅ Implemented            |
+| Add snapshot read endpoints for authenticated roles                                                | ✅ Implemented            |
+| Add frontend stock overview / on-hand display                                                      | ✅ Implemented            |
 
 ## Acceptance criteria
 

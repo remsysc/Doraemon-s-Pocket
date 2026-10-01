@@ -6,38 +6,40 @@ Navigation index for all project documentation.
 
 ## Product
 
-| File | Purpose |
-| ---- | ------- |
+| File                     | Purpose                                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------- |
 | [prd/PRD.md](prd/PRD.md) | Product Requirements Document — problem, goals, user roles, functional requirements, risks, open questions |
 
 ## Engineering Spec
 
-| File | Purpose |
-| ---- | ------- |
+| File                         | Purpose                                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | [spec/SPEC.md](spec/SPEC.md) | Technical spec — EARS requirements, API contracts, data model reference, edge cases, acceptance criteria, changelog |
-| [erd/erd.md](erd/erd.md) | ERD diagram + full schema reference for all tables (impl. and planned) |
+| [erd/erd.md](erd/erd.md)     | ERD diagram + current schema reference for migrated tables                                                          |
 
 ## Sprint Tracking
 
-| File | Purpose |
-| ---- | ------- |
-| [sprints/sprint-1.md](sprints/sprint-1.md) | Sprint 1 — Foundation & Auth ✅ DONE |
-| [sprints/sprint-2.md](sprints/sprint-2.md) | Sprint 2 — Core Ledger ✅ DONE |
-| [sprints/sprint-3.md](sprints/sprint-3.md) | Sprint 3 — Inventory Snapshots & Concurrency ✅ DONE |
-| [sprints/sprint-4.md](sprints/sprint-4.md) | Sprint 4 — Classification & Reorder Intelligence ✅ DONE |
-| [sprints/sprint-5.md](sprints/sprint-5.md) | Sprint 5 — Reconciliation & Audit ✅ DONE |
-| [sprints/sprints-3-6.md](sprints/sprints-3-6.md) | Sprints 3–6 — Roadmap ⬜ Ongoing (Sprint 6 Next) |
+| File                                     | Purpose                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------- |
+| [sprints/sprints.md](sprints/sprints.md) | Canonical status overview for Sprints 1–6, with links to detailed records |
+
+The individual `sprints/sprint-1.md` through `sprints/sprint-6.md` files are supporting implementation records. Sprint status is maintained only in the canonical overview.
 
 ## AI / Agent Context
 
-> These files are written for Kiro and AI agents, not for human onboarding.
-> They stay accurate as implementation progresses.
+> These files are written for AI agents and project maintenance, not human onboarding.
 
-| File | Purpose |
-| ---- | ------- |
-| [ai/current.md](ai/current.md) | Current implementation state — what is actually on disk and merged |
-| [ai/architecture.md](ai/architecture.md) | Stack, layers, RBAC model, testing approach |
-| [ai/decisions.md](ai/decisions.md) | Decision log — why choices were made |
-| [ai/coding-standards.md](ai/coding-standards.md) | Conventions, patterns, and rules specific to this repo |
-| [ai/anti-patterns.md](ai/anti-patterns.md) | Known traps and mistakes to avoid |
-| [ai/todo.md](ai/todo.md) | Immediate next steps (not sprint-level tracking) |
+| File                               | Purpose                                                            |
+| ---------------------------------- | ------------------------------------------------------------------ |
+| [ai/current.md](ai/current.md)     | Current implementation state — what is actually on disk and merged |
+| [ai/decisions.md](ai/decisions.md) | Decision log — why choices were made                               |
+| [ai/todo.md](ai/todo.md)           | Verified implementation and deployment follow-ups                  |
+
+## Design & Demo
+
+| File                                                             | Purpose                                                                                       |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [design/data-management.md](design/data-management.md)           | Initial Data Management UI scope (historical; see expanded spec for current capability notes) |
+| [design/data-management-spec.md](design/data-management-spec.md) | Expanded Data Management design and implementation boundary notes                             |
+| [demo/DEMO_FLOW.md](demo/DEMO_FLOW.md)                           | Role-based demo flow and verified seed-data limitations                                       |
+| [tech-debt.md](tech-debt.md)                                     | Production hardening and deployment target guidance                                           |

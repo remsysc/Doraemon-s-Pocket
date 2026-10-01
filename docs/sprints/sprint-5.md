@@ -1,7 +1,8 @@
 # Sprint 5 — Reconciliation, Reports & User Management
 
-> Status: ✅ Complete  
+> Status: ✅ Complete
 > Depends on: Sprint 4 Classification & Reorder Intelligence ✅ Complete
+> Overall sprint status is maintained in [`sprints.md`](sprints.md); this file is the detailed implementation record.
 
 ## Goal
 
@@ -11,8 +12,7 @@ are found, allow Admin to review variances and reconcile stock via the append-on
 ledger (`ADJUSTMENT` transactions), provide Admin variance and turnover reports,
 and add Admin user management.
 
-Catalog pricing and monetary ABC are documented on the product roadmap and deferred
-to the post-Sprint 5 backlog.
+At Sprint 5 planning, catalog pricing and monetary ABC were deferred to the post-Sprint 5 backlog. Product pricing was subsequently implemented under FR-14; see `docs/spec/SPEC.md` and the later pricing migration.
 
 Implements PRD FR-16, FR-18, FR-19 and SPEC FR-30, FR-36, FR-38.
 
@@ -28,7 +28,7 @@ Implements PRD FR-16, FR-18, FR-19 and SPEC FR-30, FR-36, FR-38.
   start with status `pending`.
 - **Reconciliation action:** Admin only (`POST /api/cycle-counts/{id}/reconcile`).
   Creates an append-only `ADJUSTMENT` transaction with `qty_delta = counted_qty - snapshot_on_hand`
-  via `InventoryTransactionService::applySideEffect()`, which atomically updates
+  via `InventoryTransactionService::record()`, which atomically updates
   `inventory_snapshots` under row-level lock. Marks status `reconciled` and records
   `reconciliation_txn_id`.
 - **Dismissal:** Admin can dismiss a false alarm (`POST /api/cycle-counts/{id}/dismiss`)
@@ -59,29 +59,26 @@ Implements PRD FR-16, FR-18, FR-19 and SPEC FR-30, FR-36, FR-38.
 
 ## Scope checklist
 
-| Item | Status |
-| --- | --- |
-| `cycle_counts` schema (UUID PK, FKs, snapshot comparison, status, PG checks) | ✅ Done |
-| `CycleCount` model, relationships, non-standard PK handling | ✅ Done |
-| Cycle count submission endpoint (Warehouse Staff + Admin; PM 403) | ✅ Done |
-| Cycle count list & detail endpoints (WS own counts, Admin all counts) | ✅ Done |
-| Reconciliation endpoint (`POST /api/cycle-counts/{id}/reconcile`, Admin only) | ✅ Done |
-| Dismissal endpoint (`POST /api/cycle-counts/{id}/dismiss`, Admin only) | ✅ Done |
-| Variance report endpoint (`GET /api/reports/variance`, Admin only) | ✅ Done |
-| Turnover report endpoint (`GET /api/reports/turnover`, Admin only) | ✅ Done |
-| User management endpoints (Admin only CRUD + deactivation) | ✅ Done |
-| Config keys: `variance_alert_threshold_percentage` and `turnover_window_days` | ✅ Done |
+| Item                                                                            | Status  |
+| ------------------------------------------------------------------------------- | ------- |
+| `cycle_counts` schema (UUID PK, FKs, snapshot comparison, status, PG checks)    | ✅ Done |
+| `CycleCount` model, relationships, non-standard PK handling                     | ✅ Done |
+| Cycle count submission endpoint (Warehouse Staff + Admin; PM 403)               | ✅ Done |
+| Cycle count list & detail endpoints (WS own counts, Admin all counts)           | ✅ Done |
+| Reconciliation endpoint (`POST /api/cycle-counts/{id}/reconcile`, Admin only)   | ✅ Done |
+| Dismissal endpoint (`POST /api/cycle-counts/{id}/dismiss`, Admin only)          | ✅ Done |
+| Variance report endpoint (`GET /api/reports/variance`, Admin only)              | ✅ Done |
+| Turnover report endpoint (`GET /api/reports/turnover`, Admin only)              | ✅ Done |
+| User management endpoints (Admin only CRUD + deactivation)                      | ✅ Done |
+| Config keys: `variance_alert_threshold_percentage` and `turnover_window_days`   | ✅ Done |
 | Demo cycle count seeder (thermostat shrinkage case: 45 recorded vs 12 physical) | ✅ Done |
-| Frontend: Warehouse cycle count submission form/modal | ✅ Done |
-| Frontend: Admin reconciliation review queue (reconcile / dismiss) | ✅ Done |
-| Frontend: Admin variance and turnover report screens | ✅ Done |
-| Frontend: Admin user management screen | ✅ Done |
-| RBAC + reconciliation + math + edge-case tests | ✅ Done |
+| Frontend: Warehouse cycle count submission form/modal                           | ✅ Done |
+| Frontend: Admin reconciliation review queue (reconcile / dismiss)               | ✅ Done |
+| Frontend: Admin variance and turnover report screens                            | ✅ Done |
+| Frontend: Admin user management screen                                          | ✅ Done |
+| RBAC + reconciliation + math + edge-case tests                                  | ✅ Done |
 
-> Backend implemented and verified on real PostgreSQL 17 (full suite: 140 tests /
-> 556 assertions pass, including the 3 PostgreSQL-specific constraint/concurrency
-> tests). Frontend items remain for a follow-up. See `docs/ai/decisions.md`
-> (Sprint 5) for implementation notes and two PostgreSQL-only bug fixes.
+> Sprint 5 backend and frontend items are implemented. At Sprint 5 sign-off, the backend suite passed on PostgreSQL 17 (140 tests / 556 assertions, including PostgreSQL-specific constraint/concurrency tests). This historical result is not a current CI result. See `docs/ai/decisions.md` (Sprint 5) for implementation notes and PostgreSQL-specific fixes.
 
 ## API contracts (written before implementation per SPEC §4 process rule)
 
@@ -189,34 +186,34 @@ DELETE /api/users/{user}                        role: admin only
 
 ## Traceable tasks
 
-| Task ID | Component | Description | Est. | Traces to |
-| --- | --- | --- | --- | --- |
-| **SETUP-5.1** | Schema | `cycle_counts` table migration with indexes, foreign keys, and checks | M | FR-30, FR-36 |
-| **SETUP-5.2** | Config | `variance_alert_threshold_percentage` and `turnover_window_days` config keys | S | FR-30, FR-18 |
-| **FR-30.1** | Model | `CycleCount` Eloquent model with UUID PK, relationships, and status scopes | S | FR-30 |
-| **FR-30.2** | Validation | `StoreCycleCountRequest` (validates `sku_id`, `lot_id`, `counted_qty`) | S | FR-30, FR-36 |
-| **FR-30.3** | Service | `CycleCountService::recordCount` comparing against snapshot `qty_on_hand` | M | FR-30 |
-| **FR-30.4** | Controller | `CycleCountController` (`store`, `index`, `show`) and `CycleCountResource` | M | FR-30, FR-36 |
-| **FR-30.5** | Policy | `CycleCountPolicy`: WS can create and view own counts; Admin superuser | S | FR-36 |
-| **FR-30.6** | Service | `CycleCountService::reconcile` creating atomic `ADJUSTMENT` transaction | M | FR-30 |
-| **FR-30.7** | Controller | `reconcile` and `dismiss` endpoints on `CycleCountController` (Admin only) | S | FR-30, FR-36 |
-| **FR-18.1** | Service | `ReportService::getVarianceReport` aggregating discrepancies and net variance | M | FR-18, FR-30 |
-| **FR-18.2** | Service | `ReportService::getTurnoverReport` calculating volume outflow and turnover ratio | M | FR-18 |
-| **FR-18.3** | Controller | `ReportController` (`variance`, `turnover`) behind `role:admin` | S | FR-18 |
-| **FR-38.1** | Validation | `StoreUserRequest` and `UpdateUserRequest` with email unique rules and roles | S | FR-19, FR-38 |
-| **FR-38.2** | Controller | `UserController` (CRUD + deactivation, self-deactivation guard) and `UserPolicy` | M | FR-19, FR-38 |
-| **FE-5.1** | API Client | API functions in `resources/js/lib/inventory-api.ts` for counts, reports, users | S | FR-30, FR-18, FR-38 |
-| **FE-5.2** | UI (WS) | Cycle count submission modal / form on warehouse stock view | M | FR-30 |
-| **FE-5.3** | UI (Admin) | Admin variance and shrinkage report screen with threshold flags | M | FR-18, FR-30 |
-| **FE-5.4** | UI (Admin) | Admin inventory turnover report screen with velocity tiers | M | FR-18 |
-| **FE-5.5** | UI (Admin) | Admin reconciliation queue (one-click reconcile / dismiss) | M | FR-30 |
-| **FE-5.6** | UI (Admin) | Admin user management screen (list, add, edit role, deactivate) | M | FR-38 |
-| **FE-5.7** | Navigation | Update `DashboardLayout.tsx` and `App.tsx` routes with role guards | S | FR-30, FR-38 |
-| **SEED-5.1** | Seeder | `CycleCountSeeder` with realistic demo discrepancy data (thermostat case) | S | PRD §1 |
-| **TEST-5.1** | Tests | Cycle count submission, variance math, threshold flag, and RBAC tests | M | FR-30, FR-36 |
-| **TEST-5.2** | Tests | Admin reconciliation creating `ADJUSTMENT` transaction and updating snapshot | M | FR-30 |
-| **TEST-5.3** | Tests | Variance and turnover reports calculations and Admin-only RBAC tests | M | FR-18 |
-| **TEST-5.4** | Tests | User management CRUD, self-deactivation guard, and audit observer tests | M | FR-38, FR-31 |
+| Task ID       | Component  | Description                                                                      | Est. | Traces to           |
+| ------------- | ---------- | -------------------------------------------------------------------------------- | ---- | ------------------- |
+| **SETUP-5.1** | Schema     | `cycle_counts` table migration with indexes, foreign keys, and checks            | M    | FR-30, FR-36        |
+| **SETUP-5.2** | Config     | `variance_alert_threshold_percentage` and `turnover_window_days` config keys     | S    | FR-30, FR-18        |
+| **FR-30.1**   | Model      | `CycleCount` Eloquent model with UUID PK, relationships, and status scopes       | S    | FR-30               |
+| **FR-30.2**   | Validation | `StoreCycleCountRequest` (validates `sku_id`, `lot_id`, `counted_qty`)           | S    | FR-30, FR-36        |
+| **FR-30.3**   | Service    | `CycleCountService::recordCount` comparing against snapshot `qty_on_hand`        | M    | FR-30               |
+| **FR-30.4**   | Controller | `CycleCountController` (`store`, `index`, `show`) and `CycleCountResource`       | M    | FR-30, FR-36        |
+| **FR-30.5**   | Policy     | `CycleCountPolicy`: WS can create and view own counts; Admin superuser           | S    | FR-36               |
+| **FR-30.6**   | Service    | `CycleCountService::reconcile` creating atomic `ADJUSTMENT` transaction          | M    | FR-30               |
+| **FR-30.7**   | Controller | `reconcile` and `dismiss` endpoints on `CycleCountController` (Admin only)       | S    | FR-30, FR-36        |
+| **FR-18.1**   | Service    | `ReportService::getVarianceReport` aggregating discrepancies and net variance    | M    | FR-18, FR-30        |
+| **FR-18.2**   | Service    | `ReportService::getTurnoverReport` calculating volume outflow and turnover ratio | M    | FR-18               |
+| **FR-18.3**   | Controller | `ReportController` (`variance`, `turnover`) behind `role:admin`                  | S    | FR-18               |
+| **FR-38.1**   | Validation | `StoreUserRequest` and `UpdateUserRequest` with email unique rules and roles     | S    | FR-19, FR-38        |
+| **FR-38.2**   | Controller | `UserController` (CRUD + deactivation, self-deactivation guard) and `UserPolicy` | M    | FR-19, FR-38        |
+| **FE-5.1**    | API Client | API functions in `resources/js/lib/inventory-api.ts` for counts, reports, users  | S    | FR-30, FR-18, FR-38 |
+| **FE-5.2**    | UI (WS)    | Cycle count submission modal / form on warehouse stock view                      | M    | FR-30               |
+| **FE-5.3**    | UI (Admin) | Admin variance and shrinkage report screen with threshold flags                  | M    | FR-18, FR-30        |
+| **FE-5.4**    | UI (Admin) | Admin inventory turnover report screen with velocity tiers                       | M    | FR-18               |
+| **FE-5.5**    | UI (Admin) | Admin reconciliation queue (one-click reconcile / dismiss)                       | M    | FR-30               |
+| **FE-5.6**    | UI (Admin) | Admin user management screen (list, add, edit role, deactivate)                  | M    | FR-38               |
+| **FE-5.7**    | Navigation | Update `DashboardLayout.tsx` and `App.tsx` routes with role guards               | S    | FR-30, FR-38        |
+| **SEED-5.1**  | Seeder     | `CycleCountSeeder` with realistic demo discrepancy data (thermostat case)        | S    | PRD §1              |
+| **TEST-5.1**  | Tests      | Cycle count submission, variance math, threshold flag, and RBAC tests            | M    | FR-30, FR-36        |
+| **TEST-5.2**  | Tests      | Admin reconciliation creating `ADJUSTMENT` transaction and updating snapshot     | M    | FR-30               |
+| **TEST-5.3**  | Tests      | Variance and turnover reports calculations and Admin-only RBAC tests             | M    | FR-18               |
+| **TEST-5.4**  | Tests      | User management CRUD, self-deactivation guard, and audit observer tests          | M    | FR-38, FR-31        |
 
 ## Acceptance criteria
 
@@ -239,10 +236,10 @@ DELETE /api/users/{user}                        role: admin only
 
 ## Non-goals
 
-- Product catalog pricing, valuation, and monetary ABC (deferred to post-Sprint 5 backlog).
+- Product catalog pricing, valuation, and monetary ABC were outside the original Sprint 5 scope; catalog pricing was added later under FR-14.
 - Barcode scanner hardware integration.
 - Purchase order lifecycle beyond reorder alerts.
-- Valuation or COGS modeling during Sprint 5 (strict non-goal).
+- Valuation or COGS modeling as part of the original Sprint 5 report implementation (later catalog pricing enables limited inventory valuation and shrinkage-value reporting; advanced accounting remains out of scope).
 - Automatic recurring cycle-count cron schedules (counts are staff-initiated).
 
 ## Technical constraints

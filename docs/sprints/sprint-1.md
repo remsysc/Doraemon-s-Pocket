@@ -1,24 +1,25 @@
 # Sprint 1 — Foundation & Auth
 
 > Status: 🟡 DONE WITH FOLLOW-UPS | Owner: Rem (Backend) + Lyll & Larce (Frontend)
+> Overall sprint status is maintained in [`sprints.md`](sprints.md); this file is the detailed implementation record.
 
 Sprint 1's foundation work is substantially present, with documentation follow-ups
 remaining for future decisions. The completed work below is based on the
 implementation currently in the repository, not on the earlier checklist claims.
 
-| Item                                                    | Owner        | Status                                                   |
-| ------------------------------------------------------- | ------------ | -------------------------------------------------------- |
-| Repo setup, CI, project skeleton                        | Rem          | ✅ DONE                                                  |
-| USER table (id, email, password_hash, role)             | Rem          | ✅ DONE                                                  |
+| Item                                                    | Owner        | Status                                                             |
+| ------------------------------------------------------- | ------------ | ------------------------------------------------------------------ |
+| Repo setup, CI, project skeleton                        | Rem          | ✅ DONE                                                            |
+| USER table (id, email, password_hash, role)             | Rem          | ✅ DONE                                                            |
 | Register/login endpoints, session auth                  | Rem          | ✅ DONE — register/login/logout/user routes and registration tests |
-| Role-based route-guarding middleware                    | Rem          | ✅ DONE — admin bypass plus role checks and tests        |
-| Purchasing Manager / Warehouse Staff / Admin personas   | Cindy & Vane | ✅ DONE (submitted 2026-08-04)                           |
-| User can/can't-do, UI expectations                      | Cindy & Vane | ✅ DONE (submitted 2026-08-04)                           |
-| Wireframes                                              | Lyll & Larce | ✅ DONE                                                  |
-| Frontend: login/register pages, protected-route wrapper | Lyll & Larce | ✅ DONE — wrapper checks current user before `/dashboard` |
-| Initial DB seeders (users, roles, sample products)      | Rem          | ✅ DONE — 3 users, 4 categories, 8 products, 16 lots |
-| List all endpoints (API contract doc)                   | Rem          | ✅ DONE — registration route now matches implementation |
-| Test: can't hit inventory endpoint unauthenticated      | —            | ✅ DONE — transaction list test added 2026-08-07         |
+| Role-based route-guarding middleware                    | Rem          | ✅ DONE — admin bypass plus role checks and tests                  |
+| Purchasing Manager / Warehouse Staff / Admin personas   | Cindy & Vane | ✅ DONE (submitted 2026-08-04)                                     |
+| User can/can't-do, UI expectations                      | Cindy & Vane | ✅ DONE (submitted 2026-08-04)                                     |
+| Wireframes                                              | Lyll & Larce | ✅ DONE                                                            |
+| Frontend: login/register pages, protected-route wrapper | Lyll & Larce | ✅ DONE — wrapper checks current user before `/dashboard`          |
+| Initial DB seeders (users, roles, sample products)      | Rem          | ✅ DONE — 3 users, 4 categories, 8 products, 16 lots               |
+| List all endpoints (API contract doc)                   | Rem          | ✅ DONE — registration route now matches implementation            |
+| Test: can't hit inventory endpoint unauthenticated      | —            | ✅ DONE — transaction list test added 2026-08-07                   |
 
 ---
 
@@ -48,19 +49,19 @@ implementation currently in the repository, not on the earlier checklist claims.
 
 ## Open questions and current answers
 
-| Question | Current answer | Decision status |
-| --- | --- | --- |
-| Is the role/persona model settled? | Yes. The three roles and their can/can't-do expectations were submitted by the perms team on 2026-08-04. | ✅ Resolved |
-| Should Admin be a separate escalation tier? | No. The implementation treats Admin as a backend superuser; the frontend's default screen is only a navigation convention. | ✅ Resolved |
-| Is registration implemented? | Yes. `POST /api/register` is routed to `RegisteredUserController@store`, validated by three feature tests, and used by the frontend API client. | ✅ Resolved 2026-08-09 |
-| Is the protected-route requirement implemented? | Yes. `ProtectedRoute` checks `/api/user` before rendering `/dashboard` and redirects unauthenticated users to `/login`. | ✅ Resolved 2026-08-09 |
-| Is the unauthenticated inventory check implemented? | Yes. The transaction-list feature test asserts 401 for guests. | ✅ Resolved |
-| Are sample catalog records seeded? | Yes. `DatabaseSeeder` invokes `CatalogSeeder`, producing 4 categories, 8 products, and 16 lots; repeatability is covered by `CatalogSeederTest`. | ✅ Resolved 2026-08-09 |
-| Who owns Lot writes? | Admin + Warehouse Staff, under the physical-receipt interpretation. Purchasing Manager is read-only. | ✅ Resolved 2026-08-09 |
-| Should Purchasing Manager be blocked from all transaction writes? | Yes. Purchasing Manager is read-only for the ledger; only Admin and Warehouse Staff can append any transaction type, while all authenticated roles can read. | ✅ Resolved 2026-08-09 |
-| Lot `onDelete` behavior? | Product deletion is restricted while related Lots exist; the current constrained foreign key intentionally prevents cascading deletion and preserves inventory traceability. | ✅ Resolved 2026-08-09 |
-| `received_date` type? | `received_date` is a required `dateTime` to capture the precise physical receipt time; `expiry_date` remains a nullable `date`. | ✅ Resolved 2026-08-09 |
-| Users table UUID vs bigint? | Keep Laravel's auto-incrementing `bigint` `users.id`; it is appropriate for this single-warehouse project's internal user and actor references. UUIDs remain available for domain records. | ✅ Resolved 2026-08-09 |
+| Question                                                          | Current answer                                                                                                                                                                             | Decision status        |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
+| Is the role/persona model settled?                                | Yes. The three roles and their can/can't-do expectations were submitted by the perms team on 2026-08-04.                                                                                   | ✅ Resolved            |
+| Should Admin be a separate escalation tier?                       | No. The implementation treats Admin as a backend superuser; the frontend's default screen is only a navigation convention.                                                                 | ✅ Resolved            |
+| Is registration implemented?                                      | Yes. `POST /api/register` is routed to `RegisteredUserController@store`, validated by three feature tests, and used by the frontend API client.                                            | ✅ Resolved 2026-08-09 |
+| Is the protected-route requirement implemented?                   | Yes. `ProtectedRoute` checks `/api/user` before rendering `/dashboard` and redirects unauthenticated users to `/login`.                                                                    | ✅ Resolved 2026-08-09 |
+| Is the unauthenticated inventory check implemented?               | Yes. The transaction-list feature test asserts 401 for guests.                                                                                                                             | ✅ Resolved            |
+| Are sample catalog records seeded?                                | Yes. `DatabaseSeeder` invokes `CatalogSeeder`, producing 4 categories, 8 products, and 16 lots; repeatability is covered by `CatalogSeederTest`.                                           | ✅ Resolved 2026-08-09 |
+| Who owns Lot writes?                                              | Admin + Warehouse Staff, under the physical-receipt interpretation. Purchasing Manager is read-only.                                                                                       | ✅ Resolved 2026-08-09 |
+| Should Purchasing Manager be blocked from all transaction writes? | Yes. Purchasing Manager is read-only for the ledger; only Admin and Warehouse Staff can append any transaction type, while all authenticated roles can read.                               | ✅ Resolved 2026-08-09 |
+| Lot `onDelete` behavior?                                          | Product deletion is restricted while related Lots exist; the current constrained foreign key intentionally prevents cascading deletion and preserves inventory traceability.               | ✅ Resolved 2026-08-09 |
+| `received_date` type?                                             | `received_date` is a required `dateTime` to capture the precise physical receipt time; `expiry_date` remains a nullable `date`.                                                            | ✅ Resolved 2026-08-09 |
+| Users table UUID vs bigint?                                       | Keep Laravel's auto-incrementing `bigint` `users.id`; it is appropriate for this single-warehouse project's internal user and actor references. UUIDs remain available for domain records. | ✅ Resolved 2026-08-09 |
 
 ## Follow-ups for the next sprint
 
