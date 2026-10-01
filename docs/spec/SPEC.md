@@ -8,19 +8,11 @@ This spec is the source of truth for implementation. Where code and spec disagre
 
 ## 1. Scope of This Spec
 
-Covers Sprint 1 (done) and Sprint 2 (complete) in full detail, and Sprint 3–6 at requirement-level (with a dedicated Sprint 3 plan now created). Do not implement Sprint 4+ behavior against this document alone — flag it as unspecified first.
+Covers the current Sprint 1–6 implementation contracts and recorded requirements. The canonical sprint tracker records delivery status; per-sprint files preserve detailed implementation notes. Where a requirement remains incomplete or differs from implementation, the gap is called out explicitly below; do not infer completion from a sprint label alone.
 
 ### 1.1 Sprint status source of truth
 
-Sprint checklists are tracked in dedicated files — keep status updates there, not here:
-
-- **[Sprint 1 — Foundation & Auth](../sprints/sprint-1.md)** ✅ DONE
-- **[Sprint 2 — Core Ledger](../sprints/sprint-2.md)** ✅ Complete
-- **[Sprint 3 — Inventory Snapshots & Concurrency](../sprints/sprint-3.md)** ✅ Complete
-- **[Sprint 4 — Classification & Reorder Intelligence](../sprints/sprint-4.md)** ✅ Complete
-- **[Sprints 3–6 — Roadmap](../sprints/sprints-3-6.md)** ⬜ Future roadmap
-
-**Sprints 5–6** — Sprints 3 and 4 are complete (snapshots/concurrency and classification/reorder intelligence). Nothing in cycle-count reconciliation, variance/turnover reporting, or hardening has been started. Treat the §§6–7 requirements for those sprints as **forward-looking requirements only**, not in-progress work.
+The canonical status overview for Sprints 1–6 is **[Sprint Status](../sprints/sprints.md)**. Per-sprint files linked there preserve detailed implementation notes and contracts; update overall status only in the canonical tracker. Sprint 6's PO-trends chart and demo-seed fidelity remain incomplete; see the tracker and `docs/ai/todo.md`.
 
 ---
 
@@ -47,7 +39,7 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 - **FR-11** THE SYSTEM SHALL restrict Product write operations to the `admin` role only. 🔄 CHANGED 2026-08-04: `purchasing_manager` write access to Product is removed, same rationale as FR-7 — see FR-32/§9.
 - **FR-12** THE SYSTEM SHALL allow any authenticated role to read Product.
 - **FR-13** IF a Product's `category_id` does not reference an existing Category THEN THE SYSTEM SHALL return 422.
-- **FR-14** THE SYSTEM SHALL store nullable non-negative `unit_cost` and `unit_price` fields (decimal(12, 2)) on Product. Write access is restricted to `admin` only; all authenticated roles can read. Supports monetary ABC analysis (Annual Demand × unit_cost), inventory valuation, and monetary shrinkage loss reporting. 🔄 DECIDED 2026-09-20 (Backlog milestone post-Sprint 5; was non-goal in Blueprint §4.1).
+- **FR-14** THE SYSTEM SHALL store nullable non-negative `unit_cost` and `unit_price` fields (decimal(12, 2)) on Product. Write access is restricted to `admin` only; all authenticated roles can read. Supports monetary ABC analysis (Annual Demand × unit_cost), inventory valuation, and monetary shrinkage loss reporting. ✅ Implemented 2026-09-25 (post-Sprint 5 pricing milestone; originally out of scope).
 
 ### Lot (Sprint 2 — complete)
 
@@ -59,7 +51,7 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 
 ### Inventory Transaction Ledger (Sprint 2 — ✅ implemented 2026-08-07)
 
-- **FR-20** THE SYSTEM SHALL record every stock movement as an append-only row in `inventory_transactions` with `txn_type` in (`RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, `WRITE_OFF`), a signed `qty_delta`, `occurred_at`, and `actor_id` set from the authenticated session — never a client-supplied actor_id. THE SYSTEM SHALL restrict `POST` access to `warehouse_staff` and `admin` (superuser — same permission, not a separate tier); `purchasing_manager` has read-only access to the ledger. ✅ IMPLEMENTED 2026-08-09; all six types are accepted by validation and covered by `InventoryTransactionTest`. Snapshot-side effects remain deferred to FR-22/FR-23 implementation.
+- **FR-20** THE SYSTEM SHALL record every stock movement as an append-only row in `inventory_transactions` with `txn_type` in (`RECEIPT`, `RESERVE`, `PICK`, `SALE`, `ADJUSTMENT`, `WRITE_OFF`), a signed `qty_delta`, `occurred_at`, and `actor_id` set from the authenticated session — never a client-supplied actor_id. THE SYSTEM SHALL restrict `POST` access to `warehouse_staff` and `admin` (superuser — same permission, not a separate tier); `purchasing_manager` has read-only access to the ledger. ✅ Implemented and covered by `InventoryTransactionTest`; snapshot effects are applied atomically under FR-22/FR-23 (Sprint 3).
 - **FR-21** THE SYSTEM SHALL NOT expose any UPDATE or DELETE route for `inventory_transactions`. Only `POST` (create) and `GET` (read) are permitted.
 - **FR-22** WHEN any stock-affecting `inventory_transactions` row is inserted THE SYSTEM SHALL, within the same database transaction, update the corresponding SKU's `inventory_snapshots` row using row-level locking (`SELECT ... FOR UPDATE` or Eloquent's `lockForUpdate()`). Snapshot rows SHALL maintain `qty_on_hand >= 0`, `qty_reserved >= 0`, `qty_available >= 0`, and `qty_available = qty_on_hand - qty_reserved`. ✅ Implemented Sprint 3 — `InventoryTransactionService` performs the ledger insert and snapshot update in one `DB::transaction`, locking the Product on first-touch and the snapshot row via `lockForUpdate()`; PostgreSQL check constraints enforce both invariants.
 - **FR-23** The signed `qty_delta` SHALL have these side effects: `RECEIPT +N` increases on-hand and available; `ADJUSTMENT ±N` changes on-hand and available; `RESERVE -N` increases reserved and decreases available; `RESERVE +N` releases reserved stock and increases available; `PICK -N` decreases on-hand and reserved while leaving available unchanged; `SALE -N` and `WRITE_OFF -N` decrease on-hand and available. A `SALE`, `PICK`, reservation, release, adjustment, or write-off that would violate a snapshot invariant SHALL return 422 and atomically roll back the snapshot and ledger insert. ✅ Implemented Sprint 3 — semantics live in the pure `InventoryTransactionService::project()`; violations raise `InventoryTransactionException` rendered as JSON 422 with a `code` (`INSUFFICIENT_STOCK`, `INSUFFICIENT_RESERVED_STOCK`, `INVALID_QTY_DELTA`, `INVALID_TRANSACTION_TYPE`).
@@ -71,14 +63,17 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 ### FEFO Picking (Sprint 2/4)
 
 - **FR-24** THE SYSTEM SHALL order any pick-list query for a given Product by `lots.expiry_date` ascending (nulls last), regardless of `received_date` or insertion order.
-- **FR-25** WHEN a Lot's `expiry_date` falls within the configurable expiry window (default 30 days, configurable via `REORDER_CONFIG`-adjacent config, not yet modeled) AND `qty_on_hand` for that lot > 0, THE SYSTEM SHALL surface it in an expiry-alert endpoint. THE SYSTEM SHALL restrict visibility of this endpoint to `purchasing_manager` and `admin`; `warehouse_staff` instead sees expiry risk inline via the FEFO pick list (FR-24), not a separate alert feed. 🔄 CHANGED 2026-08-04, 🚧 inferred — see FR-35/§9. ✅ Implemented Sprint 4 — `GET /api/alerts/expiry?days=` returns lots whose `expiry_date` falls within the window (default 30, `EXPIRY_ALERT_WINDOW_DAYS`) and whose SKU snapshot `qty_on_hand > 0`; restricted to `purchasing_manager` + `admin`.
+
+**Implementation status:** `GET /api/lots` supports `filter[sku_id]` and `sort=expiry_date`, but the Lots UI has no FEFO sort control and there is no dedicated pick-allocation workflow. The requirement is only partially met; expiry alerts are not an automated lot-allocation mechanism.
+
+- **FR-25** WHEN a Lot's `expiry_date` falls within the configurable expiry window (default 30 days, configured by `inventory.expiry_alert_window_days`) AND its Product SKU has positive snapshot `qty_on_hand`, THE SYSTEM SHALL surface it in an expiry-alert endpoint. THE SYSTEM SHALL restrict visibility of this endpoint to `purchasing_manager` and `admin`; `warehouse_staff` is intended to see expiry risk via an operational watchlist rather than the PM/Admin alert feed; this watchlist is not an automated FEFO pick list (FR-24). 🔄 CHANGED 2026-08-04, 🚧 inferred — see FR-35/§9. ✅ Implemented Sprint 4 — `GET /api/alerts/expiry?days=` returns lots whose `expiry_date` falls within the window (default 30, `EXPIRY_ALERT_WINDOW_DAYS`) and whose SKU snapshot `qty_on_hand > 0`; restricted to `purchasing_manager` + `admin`.
 
 ### Reorder / ROP / EOQ (Sprint 4 — ✅ implemented 2026-09-11)
 
 - **FR-26** THE SYSTEM SHALL compute `ROP = (avg_daily_demand × lead_time_days) + safety_stock` per SKU, reading `lead_time_days` from `reorder_configs`. ✅ Implemented Sprint 4 — `ReorderService::metricsFor()`; `avg_daily_demand` is derived from `SALE`+`PICK` outflow over a trailing window (default 90 days). A `reorder_configs.reorder_point` override, when set, takes precedence over the derived value.
 - **FR-27** THE SYSTEM SHALL compute `safety_stock = Z × sqrt((lead_time_avg × demand_variance) + (demand_avg^2 × lead_time_variance))` with a configurable Z (default 1.65 for ~95% service level). ✅ Implemented Sprint 4 — lead-time variance is not modeled (single-supplier demo assumption), so the formula reduces to `Z × sqrt(lead_time_days × demand_variance)`. Z is `reorder_configs.service_level_z` (default 1.65); a `safety_stock` override takes precedence.
 - **FR-28** WHERE a Product has `is_seasonal = true` THE SYSTEM SHALL compute its reorder trigger from the same period last year's demand (seasonal index or Holt-Winters decomposition), shifted earlier by `lead_time_days`, rather than a flat trailing average. ✅ Implemented Sprint 4 (baseline) — seasonal SKUs are flagged (`seasonal: true`) and report a `seasonal_basis` (`last_year` when same-period-last-year demand exists, else `insufficient_history`); EOQ is intentionally not applied to seasonal items. Richer seasonal decomposition improves the number without an API change as history accumulates.
-- **FR-29** THE SYSTEM SHALL compute `EOQ = sqrt((2 × annual_demand × order_cost) / holding_cost_per_unit)` for non-seasonal items. ✅ Implemented Sprint 4; OQ-6 RESOLVED — `order_cost` and `holding_cost_per_unit` are modeled as **nullable, non-price operational cost fields on `reorder_configs`** (never on Product; pricing/valuation stays out of scope per FR-14). EOQ is computed only for non-seasonal SKUs when both cost inputs are present and positive; otherwise the API returns `eoq: null`.
+- **FR-29** THE SYSTEM SHALL compute `EOQ = sqrt((2 × annual_demand × order_cost) / holding_cost_per_unit)` for non-seasonal items. ✅ Implemented Sprint 4; OQ-6 RESOLVED — `order_cost` and `holding_cost_per_unit` are modeled as **nullable, non-price operational cost fields on `reorder_configs`**, separate from Product's `unit_cost` / `unit_price` fields (FR-14). EOQ is computed only for non-seasonal SKUs when both cost inputs are present and positive; otherwise the API returns `eoq: null`.
 
 ### Reconciliation & Audit (Sprint 5 — Implemented)
 
@@ -95,6 +90,8 @@ Sprint checklists are tracked in dedicated files — keep status updates there, 
 
 - **FR-42** THE SYSTEM SHALL provide visual graphs and smart analytics on the Admin and Purchasing Manager dashboards (e.g., Turnover velocity, ABC/XYZ distribution, shrinkage trends) to improve data digestability.
 - **FR-43** The frontend SHALL implement a charting solution (e.g., Recharts) to visualize the data returned by existing report and classification endpoints without requiring heavy new analytical backend processing.
+
+**Implementation status:** Admin category-turnover and shrinkage charts and Purchasing ABC/XYZ charts are present. The purchase-order trend / supplier lead-time visualization requested by PRD FR-21 and Sprint 6 CHART-6.1 remains a placeholder; CHART-6.1 is partial, not complete.
 
 ### Role-Based Access Control (RBAC) refinement — perms team submission, 2026-08-04
 
@@ -116,19 +113,20 @@ Full schema with ERD diagram: **[docs/erd/erd.md](../erd/erd.md)**
 
 Quick reference — tables and their implementation status:
 
-| Table                    | Status               | PK               | Notes                                               |
-| ------------------------ | -------------------- | ---------------- | --------------------------------------------------- |
-| `users`                  | impl.                | `id` bigint ⚠️*¹ | role enum: admin/purchasing_manager/warehouse_staff |
-| `categories`             | impl.                | `id` uuid        | soft deletes                                        |
-| `products`               | impl.                | `sku_id` uuid ⚠️ | non-standard PK — `$primaryKey` required; includes unit_cost & unit_price |
-| `suppliers`              | planned (Sprint 6)   | `id` uuid        | supplier master data                                |
-| `purchase_orders`        | planned (Sprint 6)   | `id` uuid        | track PO lifecycle (`draft`, `ordered`, `received`) |
-| `purchase_order_items`   | planned (Sprint 6)   | `id` uuid        | PO line items (`po_id`, `sku_id`, `qty`)            |
-| `lots`                   | impl.                | `lot_id` uuid ⚠️ | non-standard PK — `$primaryKey` required            |
-| `inventory_transactions` | impl. (Sprint 2)     | `txn_id` uuid    | append-only, signed qty_delta; write: WS+admin, read: all roles |
-| `inventory_snapshots`    | implemented (Sprint 3) | `sku_id` uuid    | derived, row-locked updates only                    |
-| `reorder_configs`        | implemented (Sprint 4) | `sku_id` uuid    | PM + admin write; WS no access; incl. non-price operational costs |
-| `audit_logs`             | impl. schema/read API/automatic logging | `audit_id` uuid | system-generated, append-only, admin read only |
+| Table                    | Status                                  | PK                 | Notes                                                                     |
+| ------------------------ | --------------------------------------- | ------------------ | ------------------------------------------------------------------------- |
+| `users`                  | impl.                                   | `id` bigint ⚠️*¹   | role enum: admin/purchasing_manager/warehouse_staff                       |
+| `categories`             | impl.                                   | `category_id` uuid | soft deletes                                                              |
+| `products`               | impl.                                   | `sku_id` uuid ⚠️   | non-standard PK — `$primaryKey` required; includes unit_cost & unit_price |
+| `suppliers`              | impl. (Sprint 6)                        | `id` uuid          | supplier master data                                                      |
+| `purchase_orders`        | impl. (Sprint 6)                        | `id` uuid          | track PO lifecycle (`draft`, `ordered`, `received`)                       |
+| `purchase_order_items`   | impl. (Sprint 6)                        | `id` uuid          | PO line items, ordered/received quantities and costs                      |
+| `lots`                   | impl.                                   | `lot_id` uuid ⚠️   | non-standard PK — `$primaryKey` required                                  |
+| `inventory_transactions` | impl. (Sprint 2)                        | `txn_id` uuid      | append-only, signed qty_delta; write: WS+admin, read: all roles           |
+| `inventory_snapshots`    | implemented (Sprint 3)                  | `sku_id` uuid      | derived, row-locked updates only                                          |
+| `reorder_configs`        | implemented (Sprint 4)                  | `sku_id` uuid      | PM + admin write; WS no access; incl. non-price operational costs         |
+| `cycle_counts`           | impl. (Sprint 5)                        | `id` uuid          | physical counts and reconciliation state                                  |
+| `audit_logs`             | impl. schema/read API/automatic logging | `audit_id` uuid    | system-generated, append-only, admin read only                            |
 
 *¹ `users.id` is intentionally an auto-incrementing `bigint` primary key. The Blueprint's UUID choice is an accepted project deviation for this single-warehouse application; Laravel's default is appropriate for internal user and actor references.
 
@@ -161,7 +159,7 @@ GET /api/user
   Response 401: { message: "Unauthenticated." }
 ```
 
-### Planned (Sprint 2 — per commented routes in routes/api.php)
+### Implemented (Sprint 2)
 
 ```
 GET  /api/categories                 Auth: sanctum (any role)
@@ -200,16 +198,15 @@ GET  /api/audit-logs/{audit_log}             role:admin                         
 
 Automatic audit creation for Product, Lot, Category, and User writes is implemented through centrally registered Eloquent observers and `AuditLogService`. Authenticated actors are recorded server-side; User secrets are redacted. Bootstrap seed writes and temporary unauthenticated registration are intentionally not audited.
 
-### Implemented (Sprints 3–5 — do not implement against this table alone)
+### Implemented (Sprints 3–6 — route summary)
 
 ```
 POST /api/inventory-transactions               role:warehouse_staff,admin                          FR-20, FR-34  ✅ impl. 2026-08-07
 GET  /api/inventory-transactions               role: any authenticated (all three roles)            FR-20         ✅ impl. 2026-08-07
 GET  /api/inventory-transactions/{transaction} role: any authenticated (all three roles)            FR-20         ✅ impl. 2026-08-07
-GET  /api/inventory-snapshots                role: any
-GET  /api/inventory-snapshots/{product}      role: any
-POST /api/products/{product}/reserve         role:warehouse_staff,admin
-POST /api/products/{product}/release         role:warehouse_staff,admin
+GET  /api/inventory-snapshots                any authenticated role
+GET  /api/inventory-snapshots/{inventory_snapshot} any authenticated role
+
 GET  /api/inventory-classifications          role: any                                            FR-15 (PRD)   ✅ impl. 2026-09-11
 POST /api/inventory-classifications/recompute role:admin,purchasing_manager                       FR-15 (PRD)   ✅ impl. 2026-09-11
 GET/POST /api/reorder-configs                role:purchasing_manager,admin; warehouse_staff: no access  FR-32   ✅ impl. 2026-09-11
@@ -217,41 +214,60 @@ GET/PUT/DELETE /api/reorder-configs/{reorder_config} role:purchasing_manager,adm
 GET  /api/reorder-configs/{reorder_config}/metrics role:purchasing_manager,admin  (ROP/safety/EOQ/seasonal)  FR-26/27/28/29  ✅ impl. 2026-09-11
 GET  /api/alerts/reorder                     role:purchasing_manager,admin                       FR-35         ✅ impl. 2026-09-11
 GET  /api/alerts/expiry                      role:purchasing_manager,admin                       FR-25, FR-35  ✅ impl. 2026-09-11
-GET  /api/cycle-counts                        role:warehouse_staff (POST/submit); admin (GET/view report)  FR-30, FR-36
-GET  /api/cycle-counts/{count}                role:warehouse_staff,admin
+GET/POST /api/cycle-counts                   role:warehouse_staff,admin (WS sees own counts)             FR-30, FR-36
+GET  /api/cycle-counts/{cycle_count}          role:warehouse_staff,admin                                  FR-30, FR-36
+POST /api/cycle-counts/{cycle_count}/reconcile role:admin                                                   FR-30, FR-36
+POST /api/cycle-counts/{cycle_count}/dismiss   role:admin                                                   FR-30, FR-36
 GET  /api/reports/turnover                    role:admin
 GET  /api/reports/variance                    role:admin                                          FR-16, FR-36
-GET  /api/alerts/history                      role:purchasing_manager,admin
-GET/POST /api/suppliers                       role:purchasing_manager,admin (WS: GET only)         FR-39
-GET/PUT/DELETE /api/suppliers/{supplier}      role:purchasing_manager,admin                        FR-39
-GET/POST /api/purchase-orders                 role:purchasing_manager,admin (WS: GET only)         FR-40, FR-41
-GET/PUT/DELETE /api/purchase-orders/{po}      role:purchasing_manager,admin (WS: GET/PUT status)   FR-40, FR-41
+
+GET    /api/suppliers                         any authenticated role                                  FR-39
+POST   /api/suppliers                         role:purchasing_manager,admin                          FR-39
+GET    /api/suppliers/{supplier}              any authenticated role                                  FR-39
+PUT/DELETE /api/suppliers/{supplier}          role:purchasing_manager,admin                          FR-39
+GET    /api/purchase-orders                   any authenticated role                                  FR-40, FR-41
+POST   /api/purchase-orders                   role:purchasing_manager,admin                          FR-40, FR-41
+GET    /api/purchase-orders/{purchase_order}  any authenticated role                                  FR-40, FR-41
+PUT/DELETE /api/purchase-orders/{purchase_order} role:purchasing_manager,admin                        FR-40, FR-41
+POST   /api/purchase-orders/{purchase_order}/receive role:warehouse_staff,admin                      FR-41
+
+GET  /api/data/templates/{type}                 any authenticated role
+GET  /api/data/export/categories                role:admin
+POST /api/data/import/categories                role:admin
+GET  /api/data/export/products                  role:admin
+POST /api/data/import/products                  role:admin
+GET  /api/data/export/inventory-transactions    role:admin (export-only; no ledger import)
+GET  /api/data/export/suppliers                 role:purchasing_manager,admin
+POST /api/data/import/suppliers                 role:purchasing_manager,admin
+GET  /api/data/export/purchase-orders           role:purchasing_manager,admin
+POST /api/data/import/purchase-orders           role:purchasing_manager,admin
+GET  /api/data/export/lots                      role:warehouse_staff,admin
+POST /api/data/import/lots                      role:warehouse_staff,admin
+GET  /api/data/export/cycle-counts              role:warehouse_staff,admin
+POST /api/data/import/cycle-counts              role:warehouse_staff,admin
 ```
 
-Full request/response shapes for the implemented Sprint 4 endpoints are in
-**[docs/sprints/sprint-4.md](../sprints/sprint-4.md)** (§ "API contracts").
-The remaining (Sprint 5) shapes are implemented (see sprint-5.md) (§4)
-before starting that sprint, not while coding it.
+Detailed request/response shapes are maintained in the corresponding sprint files where provided: [Sprint 4](../sprints/sprint-4.md) and [Sprint 5](../sprints/sprint-5.md). This section is a route/authorization summary, not a substitute for the endpoint-specific request schemas.
 
 ---
 
 ## 5. Edge Cases & Error Handling
 
-| Case                                                                                              | Behavior                                                                                                                                            |
-| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Two simultaneous SALE transactions on the last unit of a lot                                      | Row-level lock on `inventory_snapshots` ensures only one succeeds; the other gets 422 `INSUFFICIENT_STOCK`. (FR-22, FR-23)                          |
-| Registration with an already-registered email                                                     | 422, field-level error on `email` (`unique:users,email` — already implemented).                                                                     |
-| Category slug collision after soft-delete                                                         | New record created, not auto-revived (FR-9). Explicit restore endpoint required to reuse.                                                           |
-| Product created with `category_id` pointing to a soft-deleted Category            | 422 validation error. Existing Product → Category relationships remain readable via `withTrashed()`; explicit Admin restore is required before reuse. (FR-9) |
+| Case                                                                                              | Behavior                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two simultaneous SALE transactions on the last unit of a lot                                      | Row-level lock on `inventory_snapshots` ensures only one succeeds; the other gets 422 `INSUFFICIENT_STOCK`. (FR-22, FR-23)                                                             |
+| Registration with an already-registered email                                                     | 422, field-level error on `email` (`unique:users,email` — already implemented).                                                                                                        |
+| Category slug collision after soft-delete                                                         | New record created, not auto-revived (FR-9). Explicit restore endpoint required to reuse.                                                                                              |
+| Product created with `category_id` pointing to a soft-deleted Category                            | 422 validation error. Existing Product → Category relationships remain readable via `withTrashed()`; explicit Admin restore is required before reuse. (FR-9)                           |
 | Lot created with `expiry_date` in the past                                                        | 422 validation error in normal create/update flows. `expiry_date` remains nullable; historical expired Lots require a separate explicitly authorized backfill/import workflow. (FR-19) |
-| Non-admin attempts write on Category/Product                                                      | 403 via `role` middleware (🔄 CHANGED 2026-08-04 — previously admin+purchasing_manager, now admin only; FR-7, FR-11).                               |
-| Purchasing Manager or non-admin/non-warehouse_staff attempts write on Lot                         | 403 via `role` middleware (🔄 CHANGED 2026-08-04; FR-16, FR-33).                                                                                    |
-| Purchasing Manager attempts `POST /api/inventory-transactions`                                    | 403 via `role` middleware — Purchasing Manager performs no physical stock movements (FR-20, FR-34).                                                 |
-| Warehouse Staff attempts `GET /api/reorder-configs` or `/api/alerts/reorder`/`/api/alerts/expiry` | 403, or endpoint hidden client-side — reorder/EOQ/purchasing alerts are out of scope for Warehouse Staff (FR-32, FR-35).                            |
-| Purchasing Manager or Warehouse Staff attempts `GET /api/audit-logs`                              | 403 — audit log is Admin-only (FR-31, FR-37).                                                                                                       |
-| Purchasing Manager or Warehouse Staff attempts any user-management endpoint                       | 403 — user management is Admin-only (FR-38).                                                                                                        |
-| Unauthenticated request to any `auth:sanctum` route                                               | 401.                                                                                                                                                |
-| CSRF cookie not fetched before a state-changing request                                           | 419 (Sanctum default).                                                                                                                              |
+| Non-admin attempts write on Category/Product                                                      | 403 via `role` middleware (🔄 CHANGED 2026-08-04 — previously admin+purchasing_manager, now admin only; FR-7, FR-11).                                                                  |
+| Purchasing Manager or non-admin/non-warehouse_staff attempts write on Lot                         | 403 via `role` middleware (🔄 CHANGED 2026-08-04; FR-16, FR-33).                                                                                                                       |
+| Purchasing Manager attempts `POST /api/inventory-transactions`                                    | 403 via `role` middleware — Purchasing Manager performs no physical stock movements (FR-20, FR-34).                                                                                    |
+| Warehouse Staff attempts `GET /api/reorder-configs` or `/api/alerts/reorder`/`/api/alerts/expiry` | 403, or endpoint hidden client-side — reorder/EOQ/purchasing alerts are out of scope for Warehouse Staff (FR-32, FR-35).                                                               |
+| Purchasing Manager or Warehouse Staff attempts `GET /api/audit-logs`                              | 403 — audit log is Admin-only (FR-31, FR-37).                                                                                                                                          |
+| Purchasing Manager or Warehouse Staff attempts any user-management endpoint                       | 403 — user management is Admin-only (FR-38).                                                                                                                                           |
+| Unauthenticated request to any `auth:sanctum` route                                               | 401.                                                                                                                                                                                   |
+| CSRF cookie not fetched before a state-changing request                                           | 419 (Sanctum default).                                                                                                                                                                 |
 
 ---
 
@@ -324,21 +340,21 @@ FR-20 / FR-34: InventoryTransaction Permissions
   And an inventory_transactions row is created with actor_id = auth user's id
 ```
 
-Remaining FR-1 through FR-38 acceptance criteria: implemented in their respective sprint docs.
+Acceptance criteria and current implementation status are recorded in the corresponding sprint files. FR-21 / CHART-6.1 and the FEFO pick-list workflow remain incomplete (see §2).
 
 ---
 
 ## 8. Assumptions
 
 - `users.id` is intentionally an auto-incrementing `bigint` rather than a UUID. This accepted Blueprint deviation fits the single-warehouse project scope and keeps internal actor references simple.
-- ✅ RESOLVED 2026-08-04 (was: `admin` and `purchasing_manager` share identical write permissions on Category/Product/Lot): they no longer do. `admin` alone writes Category/Product; `admin` + `warehouse_staff` write Lot; `purchasing_manager` writes `reorder_configs` and reads everything else. See §2 RBAC refinement (FR-32–FR-38) and §4.
+- ✅ RESOLVED 2026-08-04: `admin` alone writes Category/Product; `admin` + `warehouse_staff` write Lots; `purchasing_manager` writes reorder configuration, suppliers, and purchase orders, and reads permitted catalog, lot, ledger, and PO data. Role-specific access to reports, counts, and audit logs remains constrained by the route contract in §4.
 - Pagination and Resource-wrapped JSON shape follow the AGENTS.md convention (`{ data, message, meta }`) for all new list/show endpoints.
 
 ## 9. Open Questions
 
 - ✅ **Lot/Product deletion behavior (FR-18), resolved 2026-08-09:** Product deletion is restricted while related Lots exist. The current constrained foreign key intentionally preserves Lot and inventory traceability; no cascade is used.
 - ✅ **`received_date` type (FR-19), resolved 2026-08-09:** `received_date` is required `dateTime`; `expiry_date` is a nullable `date`. The time component is intentional for precise receipt ordering and reconciliation.
-- ✅ **`order_cost` / `holding_cost_per_unit` sourcing for EOQ (FR-29), resolved 2026-09-11 (OQ-6):** modeled as nullable, non-price operational cost fields on `reorder_configs` (option (b)) — never on Product, and explicitly not unit price/COGS/valuation. EOQ is computed only for non-seasonal SKUs when both inputs are present and positive; otherwise `eoq` is null. This unblocks FR-29 while preserving the pricing non-goal (FR-14).
+- ✅ **`order_cost` / `holding_cost_per_unit` sourcing for EOQ (FR-29), resolved 2026-09-11 (OQ-6):** modeled as nullable, non-price operational cost fields on `reorder_configs`, separate from Product's `unit_cost` / `unit_price` fields. EOQ is computed only for non-seasonal SKUs when both inputs are present and positive; otherwise `eoq` is null.
 - ✅ **Soft-deleted Category assignment (FR-9), resolved 2026-08-09:** New Product creation and Category reassignment reject soft-deleted Categories with 422; existing Product relationships remain readable via `withTrashed()`; explicit Admin restoration is required before reuse.
 - ✅ **Past-dated Lot expiry (FR-19), resolved 2026-08-09:** Normal Lot create/update flows reject `expiry_date` before today with 422 while retaining nullable expiry dates. Historical expired Lots require a separate explicitly authorized backfill/import workflow.
 - ✅ **Category restore endpoint (FR-9), resolved 2026-08-09:** Admin can explicitly restore a soft-deleted Category through `POST /api/categories/{category}/restore` before reusing it.
@@ -347,10 +363,11 @@ Remaining FR-1 through FR-38 acceptance criteria: implemented in their respectiv
 - ✅ **Purchasing Manager inventory-transaction access (FR-20, FR-34), resolved 2026-08-09:** Purchasing Manager is read-only for the ledger. `GET /api/inventory-transactions` and `GET /api/inventory-transactions/{transaction}` are allowed for analysis; `POST` for every transaction type is restricted to Warehouse Staff and Admin.
 - ✅ RESOLVED (Sprint 5): Cycle-count submit-vs-view split. Warehouse Staff submits physical counts; Admin reconciles via ledger adjustments.
 - ✅ RESOLVED 2026-08-04: Admin's exclusion from daily picking/reorder-config is UI-only, not a backend permission distinction. `RoleMiddleware` grants `admin` an unconditional pass regardless of a route's role list, and `CategoryPolicy`/`ProductPolicy`/`LotPolicy` each grant `admin` via a `before()` hook. Admin is a plain superuser — there is no separate "escalation" access tier anywhere in the implementation. "Admin doesn't do daily picking/reorder config" is purely which screen the frontend defaults Admin to.
-- ✅ RESOLVED 2026-08-04: `routes/api.php`, `RoleMiddleware`, and the Category/Product/Lot Policies have been updated to match — Category/Product writes are `role:admin`, Lot writes are `role:admin,warehouse_staff`, and the corresponding Policy `create`/`update`/`delete` methods were updated to match (Category/Product: admin-only via `before()`, non-admin always `false`; Lot: `warehouse_staff`, with admin via `before()`). Covered by `tests/Feature/CategoryProductLotCrudTest.php` and `tests/Feature/RoleMiddlewareTest.php` (14 tests, all passing). FR-32–FR-38's ledger/reorder_configs/audit_logs/user-management endpoints remain unbuilt (Sprint 4/5), so those routes/policies don't exist yet to update — tracked as before, just no longer blocked on this RBAC decision.
+- ✅ RESOLVED 2026-08-04 and implemented across Sprints 2–6: Category/Product writes are Admin-only; Lot writes are Admin + Warehouse Staff; ledger, reorder, alerts, cycle counts, audit logs, user management, suppliers, purchase orders, and data-management routes are implemented with role checks. See `routes/api.php`, the sprint files, and focused RBAC feature tests.
 
 ## 10. Changelog
 
+- 2026-10-01 — Documentation audit: updated current sprint status and API contracts; corrected migrated table status and stale implementation claims; documented the incomplete PO-trends chart, FEFO workflow, and demo-data gaps.
 - 2026-09-27 — **Sprint 6 scope expansion:** Officially brought Supplier and Purchase Order (PO) management into scope (previously listed as Non-Goals in the PRD). Added FR-39, FR-40, and FR-41 defining full CRUD for Suppliers and PO generation/tracking, assigned to Purchasing Manager (with Warehouse Staff receiving against POs). Updated data models and API contracts accordingly.
 
 - 2026-09-20 — **Product Catalog Pricing Enabled (FR-14):** Updated FR-14 and PRD non-goals to support catalog pricing. Product master includes `unit_cost` and `unit_price` (nullable decimal(12, 2), Admin write only). Enables monetary ABC classification (Annual Demand × unit_cost), inventory monetary valuation, and monetary shrinkage loss reporting for Sprint 5.
