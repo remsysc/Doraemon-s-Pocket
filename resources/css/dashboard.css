@@ -2043,6 +2043,78 @@ textarea:focus-visible {
     line-height: 1.6;
 }
 
+.procurement-chart-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    gap: 12px;
+    padding: 12px;
+}
+
+.procurement-chart-panel {
+    min-width: 0;
+}
+
+.procurement-chart-panel__header {
+    padding: 0 8px 8px;
+}
+
+.procurement-chart-panel__header h3 {
+    color: var(--wb-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.procurement-chart-panel__header p {
+    margin-top: 2px;
+    color: var(--wb-text-muted);
+    font-size: 11px;
+}
+
+.procurement-chart-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 8px 8px;
+}
+
+.procurement-chart-summary > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+    background: var(--wb-bg);
+    border: 1px solid var(--wb-border);
+    border-radius: var(--wb-radius-sm);
+}
+
+.procurement-chart-summary span {
+    overflow: hidden;
+    color: var(--wb-text-muted);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.procurement-chart-summary strong {
+    overflow: hidden;
+    color: var(--wb-text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.analytics-chart--compact {
+    height: 220px;
+    padding: 8px 8px 8px 0;
+}
+
+.analytics-empty--compact {
+    min-height: 220px;
+    font-size: 12px;
+}
+
 @media (max-width: 900px) {
     .analytics-grid {
         grid-template-columns: 1fr;
@@ -2056,6 +2128,14 @@ textarea:focus-visible {
 
     .analytics-chart--pie {
         height: 220px;
+    }
+
+    .procurement-chart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-chart--compact {
+        height: 230px;
     }
 }
 

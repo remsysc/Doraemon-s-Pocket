@@ -12,7 +12,7 @@ Covers the current Sprint 1–6 implementation contracts and recorded requiremen
 
 ### 1.1 Sprint status source of truth
 
-The canonical status overview for Sprints 1–6 is **[Sprint Status](../sprints/sprints.md)**. Per-sprint files linked there preserve detailed implementation notes and contracts; update overall status only in the canonical tracker. Sprint 6's PO-trends chart and demo-seed fidelity remain incomplete; see the tracker and `docs/ai/todo.md`.
+The canonical status overview for Sprints 1–6 is **[Sprint Status](../sprints/sprints.md)**. Per-sprint files linked there preserve detailed implementation notes and contracts; update overall status only in the canonical tracker. Sprint 6's demo-seed fidelity remains incomplete; see the tracker and `docs/ai/todo.md`.
 
 ---
 
@@ -91,7 +91,7 @@ The canonical status overview for Sprints 1–6 is **[Sprint Status](../sprints/
 - **FR-42** THE SYSTEM SHALL provide visual graphs and smart analytics on the Admin and Purchasing Manager dashboards (e.g., Turnover velocity, ABC/XYZ distribution, shrinkage trends) to improve data digestability.
 - **FR-43** The frontend SHALL implement a charting solution (e.g., Recharts) to visualize the data returned by existing report and classification endpoints without requiring heavy new analytical backend processing.
 
-**Implementation status:** Admin category-turnover and shrinkage charts and Purchasing ABC/XYZ charts are present. The purchase-order trend / supplier lead-time visualization requested by PRD FR-21 and Sprint 6 CHART-6.1 remains a placeholder; CHART-6.1 is partial, not complete.
+**Implementation status:** Admin category-turnover and shrinkage charts and Purchasing ABC/XYZ charts are present. The Purchasing dashboard also charts monthly placed/received PO volume over the past 12 calendar months and configured lead-time estimates for active suppliers with orders. Supplier lead times are configured master-data estimates; actual delivery dates are not recorded. CHART-6.1 is complete.
 
 ### Role-Based Access Control (RBAC) refinement — perms team submission, 2026-08-04
 
@@ -340,7 +340,7 @@ FR-20 / FR-34: InventoryTransaction Permissions
   And an inventory_transactions row is created with actor_id = auth user's id
 ```
 
-Acceptance criteria and current implementation status are recorded in the corresponding sprint files. FR-21 / CHART-6.1 and the FEFO pick-list workflow remain incomplete (see §2).
+Acceptance criteria and current implementation status are recorded in the corresponding sprint files. The FEFO pick-list workflow remains incomplete (see §2).
 
 ---
 
@@ -367,7 +367,8 @@ Acceptance criteria and current implementation status are recorded in the corres
 
 ## 10. Changelog
 
-- 2026-10-01 — Documentation audit: updated current sprint status and API contracts; corrected migrated table status and stale implementation claims; documented the incomplete PO-trends chart, FEFO workflow, and demo-data gaps.
+- 2026-10-01 — Completed Sprint 6 CHART-6.1: added Purchasing dashboard charts for 12-month placed/received PO volume and configured active-supplier lead-time estimates. Supplier lead times are not measured delivery results; actual receipt dates are not stored.
+- 2026-10-01 — Documentation audit: updated current sprint status and API contracts; corrected migrated table status and stale implementation claims; documented the FEFO workflow and demo-data gaps.
 - 2026-09-27 — **Sprint 6 scope expansion:** Officially brought Supplier and Purchase Order (PO) management into scope (previously listed as Non-Goals in the PRD). Added FR-39, FR-40, and FR-41 defining full CRUD for Suppliers and PO generation/tracking, assigned to Purchasing Manager (with Warehouse Staff receiving against POs). Updated data models and API contracts accordingly.
 
 - 2026-09-20 — **Product Catalog Pricing Enabled (FR-14):** Updated FR-14 and PRD non-goals to support catalog pricing. Product master includes `unit_cost` and `unit_price` (nullable decimal(12, 2), Admin write only). Enables monetary ABC classification (Annual Demand × unit_cost), inventory monetary valuation, and monetary shrinkage loss reporting for Sprint 5.

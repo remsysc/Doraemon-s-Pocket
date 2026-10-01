@@ -650,6 +650,19 @@ export function getPurchaseOrders(page = 1, perPage = 15) {
     });
 }
 
+export async function getAllPurchaseOrders(): Promise<PurchaseOrder[]> {
+    const perPage = 100;
+    const firstPage = await getPurchaseOrders(1, perPage);
+    const orders = [...firstPage.data.data];
+
+    for (let page = 2; page <= firstPage.data.meta.last_page; page += 1) {
+        const response = await getPurchaseOrders(page, perPage);
+        orders.push(...response.data.data);
+    }
+
+    return orders;
+}
+
 export function getPurchaseOrder(id: string) {
     return api.get<{ data: PurchaseOrder }>(`/api/purchase-orders/${id}`);
 }

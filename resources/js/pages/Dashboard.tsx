@@ -14,6 +14,8 @@ import {
     getCycleCounts,
     getTurnoverReport,
     getVarianceReport,
+    getAllPurchaseOrders,
+    type PurchaseOrder,
     type InventoryTransaction,
     type AuditLog,
     type ExpiryAlert,
@@ -52,6 +54,8 @@ export default function Dashboard() {
     const [reorderAlerts, setReorderAlerts] = useState<ReorderAlert[]>([]);
     const [reorderConfigs, setReorderConfigs] = useState<ReorderConfig[]>([]);
     const [classifications, setClassifications] = useState<Classification[]>([]);
+    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[] | null>(null);
+    const [purchaseOrdersLoading, setPurchaseOrdersLoading] = useState(true);
     const [turnoverData, setTurnoverData] = useState<TurnoverReportItem[] | null>(null);
     const [varianceData, setVarianceData] = useState<VarianceReportItem[] | null>(null);
 
@@ -141,6 +145,11 @@ export default function Dashboard() {
                         .then((res) => setClassifications(res.data.data))
                         .catch(() => setClassifications([])),
                 );
+                setPurchaseOrdersLoading(true);
+                void getAllPurchaseOrders()
+                    .then(setPurchaseOrders)
+                    .catch(() => setPurchaseOrders(null))
+                    .finally(() => setPurchaseOrdersLoading(false));
             }
 
             // Audit logs (Admin only)
@@ -265,6 +274,8 @@ export default function Dashboard() {
                             expiryAlerts={expiryAlerts}
                             configs={reorderConfigs}
                             classifications={classifications}
+                            purchaseOrders={purchaseOrders}
+                            purchaseOrdersLoading={purchaseOrdersLoading}
                             totalProducts={productsCount}
                         />
                     )}
