@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import { getCurrentUser, logout, type AuthUser } from "../lib/api";
+import { getExpiryAlerts, getReorderAlerts, type ExpiryAlert, type ReorderAlert } from "../lib/inventory-api";
 import "../../css/dashboard.css";
 
 interface NavSection {
@@ -142,6 +143,13 @@ export default function DashboardLayout() {
 
     const [searchOpen, setSearchOpen] = useState(false);
 
+    // ── Alert bell state ────────────────────────────────────────────────────
+    const [alertBellOpen, setAlertBellOpen] = useState(false);
+    const alertBellRef = useRef<HTMLDivElement>(null);
+    const [expiryAlerts, setExpiryAlerts] = useState<ExpiryAlert[]>([]);
+    const [reorderAlerts, setReorderAlerts] = useState<ReorderAlert[]>([]);
+    const totalAlerts = expiryAlerts.length + reorderAlerts.length;
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -164,6 +172,9 @@ export default function DashboardLayout() {
             if (quickAddRef.current && !quickAddRef.current.contains(event.target as Node)) {
                 setQuickAddOpen(false);
             }
+            if (alertBellRef.current && !alertBellRef.current.contains(event.target as Node)) {
+                setAlertBellOpen(false);
+            }
         }
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -174,6 +185,16 @@ export default function DashboardLayout() {
             .then((res) => setUser(res.data))
             .catch(() => navigate("/login"));
     }, [navigate]);
+
+    // Fetch alerts once user is known (role-gated on backend anyway)
+    useEffect(() => {
+        getExpiryAlerts(30)
+            .then((res) => setExpiryAlerts(res.data.data ?? []))
+            .catch(() => setExpiryAlerts([]));
+        getReorderAlerts()
+            .then((res) => setReorderAlerts(res.data.data ?? []))
+            .catch(() => setReorderAlerts([]));
+    }, []);
 
     useEffect(() => {
         try {
@@ -439,6 +460,118 @@ export default function DashboardLayout() {
                                 </svg>
                             )}
                         </button>
+
+                        {/* ── Alert Bell ──────────────────────────────── */}
+                        <div className="topbar__profile-wrapper" ref={alertBellRef}>
+                            <div className="topbar__btn-wrap">
+                                <button
+                                    className="topbar__theme-toggle"
+                                    aria-label={`Alerts${totalAlerts > 0 ? ` — ${totalAlerts} active` : ""}`}
+                                    title="Alerts"
+                                    aria-expanded={alertBellOpen}
+                                    onClick={() => setAlertBellOpen(!alertBellOpen)}
+                                >
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                                    </svg>
+                                </button>
+                                {totalAlerts > 0 && (
+                                    <span className="topbar__alert-badge" aria-hidden="true">
+                                        {totalAlerts > 99 ? "99+" : totalAlerts}
+                                    </span>
+                                )}
+                            </div>
+
+                            {alertBellOpen && (
+                                <div className="alert-dropdown" role="dialog" aria-label="Alerts">
+                                    <div className="alert-dropdown__header">
+                                        <span className="alert-dropdown__title">Alerts</span>
+                                        {totalAlerts > 0 && (
+                                            <span className="alert-dropdown__count">{totalAlerts} active</span>
+                                        )}
+                                    </div>
+
+                                    {totalAlerts === 0 ? (
+                                        <div className="alert-dropdown__empty">
+                                            <div className="alert-dropdown__empty-icon">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                                </svg>
+                                            </div>
+                                            <p className="alert-dropdown__empty-text">All clear</p>
+                                            <p className="alert-dropdown__empty-sub">No expiry or reorder alerts right now.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="alert-dropdown__list">
+                                            {reorderAlerts.length > 0 && (
+                                                <>
+                                                    <div className="alert-dropdown__group-label">
+                                                        Reorder ({reorderAlerts.length})
+                                                    </div>
+                                                    {reorderAlerts.slice(0, 5).map((a) => (
+                                                        <div key={a.sku_id} className="alert-item">
+                                                            <span className="alert-item__dot alert-item__dot--danger" />
+                                                            <div className="alert-item__body">
+                                                                <span className="alert-item__title">
+                                                                    {a.product?.name ?? a.sku_id}
+                                                                </span>
+                                                                <span className="alert-item__meta">
+                                                                    {a.qty_available} available · ROP {a.reorder_point}
+                                                                    {a.suggested_order_qty ? ` · Suggest ${a.suggested_order_qty} units` : ""}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {reorderAlerts.length > 5 && (
+                                                        <div className="alert-item">
+                                                            <span className="alert-item__meta">
+                                                                +{reorderAlerts.length - 5} more reorder alerts
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                            {expiryAlerts.length > 0 && (
+                                                <>
+                                                    <div className="alert-dropdown__group-label">
+                                                        Expiring soon ({expiryAlerts.length})
+                                                    </div>
+                                                    {expiryAlerts.slice(0, 5).map((a) => (
+                                                        <div key={a.lot_id} className="alert-item">
+                                                            <span className="alert-item__dot alert-item__dot--warning" />
+                                                            <div className="alert-item__body">
+                                                                <span className="alert-item__title">
+                                                                    {a.product?.name ?? a.sku_id}
+                                                                </span>
+                                                                <span className="alert-item__meta">
+                                                                    Lot {a.lot_id.slice(0, 8)} · {a.days_to_expiry}d left · {a.qty_on_hand} units
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {expiryAlerts.length > 5 && (
+                                                        <div className="alert-item">
+                                                            <span className="alert-item__meta">
+                                                                +{expiryAlerts.length - 5} more expiry alerts
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="alert-dropdown__footer">
+                                        <a href="/purchasing" onClick={() => setAlertBellOpen(false)}>
+                                            View all in Purchasing Hub →
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="topbar__divider" />
                         {user && (
                             <div className="topbar__profile-wrapper" ref={profileMenuRef}>
