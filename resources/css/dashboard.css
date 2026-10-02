@@ -2012,6 +2012,189 @@ body {
     opacity: 0.7;
 }
 
+/* keyboard focused / hovered result row */
+.search-modal__result-item--focused {
+    background: var(--wb-accent-muted) !important;
+    color: var(--wb-accent);
+}
+
+[data-theme="light"] .search-modal__result-item--focused {
+    background: #eff6ff !important;
+    color: var(--wb-accent);
+}
+
+.search-modal__result-item--focused svg {
+    color: var(--wb-accent);
+    opacity: 1;
+}
+
+/* ── Search result group label ──────────────────────────────────────────── */
+
+.search-modal__group-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 20px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--wb-text-muted);
+    user-select: none;
+}
+
+.search-modal__group-label svg {
+    opacity: 0.7;
+}
+
+/* ── Result item meta line ──────────────────────────────────────────────── */
+
+.search-modal__result-meta {
+    font-size: 11px;
+    color: var(--wb-text-muted);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-modal__result-item {
+    /* extend to allow two-line layout */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+}
+
+/* re-align icon + text on the first row */
+.search-modal__result-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+/* ── Inline <mark> highlight ────────────────────────────────────────────── */
+
+.search-modal__result-item mark {
+    background: transparent;
+    color: var(--wb-accent);
+    font-weight: 700;
+}
+
+[data-theme="light"] .search-modal__result-item mark {
+    color: #1d4ed8;
+}
+
+/* ── Loading spinner inside search modal ───────────────────────────────── */
+
+.search-modal__spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    gap: 10px;
+    color: var(--wb-text-muted);
+    font-size: 13px;
+}
+
+@keyframes search-spin {
+    to { transform: rotate(360deg); }
+}
+
+.search-modal__spinner-ring {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--wb-border-strong);
+    border-top-color: var(--wb-accent);
+    border-radius: 50%;
+    animation: search-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+/* ── No-results state ───────────────────────────────────────────────────── */
+
+.search-modal__no-results {
+    padding: 32px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-modal__no-results-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--wb-surface-2);
+    border: 1px solid var(--wb-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--wb-text-muted);
+    margin-bottom: 2px;
+}
+
+[data-theme="light"] .search-modal__no-results-icon {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.search-modal__no-results-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--wb-text-primary);
+}
+
+.search-modal__no-results-sub {
+    font-size: 12px;
+    color: var(--wb-text-muted);
+}
+
+/* ── Search modal footer hint ───────────────────────────────────────────── */
+
+.search-modal__footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--wb-border);
+    background: var(--wb-surface-2);
+}
+
+[data-theme="light"] .search-modal__footer {
+    background: #f8fafd;
+}
+
+.search-modal__footer-hint {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--wb-text-muted);
+}
+
+.search-modal__kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 4px;
+    background: var(--wb-surface-1);
+    border: 1px solid var(--wb-border-strong);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--wb-text-secondary);
+    font-family: inherit;
+}
+
+[data-theme="light"] .search-modal__kbd {
+    background: #fff;
+    border-color: #d4d9e2;
+}
+
 
 /* ── Interaction and accessibility polish ───────────────────────────────── */
 

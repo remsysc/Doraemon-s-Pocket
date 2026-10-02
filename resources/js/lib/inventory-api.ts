@@ -189,6 +189,12 @@ export function getProducts(page = 1, perPage = 15) {
     });
 }
 
+export function searchProducts(query: string, perPage = 6) {
+    return api.get<PaginatedResponse<Product>>("/api/products", {
+        params: { "filter[name]": query, per_page: perPage, page: 1, include: "category" },
+    });
+}
+
 export function getProduct(id: string) {
     return api.get<{ data: Product }>(`/api/products/${id}`);
 }
@@ -212,6 +218,31 @@ export async function deleteProduct(id: string) {
 export function getLots(page = 1, perPage = 15) {
     return api.get<PaginatedResponse<Lot>>("/api/lots", {
         params: { page, per_page: perPage },
+    });
+}
+
+export function searchLots(query: string, perPage = 6) {
+    // Lots support exact sku_id and partial bin_location filters.
+    // We run both in parallel and merge, deduplicating by lot_id.
+    return Promise.all([
+        api.get<PaginatedResponse<Lot>>("/api/lots", {
+            params: { "filter[sku_id]": query, per_page: perPage, page: 1, include: "product" },
+        }).catch(() => null),
+        api.get<PaginatedResponse<Lot>>("/api/lots", {
+            params: { "filter[bin_location]": query, per_page: perPage, page: 1, include: "product" },
+        }).catch(() => null),
+    ]).then(([bySkuId, byBin]) => {
+        const seen = new Set<string>();
+        const merged: Lot[] = [];
+        for (const res of [bySkuId, byBin]) {
+            for (const lot of res?.data?.data ?? []) {
+                if (!seen.has(lot.lot_id)) {
+                    seen.add(lot.lot_id);
+                    merged.push(lot);
+                }
+            }
+        }
+        return merged.slice(0, perPage);
     });
 }
 
