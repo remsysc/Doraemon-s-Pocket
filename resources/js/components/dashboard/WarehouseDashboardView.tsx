@@ -26,58 +26,60 @@ export default function WarehouseDashboardView({
     onOpenCountModal,
 }: WarehouseDashboardProps) {
     return (
-        <div className="warehouse-dashboard space-y-6">
+        <div className="dashboard-stack">
 
             {/* ── Stat Cards ── */}
-            <section className="stats-grid">
-                <div className="stat-card stat-card--amber">
-                    <div className="stat-card__icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <section className="stats-grid--enhanced" aria-label="Key metrics">
+
+                <div className="stat-card--enhanced">
+                    <div className="stat-icon stat-icon--amber">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M5 8h14M5 12h14M5 16h6" /><rect x="3" y="4" width="18" height="16" rx="2" />
                         </svg>
                     </div>
                     <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.lots}</span>
-                        <span className="stat-card__label">Active Lots</span>
+                        <span className="stat-card__value--lg">{stats.lots}</span>
+                        <span className="stat-card__label--sm">Active Lots</span>
                     </div>
                 </div>
 
-                <div className={`stat-card ${stats.expiringCount > 0 ? "stat-card--red" : "stat-card--blue"}`}>
-                    <div className="stat-card__icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <div className="stat-card--enhanced">
+                    <div className={`stat-icon ${stats.expiringCount > 0 ? "stat-icon--red" : "stat-icon--blue"}`}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
                     </div>
                     <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.expiringCount}</span>
-                        <span className="stat-card__label">Expiring in 30d</span>
+                        <span className="stat-card__value--lg">{stats.expiringCount}</span>
+                        <span className="stat-card__label--sm">Expiring in 30d</span>
                     </div>
                 </div>
 
-                <div className="stat-card stat-card--green">
-                    <div className="stat-card__icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <div className="stat-card--enhanced">
+                    <div className={`stat-icon ${stats.pendingCounts > 0 ? "stat-icon--amber" : "stat-icon--green"}`}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                         </svg>
                     </div>
                     <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.pendingCounts}</span>
-                        <span className="stat-card__label">Pending Counts</span>
+                        <span className="stat-card__value--lg">{stats.pendingCounts}</span>
+                        <span className="stat-card__label--sm">Pending Counts</span>
                     </div>
                 </div>
 
-                <div className="stat-card stat-card--purple">
-                    <div className="stat-card__icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <div className="stat-card--enhanced">
+                    <div className="stat-icon stat-icon--purple">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" />
                             <polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
                         </svg>
                     </div>
                     <div className="stat-card__info">
-                        <span className="stat-card__value">{stats.transactions}</span>
-                        <span className="stat-card__label">Movements</span>
+                        <span className="stat-card__value--lg">{stats.transactions}</span>
+                        <span className="stat-card__label--sm">Movements</span>
                     </div>
                 </div>
+
             </section>
 
             {/* ── Quick Actions ── */}
@@ -175,7 +177,7 @@ export default function WarehouseDashboardView({
             </section>
 
             {/* ── Split: Movements + Counts ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="dashboard-cols">
                 {/* Recent Movements */}
                 <section className="table-section">
                     <div className="table-section__header">

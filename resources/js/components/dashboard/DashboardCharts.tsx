@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import {
     Bar,
     BarChart,
@@ -18,6 +18,28 @@ import type {
     TurnoverReportItem,
     VarianceReportItem,
 } from "../../lib/inventory-api";
+
+/* ── Shared empty-state for chart cards ────────────────────────────────── */
+function ChartEmptyState({
+    icon,
+    title,
+    desc,
+    compact = false,
+}: {
+    icon: ReactNode;
+    title: string;
+    desc: string;
+    compact?: boolean;
+}) {
+    return (
+        <div className={`empty-state-card ${compact ? "empty-state-card--compact" : ""}`}
+             style={compact ? { padding: "28px 20px" } : undefined}>
+            <div className="empty-state-card__icon">{icon}</div>
+            <p className="empty-state-card__title">{title}</p>
+            <p className="empty-state-card__desc">{desc}</p>
+        </div>
+    );
+}
 
 const tooltipContentStyle: CSSProperties = {
     backgroundColor: "var(--wb-surface-1)",
@@ -81,9 +103,25 @@ export function AdminAnalyticsCharts({
                     </div>
                 </header>
                 {turnoverData === null ? (
-                    <p className="analytics-empty">Turnover data could not be loaded.</p>
+                    <ChartEmptyState
+                        icon={
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                        }
+                        title="Turnover data unavailable"
+                        desc="Could not load turnover data. Check your connection and try refreshing."
+                    />
                 ) : turnoverData.length === 0 ? (
-                    <p className="analytics-empty">No turnover data for this period.</p>
+                    <ChartEmptyState
+                        icon={
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                        }
+                        title="No turnover data yet"
+                        desc="Turnover ratios will appear once inventory transactions are recorded over a 90-day window."
+                    />
                 ) : (
                     <div className="analytics-chart" aria-label="Turnover ratio by category">
                         <ResponsiveContainer width="100%" height="100%">
@@ -141,9 +179,25 @@ export function AdminAnalyticsCharts({
                     </div>
                 </header>
                 {shrinkageData === null ? (
-                    <p className="analytics-empty">Shrinkage data could not be loaded.</p>
+                    <ChartEmptyState
+                        icon={
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                        }
+                        title="Shrinkage data unavailable"
+                        desc="Could not load shrinkage data. Check your connection and try refreshing."
+                    />
                 ) : shrinkageByProduct.length === 0 ? (
-                    <p className="analytics-empty">No recorded shrinkage losses.</p>
+                    <ChartEmptyState
+                        icon={
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                        }
+                        title="No shrinkage losses recorded"
+                        desc="Great news — no inventory value losses have been detected in the current period."
+                    />
                 ) : (
                     <div className="analytics-chart" aria-label="Shrinkage loss by product">
                         <ResponsiveContainer width="100%" height="100%">
@@ -231,9 +285,15 @@ export function PurchasingAnalyticsCharts({
                             <p>SKU distribution by value and demand variability</p>
                         </div>
                     </header>
-                    <p className="analytics-empty">
-                        No classification data is available yet.
-                    </p>
+                    <ChartEmptyState
+                        icon={
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="12" y1="8" x2="12" y2="16"/>
+                            </svg>
+                        }
+                        title="No classification data"
+                        desc="Run the ABC/XYZ classification to see SKU distribution by value and demand variability."
+                    />
                 </article>
                 <PurchaseOrderTrendsCard
                     purchaseOrders={purchaseOrders}
@@ -445,13 +505,27 @@ function PurchaseOrderTrendsCard({
             </header>
 
             {loading ? (
-                <p className="analytics-empty" role="status">
-                    Loading procurement analytics…
-                </p>
+                <ChartEmptyState
+                    compact
+                    icon={
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    }
+                    title="Loading procurement analytics…"
+                    desc="Fetching purchase order data."
+                />
             ) : purchaseOrders === null ? (
-                <p className="analytics-empty" role="status">
-                    Purchase-order analytics could not be loaded.
-                </p>
+                <ChartEmptyState
+                    compact
+                    icon={
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    }
+                    title="Could not load purchase orders"
+                    desc="Purchase-order analytics are unavailable. Try refreshing the page."
+                />
             ) : (
                 <div className="procurement-chart-grid">
                     <section
@@ -473,9 +547,17 @@ function PurchaseOrderTrendsCard({
                             </div>
                         </div>
                         {orderCount === 0 ? (
-                            <p className="analytics-empty analytics-empty--compact">
-                                No placed or received purchase orders in the past 12 months.
-                            </p>
+                            <ChartEmptyState
+                                compact
+                                icon={
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                                    </svg>
+                                }
+                                title="No orders in past 12 months"
+                                desc="Placed or received purchase orders will appear as a monthly trend chart."
+                            />
                         ) : (
                             <div className="analytics-chart analytics-chart--compact">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -538,9 +620,16 @@ function PurchaseOrderTrendsCard({
                             <p>Configured days · active suppliers with orders</p>
                         </div>
                         {supplierLeadTimes.length === 0 ? (
-                            <p className="analytics-empty analytics-empty--compact">
-                                No active suppliers with placed or received purchase orders.
-                            </p>
+                            <ChartEmptyState
+                                compact
+                                icon={
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                    </svg>
+                                }
+                                title="No supplier lead times"
+                                desc="Active suppliers with placed or received orders will show configured lead-time estimates."
+                            />
                         ) : (
                             <div className="analytics-chart analytics-chart--compact">
                                 <ResponsiveContainer width="100%" height="100%">

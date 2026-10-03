@@ -1,6 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import { getCurrentUser, logout, type AuthUser } from "../lib/api";
+import {
+    getExpiryAlerts, getReorderAlerts,
+    searchProducts, searchLots,
+    type ExpiryAlert, type ReorderAlert,
+    type Product, type Lot,
+} from "../lib/inventory-api";
 import "../../css/dashboard.css";
 
 interface NavSection {
@@ -142,6 +148,27 @@ export default function DashboardLayout() {
 
     const [searchOpen, setSearchOpen] = useState(false);
 
+    // ── Search state ────────────────────────────────────────────────────────
+    const [searchQuery, setSearchQuery]         = useState("");
+    const [searchLoading, setSearchLoading]     = useState(false);
+    const [searchProducts_,  setSearchProducts] = useState<Product[]>([]);
+    const [searchLots_,      setSearchLots]     = useState<Lot[]>([]);
+    const [searchFocusIdx,   setSearchFocusIdx] = useState(-1);
+    const [recentSearches,   setRecentSearches] = useState<string[]>(() => {
+        try {
+            const stored = localStorage.getItem("wb-recent-searches");
+            return stored ? (JSON.parse(stored) as string[]) : [];
+        } catch { return []; }
+    });
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // ── Alert bell state ────────────────────────────────────────────────────
+    const [alertBellOpen, setAlertBellOpen] = useState(false);
+    const alertBellRef = useRef<HTMLDivElement>(null);
+    const [expiryAlerts, setExpiryAlerts] = useState<ExpiryAlert[]>([]);
+    const [reorderAlerts, setReorderAlerts] = useState<ReorderAlert[]>([]);
+    const totalAlerts = expiryAlerts.length + reorderAlerts.length;
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -164,6 +191,9 @@ export default function DashboardLayout() {
             if (quickAddRef.current && !quickAddRef.current.contains(event.target as Node)) {
                 setQuickAddOpen(false);
             }
+            if (alertBellRef.current && !alertBellRef.current.contains(event.target as Node)) {
+                setAlertBellOpen(false);
+            }
         }
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -174,6 +204,16 @@ export default function DashboardLayout() {
             .then((res) => setUser(res.data))
             .catch(() => navigate("/login"));
     }, [navigate]);
+
+    // Fetch alerts once user is known (role-gated on backend anyway)
+    useEffect(() => {
+        getExpiryAlerts(30)
+            .then((res) => setExpiryAlerts(res.data.data ?? []))
+            .catch(() => setExpiryAlerts([]));
+        getReorderAlerts()
+            .then((res) => setReorderAlerts(res.data.data ?? []))
+            .catch(() => setReorderAlerts([]));
+    }, []);
 
     useEffect(() => {
         try {
@@ -193,6 +233,113 @@ export default function DashboardLayout() {
         } finally {
             navigate("/login");
         }
+    };
+
+    // ── Debounced search ────────────────────────────────────────────────────
+    useEffect(() => {
+        const q = searchQuery.trim();
+        if (q.length < 2) {
+            setSearchProducts([]);
+            setSearchLots([]);
+            setSearchLoading(false);
+            setSearchFocusIdx(-1);
+            return;
+        }
+        setSearchLoading(true);
+        setSearchFocusIdx(-1);
+        const timer = setTimeout(async () => {
+            try {
+                const [prodRes, lotsRes] = await Promise.all([
+                    searchProducts(q, 5),
+                    searchLots(q, 5),
+                ]);
+                setSearchProducts(prodRes.data.data ?? []);
+                setSearchLots(lotsRes);
+            } catch {
+                setSearchProducts([]);
+                setSearchLots([]);
+            } finally {
+                setSearchLoading(false);
+            }
+        }, 280);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    // reset state when modal closes
+    useEffect(() => {
+        if (!searchOpen) {
+            setSearchQuery("");
+            setSearchProducts([]);
+            setSearchLots([]);
+            setSearchLoading(false);
+            setSearchFocusIdx(-1);
+        }
+    }, [searchOpen]);
+
+    const saveRecent = useCallback((label: string) => {
+        setRecentSearches(prev => {
+            const next = [label, ...prev.filter(r => r !== label)].slice(0, 6);
+            try { localStorage.setItem("wb-recent-searches", JSON.stringify(next)); } catch { /* ignore */ }
+            return next;
+        });
+    }, []);
+
+    // All flat results for keyboard navigation
+    const allResults: Array<{ type: "product" | "lot"; id: string; label: string; meta: string; href: string }> = [
+        ...searchProducts_.map(p => ({
+            type: "product" as const,
+            id: p.id,
+            label: p.name,
+            meta: [p.sku_id, p.category?.name].filter(Boolean).join(" · "),
+            href: "/products",
+        })),
+        ...searchLots_.map(l => ({
+            type: "lot" as const,
+            id: l.lot_id,
+            label: l.lot_id,
+            meta: [l.product?.name, l.bin_location].filter(Boolean).join(" · "),
+            href: "/lots",
+        })),
+    ];
+
+    const handleResultSelect = useCallback((item: typeof allResults[number]) => {
+        saveRecent(item.label);
+        setSearchOpen(false);
+        navigate(item.href);
+    }, [saveRecent, navigate]);
+
+    const handleRecentSelect = useCallback((label: string) => {
+        setSearchQuery(label);
+        searchInputRef.current?.focus();
+    }, []);
+
+    // keyboard arrow + enter navigation
+    const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (allResults.length === 0) return;
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setSearchFocusIdx(i => Math.min(i + 1, allResults.length - 1));
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setSearchFocusIdx(i => Math.max(i - 1, -1));
+        } else if (e.key === "Enter" && searchFocusIdx >= 0) {
+            e.preventDefault();
+            handleResultSelect(allResults[searchFocusIdx]);
+        }
+    }, [allResults, searchFocusIdx, handleResultSelect]);
+
+    // highlight matching substring
+    const highlight = (text: string, query: string): React.ReactNode => {
+        if (!query.trim()) return text;
+        const idx = text.toLowerCase().indexOf(query.trim().toLowerCase());
+        if (idx === -1) return text;
+        return (
+            <>
+                {text.slice(0, idx)}
+                <mark>{text.slice(idx, idx + query.trim().length)}</mark>
+                {text.slice(idx + query.trim().length)}
+            </>
+        );
     };
 
     const navSections: NavSection[] = [
@@ -439,6 +586,118 @@ export default function DashboardLayout() {
                                 </svg>
                             )}
                         </button>
+
+                        {/* ── Alert Bell ──────────────────────────────── */}
+                        <div className="topbar__profile-wrapper" ref={alertBellRef}>
+                            <div className="topbar__btn-wrap">
+                                <button
+                                    className="topbar__theme-toggle"
+                                    aria-label={`Alerts${totalAlerts > 0 ? ` — ${totalAlerts} active` : ""}`}
+                                    title="Alerts"
+                                    aria-expanded={alertBellOpen}
+                                    onClick={() => setAlertBellOpen(!alertBellOpen)}
+                                >
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                                    </svg>
+                                </button>
+                                {totalAlerts > 0 && (
+                                    <span className="topbar__alert-badge" aria-hidden="true">
+                                        {totalAlerts > 99 ? "99+" : totalAlerts}
+                                    </span>
+                                )}
+                            </div>
+
+                            {alertBellOpen && (
+                                <div className="alert-dropdown" role="dialog" aria-label="Alerts">
+                                    <div className="alert-dropdown__header">
+                                        <span className="alert-dropdown__title">Alerts</span>
+                                        {totalAlerts > 0 && (
+                                            <span className="alert-dropdown__count">{totalAlerts} active</span>
+                                        )}
+                                    </div>
+
+                                    {totalAlerts === 0 ? (
+                                        <div className="alert-dropdown__empty">
+                                            <div className="alert-dropdown__empty-icon">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                                </svg>
+                                            </div>
+                                            <p className="alert-dropdown__empty-text">All clear</p>
+                                            <p className="alert-dropdown__empty-sub">No expiry or reorder alerts right now.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="alert-dropdown__list">
+                                            {reorderAlerts.length > 0 && (
+                                                <>
+                                                    <div className="alert-dropdown__group-label">
+                                                        Reorder ({reorderAlerts.length})
+                                                    </div>
+                                                    {reorderAlerts.slice(0, 5).map((a) => (
+                                                        <div key={a.sku_id} className="alert-item">
+                                                            <span className="alert-item__dot alert-item__dot--danger" />
+                                                            <div className="alert-item__body">
+                                                                <span className="alert-item__title">
+                                                                    {a.product?.name ?? a.sku_id}
+                                                                </span>
+                                                                <span className="alert-item__meta">
+                                                                    {a.qty_available} available · ROP {a.reorder_point}
+                                                                    {a.suggested_order_qty ? ` · Suggest ${a.suggested_order_qty} units` : ""}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {reorderAlerts.length > 5 && (
+                                                        <div className="alert-item">
+                                                            <span className="alert-item__meta">
+                                                                +{reorderAlerts.length - 5} more reorder alerts
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                            {expiryAlerts.length > 0 && (
+                                                <>
+                                                    <div className="alert-dropdown__group-label">
+                                                        Expiring soon ({expiryAlerts.length})
+                                                    </div>
+                                                    {expiryAlerts.slice(0, 5).map((a) => (
+                                                        <div key={a.lot_id} className="alert-item">
+                                                            <span className="alert-item__dot alert-item__dot--warning" />
+                                                            <div className="alert-item__body">
+                                                                <span className="alert-item__title">
+                                                                    {a.product?.name ?? a.sku_id}
+                                                                </span>
+                                                                <span className="alert-item__meta">
+                                                                    Lot {a.lot_id.slice(0, 8)} · {a.days_to_expiry}d left · {a.qty_on_hand} units
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {expiryAlerts.length > 5 && (
+                                                        <div className="alert-item">
+                                                            <span className="alert-item__meta">
+                                                                +{expiryAlerts.length - 5} more expiry alerts
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="alert-dropdown__footer">
+                                        <a href="/purchasing" onClick={() => setAlertBellOpen(false)}>
+                                            View all in Purchasing Hub →
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="topbar__divider" />
                         {user && (
                             <div className="topbar__profile-wrapper" ref={profileMenuRef}>
@@ -480,37 +739,193 @@ export default function DashboardLayout() {
             {searchOpen && (
                 <div className="modal-overlay" onClick={() => setSearchOpen(false)}>
                     <div className="modal search-modal" onClick={e => e.stopPropagation()}>
+
+                        {/* Input row */}
                         <div className="search-modal__input-wrapper">
                             {Icons.search}
-                            <input 
-                                type="text" 
-                                autoFocus 
-                                placeholder="Search products, lots, or transactions..." 
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                autoFocus
+                                placeholder="Search products or lots..."
                                 className="search-modal__input"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                onKeyDown={handleSearchKeyDown}
+                                autoComplete="off"
+                                spellCheck={false}
                             />
+                            {searchQuery && (
+                                <button
+                                    className="search-modal__close"
+                                    onClick={() => setSearchQuery("")}
+                                    aria-label="Clear search"
+                                    style={{ marginRight: 4 }}
+                                >✕</button>
+                            )}
                             <button className="search-modal__close" onClick={() => setSearchOpen(false)}>Esc</button>
                         </div>
+
+                        {/* Body */}
                         <div className="search-modal__results">
-                            <div className="search-modal__recent">
-                                <div className="dashboard-section-title" style={{ padding: '0 20px', marginBottom: '8px' }}>Recent Searches</div>
-                                <button className="search-modal__result-item">
-                                    {Icons.clock}
-                                    <span>Doraemon Figure (SKU-892)</span>
-                                </button>
-                                <button className="search-modal__result-item">
-                                    {Icons.clock}
-                                    <span>Anywhere Door</span>
-                                </button>
-                                <button className="search-modal__result-item">
-                                    {Icons.clock}
-                                    <span>LOT-4921</span>
-                                </button>
-                                <button className="search-modal__result-item">
-                                    {Icons.clock}
-                                    <span>TXN-0092</span>
-                                </button>
-                            </div>
+
+                            {/* ── Loading ── */}
+                            {searchLoading && (
+                                <div className="search-modal__spinner">
+                                    <span className="search-modal__spinner-ring" />
+                                    Searching…
+                                </div>
+                            )}
+
+                            {/* ── Live results ── */}
+                            {!searchLoading && searchQuery.trim().length >= 2 && (
+                                <>
+                                    {allResults.length === 0 ? (
+                                        <div className="search-modal__no-results">
+                                            <div className="search-modal__no-results-icon">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                                                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                                    <line x1="8" y1="11" x2="14" y2="11"/>
+                                                </svg>
+                                            </div>
+                                            <p className="search-modal__no-results-title">No results for "{searchQuery}"</p>
+                                            <p className="search-modal__no-results-sub">Try a product name, SKU, lot ID, or bin location.</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {searchProducts_.length > 0 && (
+                                                <>
+                                                    <div className="search-modal__group-label">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                        </svg>
+                                                        Products
+                                                    </div>
+                                                    {searchProducts_.map((p, i) => {
+                                                        const flatIdx = i;
+                                                        const item = allResults[flatIdx];
+                                                        return (
+                                                            <button
+                                                                key={p.id}
+                                                                className={`search-modal__result-item${searchFocusIdx === flatIdx ? " search-modal__result-item--focused" : ""}`}
+                                                                onClick={() => handleResultSelect(item)}
+                                                                onMouseEnter={() => setSearchFocusIdx(flatIdx)}
+                                                            >
+                                                                <div className="search-modal__result-row">
+                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                                        <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                                    </svg>
+                                                                    <span>{highlight(p.name, searchQuery)}</span>
+                                                                </div>
+                                                                {item.meta && (
+                                                                    <span className="search-modal__result-meta">{item.meta}</span>
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </>
+                                            )}
+
+                                            {searchLots_.length > 0 && (
+                                                <>
+                                                    <div className="search-modal__group-label">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <path d="M5 8h14M5 12h14M5 16h6"/><rect x="3" y="4" width="18" height="16" rx="2"/>
+                                                        </svg>
+                                                        Lots
+                                                    </div>
+                                                    {searchLots_.map((l, i) => {
+                                                        const flatIdx = searchProducts_.length + i;
+                                                        const item = allResults[flatIdx];
+                                                        return (
+                                                            <button
+                                                                key={l.lot_id}
+                                                                className={`search-modal__result-item${searchFocusIdx === flatIdx ? " search-modal__result-item--focused" : ""}`}
+                                                                onClick={() => handleResultSelect(item)}
+                                                                onMouseEnter={() => setSearchFocusIdx(flatIdx)}
+                                                            >
+                                                                <div className="search-modal__result-row">
+                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                                        <path d="M5 8h14M5 12h14M5 16h6"/><rect x="3" y="4" width="18" height="16" rx="2"/>
+                                                                    </svg>
+                                                                    <span>{highlight(l.lot_id, searchQuery)}</span>
+                                                                </div>
+                                                                {item.meta && (
+                                                                    <span className="search-modal__result-meta">{item.meta}</span>
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </>
+                                            )}
+                                        </>
+                                    )}
+                                </>
+                            )}
+
+                            {/* ── Recent searches (shown when query is empty) ── */}
+                            {!searchLoading && searchQuery.trim().length < 2 && (
+                                <div className="search-modal__recent">
+                                    {recentSearches.length > 0 ? (
+                                        <>
+                                            <div className="search-modal__group-label">
+                                                {Icons.clock}
+                                                Recent
+                                                {recentSearches.length > 0 && (
+                                                    <button
+                                                        style={{ marginLeft: "auto", fontSize: 11, color: "var(--wb-text-muted)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+                                                        onClick={() => {
+                                                            setRecentSearches([]);
+                                                            try { localStorage.removeItem("wb-recent-searches"); } catch { /* ignore */ }
+                                                        }}
+                                                    >
+                                                        Clear
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {recentSearches.map((r) => (
+                                                <button
+                                                    key={r}
+                                                    className="search-modal__result-item"
+                                                    onClick={() => handleRecentSelect(r)}
+                                                >
+                                                    <div className="search-modal__result-row">
+                                                        {Icons.clock}
+                                                        <span>{r}</span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        <div className="search-modal__no-results" style={{ padding: "24px 20px" }}>
+                                            <div className="search-modal__no-results-icon">
+                                                {Icons.search}
+                                            </div>
+                                            <p className="search-modal__no-results-title">Search your inventory</p>
+                                            <p className="search-modal__no-results-sub">Type at least 2 characters to search products and lots.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
+
+                        {/* Footer hints */}
+                        <div className="search-modal__footer">
+                            <span className="search-modal__footer-hint">
+                                <kbd className="search-modal__kbd">↑</kbd>
+                                <kbd className="search-modal__kbd">↓</kbd>
+                                navigate
+                            </span>
+                            <span className="search-modal__footer-hint">
+                                <kbd className="search-modal__kbd">↵</kbd>
+                                select
+                            </span>
+                            <span className="search-modal__footer-hint">
+                                <kbd className="search-modal__kbd">Esc</kbd>
+                                close
+                            </span>
+                        </div>
+
                     </div>
                 </div>
             )}

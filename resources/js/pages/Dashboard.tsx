@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
@@ -30,6 +30,107 @@ import AdminDashboardView from "../components/dashboard/AdminDashboardView";
 import WarehouseDashboardView from "../components/dashboard/WarehouseDashboardView";
 import PurchasingDashboardView from "../components/dashboard/PurchasingDashboardView";
 import CycleCountModal from "../components/CycleCountModal";
+
+/* ── Skeleton shown while dashboard data loads ─────────────────────────── */
+function SkeletonBlock({ className, style }: { className?: string; style?: React.CSSProperties }) {
+    return <div className={`skeleton ${className ?? ""}`} style={style} />;
+}
+
+function SkeletonCard() {
+    return (
+        <div className="skeleton-card">
+            <SkeletonBlock className="skeleton-card__icon" />
+            <div className="stat-card__info">
+                <SkeletonBlock className="skeleton-card__value" />
+                <SkeletonBlock className="skeleton-card__label" />
+            </div>
+        </div>
+    );
+}
+
+function SkeletonTableRows({ rows = 5, cols }: { rows?: number; cols: number[] }) {
+    return (
+        <>
+            {Array.from({ length: rows }).map((_, r) => (
+                <div key={r} className="skeleton-row">
+                    {cols.map((w, c) => (
+                        <SkeletonBlock
+                            key={c}
+                            className="skeleton-row__cell"
+                            style={{ width: w }}
+                        />
+                    ))}
+                </div>
+            ))}
+        </>
+    );
+}
+
+function SkeletonSection({ title, rows, cols }: { title: ReactNode; rows?: number; cols: number[] }) {
+    return (
+        <div className="skeleton-section">
+            <div className="skeleton-section__header">
+                <SkeletonBlock className="skeleton-section__title" />
+            </div>
+            <SkeletonTableRows rows={rows} cols={cols} />
+        </div>
+    );
+}
+
+function DashboardSkeleton() {
+    return (
+        <div className="dashboard-stack">
+            {/* KPI cards */}
+            <div className="stats-grid--enhanced">
+                {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+
+            {/* Quick action tiles */}
+            <div className="action-grid">
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="skeleton-card" style={{ minHeight: 90 }}>
+                        <SkeletonBlock style={{ width: 36, height: 36, borderRadius: 8 }} />
+                        <SkeletonBlock style={{ height: 14, width: "60%", borderRadius: 4 }} />
+                        <SkeletonBlock style={{ height: 11, width: "80%", borderRadius: 4 }} />
+                    </div>
+                ))}
+            </div>
+
+            {/* Analytics chart placeholders */}
+            <div className="analytics-grid">
+                {[0, 1].map((i) => (
+                    <div key={i} className="analytics-card">
+                        <div className="analytics-card__header">
+                            <SkeletonBlock style={{ height: 14, width: 160, borderRadius: 4 }} />
+                        </div>
+                        <SkeletonBlock className="skeleton-chart-area" />
+                    </div>
+                ))}
+            </div>
+
+            {/* Reconciliation queue */}
+            <SkeletonSection
+                title="Reconciliation Queue"
+                rows={4}
+                cols={["22%", "15%", "10%", "10%", "12%", "10%", "8%"]}
+            />
+
+            {/* Bottom two-col split */}
+            <div className="dashboard-cols">
+                <SkeletonSection
+                    title="Recent Transactions"
+                    rows={5}
+                    cols={["18%", "12%", "30%", "18%", "14%"]}
+                />
+                <SkeletonSection
+                    title="Audit Trail"
+                    rows={5}
+                    cols={["22%", "28%", "22%", "16%"]}
+                />
+            </div>
+        </div>
+    );
+}
 
 export default function Dashboard() {
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -221,35 +322,55 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Admin Department Lens View Selector */}
+            {/* Admin Department Lens View Selector — pill toggle */}
             {role === "admin" && (
-                <div className="tab-bar">
+                <div className="pill-toggle" role="tablist" aria-label="Dashboard view">
                     <button
                         type="button"
-                        className={`tab-btn ${activeView === "admin" ? "tab-btn--active" : ""}`}
+                        role="tab"
+                        aria-selected={activeView === "admin"}
+                        className={`pill-toggle__btn${activeView === "admin" ? " pill-toggle__btn--active" : ""}`}
                         onClick={() => setActiveView("admin")}
                     >
+                        {/* grid icon */}
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                        </svg>
                         Admin Overview
                     </button>
                     <button
                         type="button"
-                        className={`tab-btn ${activeView === "warehouse" ? "tab-btn--active" : ""}`}
+                        role="tab"
+                        aria-selected={activeView === "warehouse"}
+                        className={`pill-toggle__btn${activeView === "warehouse" ? " pill-toggle__btn--active" : ""}`}
                         onClick={() => setActiveView("warehouse")}
                     >
+                        {/* box icon */}
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
                         Warehouse
                     </button>
                     <button
                         type="button"
-                        className={`tab-btn ${activeView === "purchasing" ? "tab-btn--active" : ""}`}
+                        role="tab"
+                        aria-selected={activeView === "purchasing"}
+                        className={`pill-toggle__btn${activeView === "purchasing" ? " pill-toggle__btn--active" : ""}`}
                         onClick={() => setActiveView("purchasing")}
                     >
+                        {/* shopping cart icon */}
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                        </svg>
                         Purchasing
                     </button>
                 </div>
             )}
 
             {loading ? (
-                <div className="page-loading">Loading inventory data & intelligence...</div>
+                <DashboardSkeleton />
             ) : (
                 <>
                     {/* Render active role view */}
