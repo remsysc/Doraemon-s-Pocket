@@ -138,6 +138,75 @@ class CategoryProductLotCrudTest extends TestCase
         $delete->assertNoContent();
     }
 
+    public function test_product_creation_with_omitted_optional_fields_defaults_is_active_and_null_barcode(): void
+    {
+        $user = $this->admin();
+        $category = Category::create([
+            'name' => 'Appliances',
+            'slug' => 'appliances',
+        ]);
+
+        // Omit barcode, is_active, is_seasonal, description, unit_cost, unit_price, shelf_life_days
+        $create = $this->actingAs($user)->postJson('/api/products', [
+            'name' => 'Electric Kettle',
+            'unit_of_measure' => 'piece',
+            'category_id' => $category->getKey(),
+        ]);
+
+        $create->assertCreated();
+        $this->assertDatabaseHas('products', [
+            'name' => 'Electric Kettle',
+            'unit_of_measure' => 'piece',
+            'category_id' => $category->getKey(),
+            'barcode' => null,
+            'is_active' => true,
+            'is_seasonal' => false,
+        ]);
+        $this->assertSame('active', $create->json('data.status'));
+    }
+
+    public function test_product_creation_allows_multiple_null_barcodes_but_enforces_unique_non_null(): void
+    {
+        $user = $this->admin();
+        $category = Category::create([
+            'name' => 'Kitchen',
+            'slug' => 'kitchen',
+        ]);
+
+        // First product without barcode
+        $this->actingAs($user)->postJson('/api/products', [
+            'name' => 'Blender 1',
+            'unit_of_measure' => 'piece',
+            'category_id' => $category->getKey(),
+            'barcode' => null,
+        ])->assertCreated();
+
+        // Second product without barcode also succeeds
+        $this->actingAs($user)->postJson('/api/products', [
+            'name' => 'Blender 2',
+            'unit_of_measure' => 'piece',
+            'category_id' => $category->getKey(),
+            'barcode' => null,
+        ])->assertCreated();
+
+        // Product with specific barcode
+        $this->actingAs($user)->postJson('/api/products', [
+            'name' => 'Toaster 1',
+            'unit_of_measure' => 'piece',
+            'category_id' => $category->getKey(),
+            'barcode' => 'BAR-99999',
+        ])->assertCreated();
+
+        // Duplicate non-null barcode fails
+        $this->actingAs($user)->postJson('/api/products', [
+            'name' => 'Toaster 2',
+            'unit_of_measure' => 'piece',
+            'category_id' => $category->getKey(),
+            'barcode' => 'BAR-99999',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['barcode']);
+    }
+
     public function test_purchasing_manager_cannot_write_product(): void
     {
         $user = $this->purchasingManager();

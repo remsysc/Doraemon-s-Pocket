@@ -16,6 +16,20 @@ import {
 
 type ModalMode = "create" | "edit" | null;
 
+const UNIT_OPTIONS: { value: string; label: string }[] = [
+    { value: "unit", label: "Unit (unit)" },
+    { value: "piece", label: "Piece (pc)" },
+    { value: "box", label: "Box (box)" },
+    { value: "set", label: "Set (set)" },
+    { value: "pack", label: "Pack (pack)" },
+    { value: "pair", label: "Pair (pair)" },
+    { value: "carton", label: "Carton (ctn)" },
+    { value: "bundle", label: "Bundle (bdl)" },
+    { value: "kg", label: "Kilogram (kg)" },
+    { value: "g", label: "Gram (g)" },
+    { value: "m", label: "Meter (m)" },
+];
+
 export default function Products() {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
@@ -32,12 +46,13 @@ export default function Products() {
     const [formName, setFormName] = useState("");
     const [formDescription, setFormDescription] = useState("");
     const [formBarcode, setFormBarcode] = useState("");
-    const [formUnit, setFormUnit] = useState("");
+    const [formUnit, setFormUnit] = useState(UNIT_OPTIONS[0].value);
     const [formUnitCost, setFormUnitCost] = useState("");
     const [formUnitPrice, setFormUnitPrice] = useState("");
     const [formCategoryId, setFormCategoryId] = useState("");
     const [formIsSeasonal, setFormIsSeasonal] = useState(false);
     const [formShelfLife, setFormShelfLife] = useState("");
+    const [formIsActive, setFormIsActive] = useState(true);
 
     useEffect(() => {
         getCurrentUser().then((res) => setUser(res.data));
@@ -68,12 +83,13 @@ export default function Products() {
         setFormName("");
         setFormDescription("");
         setFormBarcode("");
-        setFormUnit("");
+        setFormUnit(UNIT_OPTIONS[0].value);
         setFormUnitCost("");
         setFormUnitPrice("");
         setFormCategoryId(categories[0]?.id ?? "");
         setFormIsSeasonal(false);
         setFormShelfLife("");
+        setFormIsActive(true);
         setFormError("");
         setEditTarget(null);
         setModalMode("create");
@@ -89,6 +105,7 @@ export default function Products() {
         setFormCategoryId(product.category?.id ?? "");
         setFormIsSeasonal(product.metadata?.is_seasonal ?? false);
         setFormShelfLife(product.metadata?.shelf_life_days?.toString() ?? "");
+        setFormIsActive(product.status === "active" || product.is_active !== false);
         setFormError("");
         setEditTarget(product);
         setModalMode("edit");
@@ -116,6 +133,7 @@ export default function Products() {
                     category_id: formCategoryId,
                     is_seasonal: formIsSeasonal,
                     shelf_life_days: formShelfLife ? parseInt(formShelfLife, 10) : null,
+                    is_active: formIsActive,
                 };
                 await createProduct(payload);
             } else if (modalMode === "edit" && editTarget) {
@@ -129,6 +147,7 @@ export default function Products() {
                     category_id: formCategoryId,
                     is_seasonal: formIsSeasonal,
                     shelf_life_days: formShelfLife ? parseInt(formShelfLife, 10) : null,
+                    is_active: formIsActive,
                 };
                 await updateProduct(editTarget.id, payload);
             }
@@ -228,12 +247,14 @@ export default function Products() {
                                                             >
                                                                 Edit
                                                             </button>
-                                                            <button
-                                                                className="btn btn--sm btn--danger"
-                                                                onClick={() => handleDeactivate(prod)}
-                                                            >
-                                                                Deactivate
-                                                            </button>
+                                                            {prod.status === "active" && (
+                                                                <button
+                                                                    className="btn btn--sm btn--danger"
+                                                                    onClick={() => handleDeactivate(prod)}
+                                                                >
+                                                                    Deactivate
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 )}
@@ -319,14 +340,21 @@ export default function Products() {
                             <div className="form-row">
                                 <div className="form-group">
                                     <label htmlFor="prod-unit">Unit of Measure</label>
-                                    <input
+                                    <select
                                         id="prod-unit"
-                                        type="text"
                                         value={formUnit}
                                         onChange={(e) => setFormUnit(e.target.value)}
                                         required
-                                        placeholder="e.g. piece, kg, box"
-                                    />
+                                    >
+                                        {UNIT_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                        {formUnit && !UNIT_OPTIONS.some((opt) => opt.value === formUnit) && (
+                                            <option value={formUnit}>{formUnit}</option>
+                                        )}
+                                    </select>
                                 </div>
 
                                 <div className="form-group">
@@ -388,7 +416,7 @@ export default function Products() {
                                         min="0"
                                         value={formShelfLife}
                                         onChange={(e) => setFormShelfLife(e.target.value)}
-                                        placeholder="Optional"
+                                        placeholder={formIsSeasonal ? "Required for seasonal" : "Optional"}
                                     />
                                 </div>
 
@@ -400,6 +428,19 @@ export default function Products() {
                                             onChange={(e) => setFormIsSeasonal(e.target.checked)}
                                         />
                                         Seasonal product
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group form-group--checkbox">
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            checked={formIsActive}
+                                            onChange={(e) => setFormIsActive(e.target.checked)}
+                                        />
+                                        Active
                                     </label>
                                 </div>
                             </div>
