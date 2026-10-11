@@ -46,6 +46,24 @@ class UpdateProductRequest extends FormRequest
                 ),
             ],
             'description' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'barcode' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('products', 'barcode')->ignore(
+                    $product?->getKey(),
+                    'sku_id',
+                ),
+            ],
+            'unit_of_measure' => ['sometimes', 'string', 'max:255'],
+            'is_seasonal' => ['sometimes', 'boolean'],
+            'shelf_life_days' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                'min:1',
+            ],
             'is_active' => ['sometimes', 'boolean'],
             'unit_cost' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'unit_price' => ['sometimes', 'nullable', 'numeric', 'min:0'],
@@ -57,7 +75,7 @@ class UpdateProductRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if ($this->has('is_active')) {
+        if ($this->has('is_active') && $this->input('is_active') !== null) {
             $this->merge([
                 'is_active' => filter_var(
                     $this->input('is_active'),
@@ -65,6 +83,36 @@ class UpdateProductRequest extends FormRequest
                     FILTER_NULL_ON_FAILURE,
                 ),
             ]);
+        }
+
+        if ($this->has('is_seasonal') && $this->input('is_seasonal') !== null) {
+            $this->merge([
+                'is_seasonal' => filter_var(
+                    $this->input('is_seasonal'),
+                    FILTER_VALIDATE_BOOLEAN,
+                    FILTER_NULL_ON_FAILURE,
+                ),
+            ]);
+        }
+
+        if ($this->input('barcode') === '') {
+            $this->merge(['barcode' => null]);
+        }
+
+        if ($this->input('description') === '') {
+            $this->merge(['description' => null]);
+        }
+
+        if ($this->input('unit_cost') === '') {
+            $this->merge(['unit_cost' => null]);
+        }
+
+        if ($this->input('unit_price') === '') {
+            $this->merge(['unit_price' => null]);
+        }
+
+        if ($this->input('shelf_life_days') === '') {
+            $this->merge(['shelf_life_days' => null]);
         }
     }
 }
