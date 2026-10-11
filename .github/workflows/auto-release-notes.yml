@@ -1,0 +1,42 @@
+name: Auto Release Notes
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  generate-release-notes:
+    name: Generate Release Notes
+    if: github.event.pull_request.head.ref == 'staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate Changelog & Update PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          DATE_STR=$(date +'%Y-%m-%d')
+          TAG_STR="v$(date +'%Y.%m.%d-%H%M%S')"
+
+          # Generate categorized changelog from GitHub's native engine using .github/release.yml
+          NOTES=$(gh api "repos/${REPO}/releases/generate-notes" \
+            -f tag_name="${TAG_STR}" \
+            -f target_commitish="staging" \
+            -q .body)
+
+          if [ -n "$NOTES" ]; then
+            gh pr edit "${PR_NUMBER}" --repo "${REPO}" \
+              --title "release: promote staging to main (${DATE_STR})" \
+              --body "${NOTES}"
+          fi
