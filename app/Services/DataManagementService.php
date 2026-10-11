@@ -39,7 +39,7 @@ class DataManagementService
 
         $categories = Category::query()->orderBy('name')->get();
         foreach ($categories as $category) {
-            fputcsv($handle, [
+            $this->putCsvRow($handle, [
                 $category->category_id,
                 $category->name,
                 $category->slug,
@@ -184,7 +184,7 @@ class DataManagementService
 
         $products = Product::query()->with('category')->orderBy('name')->get();
         foreach ($products as $product) {
-            fputcsv($handle, [
+            $this->putCsvRow($handle, [
                 $product->sku_id,
                 $product->category_id,
                 $product->category?->name ?? '',
@@ -392,7 +392,7 @@ class DataManagementService
 
         $suppliers = Supplier::query()->orderBy('name')->get();
         foreach ($suppliers as $s) {
-            fputcsv($handle, [
+            $this->putCsvRow($handle, [
                 $s->id,
                 $s->name,
                 $s->contact_name ?? '',
@@ -553,7 +553,7 @@ class DataManagementService
 
         $lots = Lot::query()->with('product')->orderBy('received_date', 'desc')->get();
         foreach ($lots as $lot) {
-            fputcsv($handle, [
+            $this->putCsvRow($handle, [
                 $lot->lot_id,
                 $lot->product?->barcode ?? '',
                 $lot->sku_id,
@@ -726,7 +726,7 @@ class DataManagementService
         foreach ($orders as $po) {
             foreach ($po->items as $item) {
                 $totalItems++;
-                fputcsv($handle, [
+                $this->putCsvRow($handle, [
                     $po->po_number,
                     $po->supplier?->name ?? '',
                     $po->status,
@@ -929,7 +929,7 @@ class DataManagementService
 
         $counts = $query->get();
         foreach ($counts as $c) {
-            fputcsv($handle, [
+            $this->putCsvRow($handle, [
                 $c->id,
                 $c->sku_id,
                 $c->product?->barcode ?? '',
@@ -1099,7 +1099,7 @@ class DataManagementService
 
         $transactions = $query->get();
         foreach ($transactions as $t) {
-            fputcsv($handle, [
+            $this->putCsvRow($handle, [
                 $t->txn_id,
                 $t->occurred_at,
                 $t->txn_type,
@@ -1339,5 +1339,24 @@ class DataManagementService
         fclose($handle);
 
         return $rows;
+    }
+
+    /**
+     * Write a row to the CSV handle, sanitizing cells against spreadsheet formula injection.
+     *
+     * @param  resource  $handle
+     * @param  array<int, mixed>  $fields
+     */
+    private function putCsvRow($handle, array $fields): void
+    {
+        $sanitized = array_map(function (mixed $val): mixed {
+            if (is_string($val) && strlen($val) > 0 && in_array($val[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+                return "'".$val;
+            }
+
+            return $val;
+        }, $fields);
+
+        fputcsv($handle, $sanitized);
     }
 }

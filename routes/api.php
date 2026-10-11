@@ -19,7 +19,8 @@ use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])
+    ->middleware('throttle:login');
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
     Route::get('/user', fn (Request $request) => $request->user());
@@ -158,26 +159,26 @@ Route::middleware('auth:sanctum')->group(function () {
         // Admin-only: Master Data (Categories, Products) & Inventory Ledger Export
         Route::middleware('role:admin')->group(function () {
             Route::get('export/categories', [DataManagementController::class, 'exportCategories']);
-            Route::post('import/categories', [DataManagementController::class, 'importCategories']);
+            Route::post('import/categories', [DataManagementController::class, 'importCategories'])->middleware('throttle:bulk-import');
             Route::get('export/products', [DataManagementController::class, 'exportProducts']);
-            Route::post('import/products', [DataManagementController::class, 'importProducts']);
+            Route::post('import/products', [DataManagementController::class, 'importProducts'])->middleware('throttle:bulk-import');
             Route::get('export/inventory-transactions', [DataManagementController::class, 'exportInventoryTransactions']);
         });
 
         // Purchasing Manager + Admin: Suppliers & Purchase Orders
         Route::middleware('role:purchasing_manager,admin')->group(function () {
             Route::get('export/suppliers', [DataManagementController::class, 'exportSuppliers']);
-            Route::post('import/suppliers', [DataManagementController::class, 'importSuppliers']);
+            Route::post('import/suppliers', [DataManagementController::class, 'importSuppliers'])->middleware('throttle:bulk-import');
             Route::get('export/purchase-orders', [DataManagementController::class, 'exportPurchaseOrders']);
-            Route::post('import/purchase-orders', [DataManagementController::class, 'importPurchaseOrders']);
+            Route::post('import/purchase-orders', [DataManagementController::class, 'importPurchaseOrders'])->middleware('throttle:bulk-import');
         });
 
         // Warehouse Staff + Admin: Lots & Cycle Counts
         Route::middleware('role:warehouse_staff,admin')->group(function () {
             Route::get('export/lots', [DataManagementController::class, 'exportLots']);
-            Route::post('import/lots', [DataManagementController::class, 'importLots']);
+            Route::post('import/lots', [DataManagementController::class, 'importLots'])->middleware('throttle:bulk-import');
             Route::get('export/cycle-counts', [DataManagementController::class, 'exportCycleCounts']);
-            Route::post('import/cycle-counts', [DataManagementController::class, 'importCycleCounts']);
+            Route::post('import/cycle-counts', [DataManagementController::class, 'importCycleCounts'])->middleware('throttle:bulk-import');
         });
     });
 
