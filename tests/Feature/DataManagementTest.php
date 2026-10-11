@@ -193,4 +193,22 @@ class DataManagementTest extends TestCase
         $this->actingAs($pm)->postJson('/api/data/import/products', ['file' => $file])->assertForbidden();
         $this->actingAs($ws)->postJson('/api/data/import/products', ['file' => $file])->assertForbidden();
     }
+
+    public function test_csv_export_neutralizes_formula_injection(): void
+    {
+        Category::factory()->create([
+            'name' => '=CMD|"/C calc"!A0',
+            'slug' => 'calc-exploit',
+            'description' => '+1337-formula',
+        ]);
+
+        $response = $this->actingAs($this->admin())
+            ->get('/api/data/export/categories');
+
+        $response->assertOk();
+        $content = $response->getContent();
+        // The formula characters = and + must be prepended with a single quote '
+        $this->assertStringContainsString("'=CMD|", $content);
+        $this->assertStringContainsString("'+1337-formula", $content);
+    }
 }

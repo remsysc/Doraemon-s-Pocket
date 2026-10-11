@@ -49,4 +49,22 @@ class SeededLoginTest extends TestCase
             'password' => 'wrong-password',
         ])->assertUnprocessable();
     }
+
+    public function test_login_is_rate_limited_after_too_many_attempts(): void
+    {
+        $this->seed();
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/login', [
+                'email' => 'attacker@test.com',
+                'password' => 'wrong-password',
+            ])->assertUnprocessable();
+        }
+
+        // 6th attempt should be blocked with 429 Too Many Requests
+        $this->postJson('/api/login', [
+            'email' => 'attacker@test.com',
+            'password' => 'wrong-password',
+        ])->assertStatus(429);
+    }
 }
