@@ -359,6 +359,7 @@ export default function Lots() {
                                     type="text"
                                     value={formBinLocation}
                                     onChange={(e) => setFormBinLocation(e.target.value)}
+                                    required
                                     placeholder="e.g. A1-01, Shelf B3"
                                 />
                             </div>
