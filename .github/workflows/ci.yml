@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   pull_request:
-    branches: [main]
+    branches: [main, staging]
 
 jobs:
   backend-tests:
@@ -68,7 +68,7 @@ jobs:
         run: php artisan test
 
   frontend-build:
-    name: Frontend Build
+    name: Frontend Test & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -83,6 +83,9 @@ jobs:
 
       - name: Install npm dependencies
         run: npm ci
+
+      - name: Run frontend tests
+        run: npm test
 
       - name: Build production assets
         run: npm run build
