@@ -21,3 +21,6 @@ changelog:
       labels:
         - "documentation"
         - "docs"
+    - title: "🔄 Other Changes"
+      labels:
+        - "*"

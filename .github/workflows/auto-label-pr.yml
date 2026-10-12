@@ -1,0 +1,43 @@
+name: Auto Label PR
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  label:
+    name: Auto Label PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply labels based on title prefix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          REPO: ${{ github.repository }}
+        run: |
+          LOWER_TITLE=$(echo "${PR_TITLE}" | tr '[:upper:]' '[:lower:]')
+          LABELS=()
+
+          re_feat="^(feat(\(.*\))?!?:|feat/)"
+          re_fix="^(fix(\(.*\))?!?:|fix/)"
+          re_chore="^(chore(\(.*\))?!?:|chore/)"
+          re_test="^(test(\(.*\))?!?:|test/)"
+          re_docs="^(docs(\(.*\))?!?:|docs/)"
+
+          if [[ "$LOWER_TITLE" =~ $re_feat ]]; then LABELS+=("feat"); fi
+          if [[ "$LOWER_TITLE" =~ $re_fix ]]; then LABELS+=("fix"); fi
+          if [[ "$LOWER_TITLE" =~ $re_chore ]]; then LABELS+=("chore"); fi
+          if [[ "$LOWER_TITLE" =~ $re_test ]]; then LABELS+=("test"); fi
+          if [[ "$LOWER_TITLE" =~ $re_docs ]]; then LABELS+=("docs"); fi
+
+          if [ ${#LABELS[@]} -gt 0 ]; then
+            IFS=','
+            echo "Applying labels: ${LABELS[*]} to PR #${PR_NUMBER}"
+            gh pr edit "${PR_NUMBER}" --repo "${REPO}" --add-label "${LABELS[*]}"
+          else
+            echo "No matching conventional commit prefix found in title: ${PR_TITLE}"
+          fi
