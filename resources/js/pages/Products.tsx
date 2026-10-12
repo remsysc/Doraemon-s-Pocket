@@ -37,20 +37,6 @@ const UNIT_OPTIONS: { value: string; label: string }[] = [
     { value: "m", label: "Meter (m)" },
 ];
 
-const UNIT_OPTIONS: { value: string; label: string }[] = [
-    { value: "unit", label: "Unit (unit)" },
-    { value: "piece", label: "Piece (pc)" },
-    { value: "box", label: "Box (box)" },
-    { value: "set", label: "Set (set)" },
-    { value: "pack", label: "Pack (pack)" },
-    { value: "pair", label: "Pair (pair)" },
-    { value: "carton", label: "Carton (ctn)" },
-    { value: "bundle", label: "Bundle (bdl)" },
-    { value: "kg", label: "Kilogram (kg)" },
-    { value: "g", label: "Gram (g)" },
-    { value: "m", label: "Meter (m)" },
-];
-
 export default function Products() {
     const [searchParams, setSearchParams] = useSearchParams();
     const { toast } = useToast();
