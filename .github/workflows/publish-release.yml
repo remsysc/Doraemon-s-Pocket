@@ -1,0 +1,46 @@
+name: Publish Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  publish-release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          DATE_STR=$(date +'%Y-%m-%d')
+          TAG_STR="v$(date +'%Y.%m.%d-%H%M%S')"
+
+          # Find previous release tag on main to generate notes against
+          LATEST_TAG=$(gh release list --repo "${REPO}" -L 1 --json tagName -q ".[0].tagName" 2>/dev/null || true)
+          EXTRA_ARGS=()
+          if [ -n "$LATEST_TAG" ]; then
+            EXTRA_ARGS+=(-f previous_tag_name="${LATEST_TAG}")
+          fi
+
+          NOTES=$(gh api "repos/${REPO}/releases/generate-notes" \
+            -f tag_name="${TAG_STR}" \
+            -f target_commitish="main" \
+            "${EXTRA_ARGS[@]}" \
+            -q .body)
+
+          gh release create "${TAG_STR}" \
+            --repo "${REPO}" \
+            --target "main" \
+            --title "Release ${DATE_STR} (${TAG_STR})" \
+            --notes "${NOTES}"
