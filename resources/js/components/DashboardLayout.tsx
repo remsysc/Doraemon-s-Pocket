@@ -7,6 +7,7 @@ import {
     type ExpiryAlert, type ReorderAlert,
     type Product, type Lot,
 } from "../lib/inventory-api";
+import { ToastProvider } from "./ToastContext";
 import "../../css/dashboard.css";
 
 interface NavSection {
@@ -394,8 +395,9 @@ export default function DashboardLayout() {
     ];
 
     return (
-        <div className="layout" data-theme={theme}>
-            <aside
+        <ToastProvider>
+            <div className="layout" data-theme={theme}>
+                <aside
                 id="primary-navigation"
                 className={`sidebar ${sidebarOpen ? "" : "sidebar--collapsed"}`}
             >
@@ -537,23 +539,23 @@ export default function DashboardLayout() {
                                 {quickAddOpen && (
                                     <div className="topbar__dropdown">
                                         {user.role === "admin" && (
-                                            <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/products"); }}>
+                                            <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/products?action=new"); }}>
                                                 New Product
                                             </button>
                                         )}
                                         {(user.role === "admin" || user.role === "purchasing_manager") && (
                                             <>
-                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/purchase-orders"); }}>
+                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/purchase-orders?action=new"); }}>
                                                     New Purchase Order
                                                 </button>
-                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/suppliers"); }}>
+                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/suppliers?action=new"); }}>
                                                     New Supplier
                                                 </button>
                                             </>
                                         )}
                                         {(user.role === "admin" || user.role === "warehouse_staff") && (
                                             <>
-                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/lots"); }}>
+                                                <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/lots?action=new"); }}>
                                                     Receive Lot
                                                 </button>
                                                 <button className="topbar__dropdown-item" onClick={() => { setQuickAddOpen(false); navigate("/cycle-counts"); }}>
@@ -929,6 +931,7 @@ export default function DashboardLayout() {
                     </div>
                 </div>
             )}
-        </div>
+            </div>
+        </ToastProvider>
     );
 }
