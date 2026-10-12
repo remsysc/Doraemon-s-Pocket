@@ -8,7 +8,7 @@ on:
 
 permissions:
   pull-requests: write
-  contents: read
+  contents: write
 
 jobs:
   generate-release-notes:
@@ -29,10 +29,18 @@ jobs:
           DATE_STR=$(date +'%Y-%m-%d')
           TAG_STR="v$(date +'%Y.%m.%d-%H%M%S')"
 
+          # Find previous release tag on main to avoid digging to initial commit
+          LATEST_TAG=$(gh release list --repo "${REPO}" -L 1 --json tagName -q ".[0].tagName" 2>/dev/null || true)
+          EXTRA_ARGS=()
+          if [ -n "$LATEST_TAG" ]; then
+            EXTRA_ARGS+=(-f previous_tag_name="${LATEST_TAG}")
+          fi
+
           # Generate categorized changelog from GitHub's native engine using .github/release.yml
           NOTES=$(gh api "repos/${REPO}/releases/generate-notes" \
             -f tag_name="${TAG_STR}" \
             -f target_commitish="staging" \
+            "${EXTRA_ARGS[@]}" \
             -q .body)
 
           if [ -n "$NOTES" ]; then
