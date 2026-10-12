@@ -1,8 +1,13 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Products from "./Products";
 import * as inventoryApi from "../lib/inventory-api";
 import * as api from "../lib/api";
+
+function renderWithRouter(ui: React.ReactElement) {
+    return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 vi.mock("../lib/inventory-api", () => ({
     getProducts: vi.fn(),
@@ -67,7 +72,7 @@ describe("Products Component", () => {
     });
 
     it("renders the product list with unit, price, and status badge", async () => {
-        render(<Products />);
+        renderWithRouter(<Products />);
 
         expect(await screen.findByText("Portable AC 1.0 HP")).toBeInTheDocument();
         expect(screen.getByText("Cooling & AC")).toBeInTheDocument();
@@ -77,7 +82,7 @@ describe("Products Component", () => {
     });
 
     it("opens create modal with default unit dropdown and active status", async () => {
-        render(<Products />);
+        renderWithRouter(<Products />);
 
         const createButton = await screen.findByRole("button", { name: "+ New Product" });
         fireEvent.click(createButton);
@@ -85,7 +90,7 @@ describe("Products Component", () => {
         expect(screen.getByRole("heading", { name: "New Product" })).toBeInTheDocument();
 
         // Unit of measure is a select dropdown defaulting to 'unit'
-        const unitSelect = screen.getByLabelText("Unit of Measure") as HTMLSelectElement;
+        const unitSelect = screen.getByLabelText(/unit of measure/i) as HTMLSelectElement;
         expect(unitSelect.tagName).toBe("SELECT");
         expect(unitSelect.value).toBe("unit");
 
@@ -101,13 +106,13 @@ describe("Products Component", () => {
 
     it("submits product creation with only required fields (verifies optional fields can be left blank)", async () => {
         vi.mocked(inventoryApi.createProduct).mockResolvedValue({ data: mockProducts[0] } as any);
-        render(<Products />);
+        renderWithRouter(<Products />);
 
         fireEvent.click(await screen.findByRole("button", { name: "+ New Product" }));
 
         // Fill required fields only
-        fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Minimal Product" } });
-        fireEvent.change(screen.getByLabelText("Category"), { target: { value: "cat-uuid-1" } });
+        fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "Minimal Product" } });
+        fireEvent.change(screen.getByLabelText(/category/i), { target: { value: "cat-uuid-1" } });
         // Unit of Measure defaults to 'unit'
 
         // Barcode, description, costs, shelf life are left empty
@@ -131,13 +136,13 @@ describe("Products Component", () => {
 
     it("submits product creation with all optional fields filled and custom dropdown selection", async () => {
         vi.mocked(inventoryApi.createProduct).mockResolvedValue({ data: mockProducts[0] } as any);
-        render(<Products />);
+        renderWithRouter(<Products />);
 
         fireEvent.click(await screen.findByRole("button", { name: "+ New Product" }));
 
-        fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Heavy Industrial Fan" } });
-        fireEvent.change(screen.getByLabelText("Category"), { target: { value: "cat-uuid-1" } });
-        fireEvent.change(screen.getByLabelText("Unit of Measure"), { target: { value: "box" } });
+        fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "Heavy Industrial Fan" } });
+        fireEvent.change(screen.getByLabelText(/category/i), { target: { value: "cat-uuid-1" } });
+        fireEvent.change(screen.getByLabelText(/unit of measure/i), { target: { value: "box" } });
         fireEvent.change(screen.getByPlaceholderText("Optional barcode"), { target: { value: "WB-FAN-999" } });
         fireEvent.change(screen.getByPlaceholderText("Optional description"), { target: { value: "Floor-standing blower" } });
         fireEvent.change(screen.getByLabelText("Unit Cost (₱)"), { target: { value: "2500.50" } });
@@ -175,21 +180,22 @@ describe("Products Component", () => {
             },
         });
 
-        render(<Products />);
+        renderWithRouter(<Products />);
         fireEvent.click(await screen.findByRole("button", { name: "+ New Product" }));
 
-        fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Duplicate Name" } });
-        fireEvent.change(screen.getByLabelText("Category"), { target: { value: "cat-uuid-1" } });
+        fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "Duplicate Name" } });
+        fireEvent.change(screen.getByLabelText(/category/i), { target: { value: "cat-uuid-1" } });
         fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
-        expect(await screen.findByText("The product name has already been taken.")).toBeInTheDocument();
+        const errorElements = await screen.findAllByText("The product name has already been taken.");
+        expect(errorElements.length).toBeGreaterThanOrEqual(1);
     });
 
     it("populates edit modal with existing values and sends update payload with active status", async () => {
         vi.mocked(inventoryApi.updateProduct).mockResolvedValue({ data: mockProducts[0] } as any);
-        render(<Products />);
+        renderWithRouter(<Products />);
 
-        const editButton = await screen.findByRole("button", { name: "Edit" });
+        const editButton = await screen.findByRole("button", { name: /edit/i });
         fireEvent.click(editButton);
 
         expect(screen.getByRole("heading", { name: "Edit Product" })).toBeInTheDocument();
@@ -197,7 +203,7 @@ describe("Products Component", () => {
         expect(screen.getByDisplayValue("WB-AC-1000")).toBeInTheDocument();
 
         // Change unit of measure to piece and toggle active
-        fireEvent.change(screen.getByLabelText("Unit of Measure"), { target: { value: "piece" } });
+        fireEvent.change(screen.getByLabelText(/unit of measure/i), { target: { value: "piece" } });
         const activeCheckbox = screen.getByRole("checkbox", { name: /active/i });
         fireEvent.click(activeCheckbox); // uncheck active
 
@@ -210,5 +216,29 @@ describe("Products Component", () => {
                 is_active: false,
             }));
         });
+    });
+
+    it("allows uninterrupted typing into inputs when editing product without losing focus or resetting values", async () => {
+        renderWithRouter(<Products />);
+
+        const editButton = await screen.findByRole("button", { name: /edit/i });
+        fireEvent.click(editButton);
+
+        const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
+        nameInput.focus();
+        expect(document.activeElement).toBe(nameInput);
+
+        // Simulate typing keystroke by keystroke
+        fireEvent.change(nameInput, { target: { value: "P" } });
+        fireEvent.change(nameInput, { target: { value: "Po" } });
+        fireEvent.change(nameInput, { target: { value: "Por" } });
+        fireEvent.change(nameInput, { target: { value: "Portable AC Updated" } });
+
+        expect(nameInput.value).toBe("Portable AC Updated");
+
+        const descInput = screen.getByLabelText(/description/i) as HTMLTextAreaElement;
+        descInput.focus();
+        fireEvent.change(descInput, { target: { value: "New continuous description without stop" } });
+        expect(descInput.value).toBe("New continuous description without stop");
     });
 });

@@ -21,31 +21,74 @@ export default function Modal({
 }: ModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLElement | null>(null);
+    const prevIsOpenRef = useRef(false);
+    const onCloseRef = useRef(onClose);
+
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    });
 
     // Save active element when modal opens, restore on close
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !prevIsOpenRef.current) {
             triggerRef.current = document.activeElement as HTMLElement | null;
-        } else if (triggerRef.current) {
+        } else if (!isOpen && prevIsOpenRef.current && triggerRef.current) {
             triggerRef.current.focus();
         }
+        prevIsOpenRef.current = isOpen;
     }, [isOpen]);
 
-    // Handle Escape and Tab focus trapping
+    // Initial focus to first editable field in modal content ONCE on open
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const timer = setTimeout(() => {
+            if (modalRef.current) {
+                // If user is already focused on an element inside this modal, don't steal focus
+                if (
+                    document.activeElement &&
+                    modalRef.current.contains(document.activeElement)
+                ) {
+                    return;
+                }
+
+                // Prefer first editable field in content over the close button
+                const contentInput = modalRef.current.querySelector<HTMLElement>(
+                    '.modal__content input:not([disabled]), .modal__content select:not([disabled]), .modal__content textarea:not([disabled])'
+                );
+                if (contentInput) {
+                    contentInput.focus();
+                } else {
+                    const firstFocusable = modalRef.current.querySelector<HTMLElement>(
+                        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                    );
+                    if (firstFocusable) {
+                        firstFocusable.focus();
+                    } else {
+                        modalRef.current.focus();
+                    }
+                }
+            }
+        }, 30);
+
+        return () => clearTimeout(timer);
+    }, [isOpen]);
+
+    // Handle Escape and Tab focus trapping & background scroll lock
     useEffect(() => {
         if (!isOpen) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
                 e.preventDefault();
-                onClose();
+                onCloseRef.current();
                 return;
             }
 
             if (e.key === "Tab") {
                 if (!modalRef.current) return;
                 const focusable = modalRef.current.querySelectorAll<HTMLElement>(
-                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
                 );
                 if (focusable.length === 0) return;
 
@@ -71,26 +114,11 @@ export default function Modal({
         const originalOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
 
-        // Initial focus to first focusable element inside modal
-        const timer = setTimeout(() => {
-            if (modalRef.current) {
-                const firstFocusable = modalRef.current.querySelector<HTMLElement>(
-                    'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
-                );
-                if (firstFocusable) {
-                    firstFocusable.focus();
-                } else {
-                    modalRef.current.focus();
-                }
-            }
-        }, 30);
-
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
             document.body.style.overflow = originalOverflow;
-            clearTimeout(timer);
         };
-    }, [isOpen, onClose]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 

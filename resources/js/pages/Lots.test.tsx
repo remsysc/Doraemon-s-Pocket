@@ -1,8 +1,13 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Lots from "./Lots";
 import * as inventoryApi from "../lib/inventory-api";
 import * as api from "../lib/api";
+
+function renderWithRouter(ui: React.ReactElement) {
+    return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 vi.mock("../lib/inventory-api", () => ({
     getLots: vi.fn(),
@@ -53,20 +58,20 @@ describe("Lots Component", () => {
     });
 
     it("renders lots with bin location and product info", async () => {
-        render(<Lots />);
+        renderWithRouter(<Lots />);
 
         expect(await screen.findByText("AC-A01")).toBeInTheDocument();
         expect(screen.getByText("Portable AC 1.0 HP")).toBeInTheDocument();
     });
 
     it("validates that bin_location is required in the create modal", async () => {
-        render(<Lots />);
+        renderWithRouter(<Lots />);
 
         fireEvent.click(await screen.findByRole("button", { name: "+ New Lot" }));
 
         expect(screen.getByRole("heading", { name: "New Lot" })).toBeInTheDocument();
 
-        const binInput = screen.getByLabelText("Bin Location") as HTMLInputElement;
+        const binInput = screen.getByLabelText(/bin location/i) as HTMLInputElement;
         expect(binInput.required).toBe(true);
 
         const expiryInput = screen.getByLabelText(/expiry date/i) as HTMLInputElement;
@@ -75,13 +80,13 @@ describe("Lots Component", () => {
 
     it("creates lot with optional expiry date left blank", async () => {
         vi.mocked(inventoryApi.createLot).mockResolvedValue({ data: mockLots[0] } as any);
-        render(<Lots />);
+        renderWithRouter(<Lots />);
 
         fireEvent.click(await screen.findByRole("button", { name: "+ New Lot" }));
 
-        fireEvent.change(screen.getByLabelText("Product"), { target: { value: "prod-uuid-1" } });
-        fireEvent.change(screen.getByLabelText("Received Date"), { target: { value: "2026-08-01T10:00" } });
-        fireEvent.change(screen.getByLabelText("Bin Location"), { target: { value: "AC-A02" } });
+        fireEvent.change(screen.getByLabelText(/product/i), { target: { value: "prod-uuid-1" } });
+        fireEvent.change(screen.getByLabelText(/received date/i), { target: { value: "2026-08-01T10:00" } });
+        fireEvent.change(screen.getByLabelText(/bin location/i), { target: { value: "AC-A02" } });
 
         fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
@@ -97,13 +102,13 @@ describe("Lots Component", () => {
 
     it("creates lot with optional expiry date populated", async () => {
         vi.mocked(inventoryApi.createLot).mockResolvedValue({ data: mockLots[0] } as any);
-        render(<Lots />);
+        renderWithRouter(<Lots />);
 
         fireEvent.click(await screen.findByRole("button", { name: "+ New Lot" }));
 
-        fireEvent.change(screen.getByLabelText("Product"), { target: { value: "prod-uuid-1" } });
-        fireEvent.change(screen.getByLabelText("Received Date"), { target: { value: "2026-08-01T10:00" } });
-        fireEvent.change(screen.getByLabelText("Bin Location"), { target: { value: "AC-A03" } });
+        fireEvent.change(screen.getByLabelText(/product/i), { target: { value: "prod-uuid-1" } });
+        fireEvent.change(screen.getByLabelText(/received date/i), { target: { value: "2026-08-01T10:00" } });
+        fireEvent.change(screen.getByLabelText(/bin location/i), { target: { value: "AC-A03" } });
         fireEvent.change(screen.getByLabelText(/expiry date/i), { target: { value: "2027-08-01" } });
 
         fireEvent.click(screen.getByRole("button", { name: "Create" }));

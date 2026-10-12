@@ -1,8 +1,13 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import PurchaseOrders from "./PurchaseOrders";
 import * as inventoryApi from "../lib/inventory-api";
 import * as api from "../lib/api";
+
+function renderWithRouter(ui: React.ReactElement) {
+    return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 vi.mock("../lib/inventory-api", () => ({
     getPurchaseOrders: vi.fn(),
@@ -80,7 +85,7 @@ describe("PurchaseOrders Component", () => {
     });
 
     it("renders PO table with po_number, supplier, and status", async () => {
-        render(<PurchaseOrders />);
+        renderWithRouter(<PurchaseOrders />);
 
         expect(await screen.findByText("PO-2026-0001")).toBeInTheDocument();
         expect(screen.getByText("Daikin Philippines")).toBeInTheDocument();
@@ -89,7 +94,7 @@ describe("PurchaseOrders Component", () => {
 
     it("opens create PO modal and creates new PO with item", async () => {
         vi.mocked(inventoryApi.createPurchaseOrder).mockResolvedValue({ data: mockPO } as any);
-        render(<PurchaseOrders />);
+        renderWithRouter(<PurchaseOrders />);
 
         fireEvent.click(await screen.findByRole("button", { name: "+ New PO" }));
 
