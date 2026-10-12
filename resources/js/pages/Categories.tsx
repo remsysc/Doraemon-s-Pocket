@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useMemo, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
@@ -11,10 +12,17 @@ import {
     type UpdateCategoryPayload,
     type PaginatedResponse,
 } from "../lib/inventory-api";
+import Modal from "../components/Modal";
+import ConfirmModal from "../components/ConfirmModal";
+import { useToast } from "../components/ToastContext";
 
 type ModalMode = "create" | "edit" | null;
+type SortField = "name" | "slug";
+type SortOrder = "asc" | "desc";
 
 export default function Categories() {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { toast } = useToast();
     const [user, setUser] = useState<AuthUser | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [meta, setMeta] = useState<PaginatedResponse<Category>["meta"] | null>(null);
@@ -23,7 +31,16 @@ export default function Categories() {
     const [modalMode, setModalMode] = useState<ModalMode>(null);
     const [editTarget, setEditTarget] = useState<Category | null>(null);
     const [formError, setFormError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
     const [submitting, setSubmitting] = useState(false);
+
+    // Sorting
+    const [sortField, setSortField] = useState<SortField>("name");
+    const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+
+    // Deletion
+    const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     // Form state
     const [formName, setFormName] = useState("");
@@ -37,6 +54,15 @@ export default function Categories() {
     useEffect(() => {
         fetchCategories();
     }, [page]);
+
+    // Handle Quick Add ?action=new
+    useEffect(() => {
+        if (searchParams.get("action") === "new") {
+            openCreate();
+            searchParams.delete("action");
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [searchParams]);
 
     async function fetchCategories() {
         setLoading(true);
@@ -53,11 +79,40 @@ export default function Categories() {
 
     const isAdmin = user?.role === "admin";
 
+    function handleSort(field: SortField) {
+        if (sortField === field) {
+            setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(field);
+            setSortOrder("asc");
+        }
+    }
+
+    const sortedCategories = useMemo(() => {
+        return [...categories].sort((a, b) => {
+            let valA = "";
+            let valB = "";
+
+            if (sortField === "name") {
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+            } else if (sortField === "slug") {
+                valA = a.slug.toLowerCase();
+                valB = b.slug.toLowerCase();
+            }
+
+            if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+            if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+            return 0;
+        });
+    }, [categories, sortField, sortOrder]);
+
     function openCreate() {
         setFormName("");
         setFormSlug("");
         setFormDescription("");
         setFormError("");
+        setFieldErrors({});
         setEditTarget(null);
         setModalMode("create");
     }
@@ -67,6 +122,7 @@ export default function Categories() {
         setFormSlug(category.slug);
         setFormDescription(category.description ?? "");
         setFormError("");
+        setFieldErrors({});
         setEditTarget(category);
         setModalMode("edit");
     }
@@ -79,6 +135,7 @@ export default function Categories() {
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         setFormError("");
+        setFieldErrors({});
         setSubmitting(true);
 
         try {
@@ -89,6 +146,7 @@ export default function Categories() {
                     description: formDescription || undefined,
                 };
                 await createCategory(payload);
+                toast.success(`Category "${formName}" created successfully.`);
             } else if (modalMode === "edit" && editTarget) {
                 const payload: UpdateCategoryPayload = {
                     name: formName,
@@ -96,12 +154,14 @@ export default function Categories() {
                     description: formDescription || undefined,
                 };
                 await updateCategory(editTarget.id, payload);
+                toast.success(`Category "${formName}" updated successfully.`);
             }
             closeModal();
             fetchCategories();
         } catch (err: any) {
             if (err?.response?.status === 422) {
-                const errors = err.response.data.errors;
+                const errors = err.response.data.errors || {};
+                setFieldErrors(errors);
                 const first = Object.values(errors)[0] as string[];
                 setFormError(first?.[0] ?? "Validation failed.");
             } else if (err?.response?.status === 403) {
@@ -114,19 +174,22 @@ export default function Categories() {
         }
     }
 
-    async function handleDelete(category: Category) {
-        if (!confirm(`Delete category "${category.name}"? This action uses soft-delete.`)) {
-            return;
-        }
+    async function confirmDelete() {
+        if (!deleteTarget) return;
+        setDeleting(true);
         try {
-            await deleteCategory(category.id);
+            await deleteCategory(deleteTarget.id);
+            toast.success(`Category "${deleteTarget.name}" deleted.`);
+            setDeleteTarget(null);
             fetchCategories();
         } catch (err: any) {
             if (err?.response?.status === 403) {
-                alert("You are not authorized to delete categories.");
+                toast.error("You are not authorized to delete categories.");
             } else {
-                alert("Failed to delete category.");
+                toast.error("Failed to delete category.");
             }
+        } finally {
+            setDeleting(false);
         }
     }
 
@@ -149,22 +212,43 @@ export default function Categories() {
             ) : (
                 <>
                     <section className="table-section">
-                        {categories.length === 0 ? (
-                            <p className="empty-state">No categories found.</p>
+                        {sortedCategories.length === 0 ? (
+                            <div className="empty-state">
+                                <p>No categories found.</p>
+                                {isAdmin && (
+                                    <button
+                                        type="button"
+                                        className="btn btn--primary btn--sm mt-3"
+                                        onClick={openCreate}
+                                    >
+                                        + Create First Category
+                                    </button>
+                                )}
+                            </div>
                         ) : (
                             <div className="table-wrapper">
                                 <table className="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Name</th>
-                                            <th>Slug</th>
+                                            <th className="sortable" onClick={() => handleSort("name")}>
+                                                Name
+                                                <span className={`sort-icon ${sortField === "name" ? "sort-icon--active" : ""}`}>
+                                                    {sortField === "name" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}
+                                                </span>
+                                            </th>
+                                            <th className="sortable" onClick={() => handleSort("slug")}>
+                                                Slug
+                                                <span className={`sort-icon ${sortField === "slug" ? "sort-icon--active" : ""}`}>
+                                                    {sortField === "slug" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}
+                                                </span>
+                                            </th>
                                             <th>Description</th>
                                             <th>Created</th>
                                             {isAdmin && <th>Actions</th>}
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {categories.map((cat) => (
+                                        {sortedCategories.map((cat) => (
                                             <tr key={cat.id}>
                                                 <td className="td-bold">{cat.name}</td>
                                                 <td><code>{cat.slug}</code></td>
@@ -176,12 +260,14 @@ export default function Categories() {
                                                             <button
                                                                 className="btn btn--sm btn--secondary"
                                                                 onClick={() => openEdit(cat)}
+                                                                aria-label={`Edit ${cat.name}`}
                                                             >
                                                                 Edit
                                                             </button>
                                                             <button
                                                                 className="btn btn--sm btn--danger"
-                                                                onClick={() => handleDelete(cat)}
+                                                                onClick={() => setDeleteTarget(cat)}
+                                                                aria-label={`Delete ${cat.name}`}
                                                             >
                                                                 Delete
                                                             </button>
@@ -225,68 +311,88 @@ export default function Categories() {
             )}
 
             {/* Modal */}
-            {modalMode && (
-                <div className="modal-overlay" onClick={closeModal}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal__header">
-                            <h2>{modalMode === "create" ? "New Category" : "Edit Category"}</h2>
-                            <button className="modal__close" onClick={closeModal}>×</button>
-                        </div>
+            <Modal
+                isOpen={modalMode !== null}
+                onClose={closeModal}
+                title={modalMode === "create" ? "New Category" : "Edit Category"}
+                subtitle="Organize appliances and products by functional department."
+            >
+                {formError && <div className="form-error mb-4">{formError}</div>}
 
-                        {formError && <div className="form-error">{formError}</div>}
-
-                        <form className="modal__form" onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label htmlFor="cat-name">Name</label>
-                                <input
-                                    id="cat-name"
-                                    type="text"
-                                    value={formName}
-                                    onChange={(e) => setFormName(e.target.value)}
-                                    required
-                                    placeholder="e.g. Electronics"
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="cat-slug">Slug</label>
-                                <input
-                                    id="cat-slug"
-                                    type="text"
-                                    value={formSlug}
-                                    onChange={(e) => setFormSlug(e.target.value)}
-                                    required
-                                    placeholder="e.g. electronics"
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="cat-desc">Description</label>
-                                <textarea
-                                    id="cat-desc"
-                                    value={formDescription}
-                                    onChange={(e) => setFormDescription(e.target.value)}
-                                    placeholder="Optional description"
-                                    rows={3}
-                                />
-                            </div>
-
-                            <div className="modal__actions">
-                                <button type="button" className="btn btn--secondary" onClick={closeModal}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="btn btn--primary" disabled={submitting}>
-                                    {submitting
-                                        ? "Saving…"
-                                        : modalMode === "create"
-                                          ? "Create"
-                                          : "Update"}
-                                </button>
-                            </div>
-                        </form>
+                <form className="modal__form" onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label htmlFor="cat-name">Name *</label>
+                        <input
+                            id="cat-name"
+                            type="text"
+                            value={formName}
+                            onChange={(e) => setFormName(e.target.value)}
+                            required
+                            placeholder="e.g. Electronics"
+                            aria-invalid={!!fieldErrors.name}
+                        />
+                        {fieldErrors.name && (
+                            <p className="field-error">{fieldErrors.name[0]}</p>
+                        )}
                     </div>
-                </div>
-            )}
+
+                    <div className="form-group">
+                        <label htmlFor="cat-slug">Slug *</label>
+                        <input
+                            id="cat-slug"
+                            type="text"
+                            value={formSlug}
+                            onChange={(e) => setFormSlug(e.target.value)}
+                            required
+                            placeholder="e.g. electronics"
+                            aria-invalid={!!fieldErrors.slug}
+                        />
+                        {fieldErrors.slug && (
+                            <p className="field-error">{fieldErrors.slug[0]}</p>
+                        )}
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="cat-desc">Description</label>
+                        <textarea
+                            id="cat-desc"
+                            value={formDescription}
+                            onChange={(e) => setFormDescription(e.target.value)}
+                            placeholder="Optional description"
+                            rows={3}
+                        />
+                    </div>
+
+                    <div className="modal__actions">
+                        <button type="button" className="btn btn--secondary" onClick={closeModal}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn btn--primary" disabled={submitting}>
+                            {submitting
+                                ? "Saving…"
+                                : modalMode === "create"
+                                  ? "Create"
+                                  : "Update"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteTarget !== null}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={confirmDelete}
+                title="Delete Category"
+                message={
+                    deleteTarget
+                        ? `Are you sure you want to delete category "${deleteTarget.name}"? Products assigned to this category will require reassignment.`
+                        : ""
+                }
+                confirmLabel="Delete Category"
+                variant="danger"
+                loading={deleting}
+            />
         </>
     );
 }

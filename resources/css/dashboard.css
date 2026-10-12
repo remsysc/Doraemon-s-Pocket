@@ -2959,3 +2959,206 @@ textarea:focus-visible {
 .alert-dropdown__footer a:hover {
     text-decoration: underline;
 }
+
+/* ── Toast Notifications ────────────────────────────────────────────────── */
+
+.wb-toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+    max-width: 380px;
+}
+
+.wb-toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--wb-surface-1);
+    color: var(--wb-text-primary);
+    border: 1px solid var(--wb-border-strong);
+    border-radius: var(--wb-radius-md);
+    box-shadow: var(--wb-shadow-lg);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    animation: toastSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.15s, opacity 0.15s;
+}
+
+.wb-toast:hover {
+    transform: translateY(-2px);
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.wb-toast--success {
+    border-left: 4px solid var(--wb-success);
+}
+.wb-toast--success .wb-toast__icon {
+    color: var(--wb-success);
+}
+
+.wb-toast--error {
+    border-left: 4px solid var(--wb-danger);
+}
+.wb-toast--error .wb-toast__icon {
+    color: var(--wb-danger);
+}
+
+.wb-toast--warning {
+    border-left: 4px solid var(--wb-warning);
+}
+.wb-toast--warning .wb-toast__icon {
+    color: var(--wb-warning);
+}
+
+.wb-toast--info {
+    border-left: 4px solid var(--wb-accent);
+}
+.wb-toast--info .wb-toast__icon {
+    color: var(--wb-accent);
+}
+
+.wb-toast__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.wb-toast__message {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.wb-toast__close {
+    background: none;
+    border: none;
+    color: var(--wb-text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 4px;
+    line-height: 1;
+    border-radius: var(--wb-radius-xs);
+    transition: color 0.1s;
+}
+
+.wb-toast__close:hover {
+    color: var(--wb-text-primary);
+}
+
+/* ── CopyBadge ─────────────────────────────────────────────────────────── */
+
+.copy-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+    vertical-align: middle;
+}
+
+.copy-badge:hover code {
+    border-color: var(--wb-accent);
+    color: var(--wb-accent);
+}
+
+.copy-badge__icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--wb-text-muted);
+    transition: color 0.1s;
+}
+
+.copy-badge:hover .copy-badge__icon {
+    color: var(--wb-accent);
+}
+
+.copy-badge__tooltip {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--wb-surface-2);
+    color: var(--wb-success);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: var(--wb-radius-xs);
+    border: 1px solid var(--wb-border-strong);
+    box-shadow: var(--wb-shadow-sm);
+    white-space: nowrap;
+    animation: fadeIn 0.12s ease;
+    z-index: 10;
+}
+
+/* ── ConfirmModal ──────────────────────────────────────────────────────── */
+
+.confirm-modal .confirm-modal__body {
+    padding: 6px 0 16px 0;
+}
+
+.confirm-modal__message {
+    font-size: 13.5px;
+    color: var(--wb-text-secondary);
+    line-height: 1.5;
+}
+
+/* ── Sortable Table Headers ────────────────────────────────────────────── */
+
+.data-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.1s, background-color 0.1s;
+}
+
+.data-table th.sortable:hover {
+    color: var(--wb-text-primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="light"] .data-table th.sortable:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.sort-icon {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 10px;
+    vertical-align: middle;
+    opacity: 0.6;
+}
+
+.sort-icon--active {
+    opacity: 1;
+    color: var(--wb-accent);
+}
+
+/* ── Field-level Form Error ─────────────────────────────────────────────── */
+
+.field-error {
+    font-size: 11.5px;
+    color: var(--wb-danger);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+

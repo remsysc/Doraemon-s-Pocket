@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useMemo, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { getCurrentUser, type AuthUser } from "../lib/api";
 import {
@@ -13,8 +14,14 @@ import {
     type UpdateProductPayload,
     type PaginatedResponse,
 } from "../lib/inventory-api";
+import Modal from "../components/Modal";
+import ConfirmModal from "../components/ConfirmModal";
+import CopyBadge from "../components/CopyBadge";
+import { useToast } from "../components/ToastContext";
 
 type ModalMode = "create" | "edit" | null;
+type SortField = "name" | "category" | "unit_cost" | "unit_price" | "status";
+type SortOrder = "asc" | "desc";
 
 const UNIT_OPTIONS: { value: string; label: string }[] = [
     { value: "unit", label: "Unit (unit)" },
@@ -31,6 +38,8 @@ const UNIT_OPTIONS: { value: string; label: string }[] = [
 ];
 
 export default function Products() {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { toast } = useToast();
     const [user, setUser] = useState<AuthUser | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [meta, setMeta] = useState<PaginatedResponse<Product>["meta"] | null>(null);
@@ -40,7 +49,16 @@ export default function Products() {
     const [modalMode, setModalMode] = useState<ModalMode>(null);
     const [editTarget, setEditTarget] = useState<Product | null>(null);
     const [formError, setFormError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
     const [submitting, setSubmitting] = useState(false);
+
+    // Sorting
+    const [sortField, setSortField] = useState<SortField>("name");
+    const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+
+    // Deactivation confirmation modal state
+    const [deactivateTarget, setDeactivateTarget] = useState<Product | null>(null);
+    const [deactivating, setDeactivating] = useState(false);
 
     // Form fields
     const [formName, setFormName] = useState("");
@@ -64,6 +82,16 @@ export default function Products() {
         fetchProducts();
     }, [page]);
 
+    // Handle Quick Add ?action=new
+    useEffect(() => {
+        if (searchParams.get("action") === "new") {
+            openCreate();
+            // Clear parameter from URL so reload doesn't keep reopening
+            searchParams.delete("action");
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [searchParams, categories]);
+
     async function fetchProducts() {
         setLoading(true);
         try {
@@ -79,6 +107,43 @@ export default function Products() {
 
     const isAdmin = user?.role === "admin";
 
+    function handleSort(field: SortField) {
+        if (sortField === field) {
+            setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(field);
+            setSortOrder("asc");
+        }
+    }
+
+    const sortedProducts = useMemo(() => {
+        return [...products].sort((a, b) => {
+            let valA: string | number = "";
+            let valB: string | number = "";
+
+            if (sortField === "name") {
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+            } else if (sortField === "category") {
+                valA = (a.category?.name ?? "").toLowerCase();
+                valB = (b.category?.name ?? "").toLowerCase();
+            } else if (sortField === "unit_cost") {
+                valA = a.unit_cost ?? 0;
+                valB = b.unit_cost ?? 0;
+            } else if (sortField === "unit_price") {
+                valA = a.unit_price ?? 0;
+                valB = b.unit_price ?? 0;
+            } else if (sortField === "status") {
+                valA = a.status;
+                valB = b.status;
+            }
+
+            if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+            if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+            return 0;
+        });
+    }, [products, sortField, sortOrder]);
+
     function openCreate() {
         setFormName("");
         setFormDescription("");
@@ -91,6 +156,7 @@ export default function Products() {
         setFormShelfLife("");
         setFormIsActive(true);
         setFormError("");
+        setFieldErrors({});
         setEditTarget(null);
         setModalMode("create");
     }
@@ -107,6 +173,7 @@ export default function Products() {
         setFormShelfLife(product.metadata?.shelf_life_days?.toString() ?? "");
         setFormIsActive(product.status === "active" || product.is_active !== false);
         setFormError("");
+        setFieldErrors({});
         setEditTarget(product);
         setModalMode("edit");
     }
@@ -119,6 +186,7 @@ export default function Products() {
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         setFormError("");
+        setFieldErrors({});
         setSubmitting(true);
 
         try {
@@ -136,6 +204,7 @@ export default function Products() {
                     is_active: formIsActive,
                 };
                 await createProduct(payload);
+                toast.success(`Product "${formName}" created successfully.`);
             } else if (modalMode === "edit" && editTarget) {
                 const payload: UpdateProductPayload = {
                     name: formName,
@@ -150,12 +219,14 @@ export default function Products() {
                     is_active: formIsActive,
                 };
                 await updateProduct(editTarget.id, payload);
+                toast.success(`Product "${formName}" updated successfully.`);
             }
             closeModal();
             fetchProducts();
         } catch (err: any) {
             if (err?.response?.status === 422) {
-                const errors = err.response.data.errors;
+                const errors = err.response.data.errors || {};
+                setFieldErrors(errors);
                 const first = Object.values(errors)[0] as string[];
                 setFormError(first?.[0] ?? "Validation failed.");
             } else if (err?.response?.status === 403) {
@@ -168,19 +239,24 @@ export default function Products() {
         }
     }
 
-    async function handleDeactivate(product: Product) {
-        if (!confirm(`Deactivate product "${product.name}"?`)) return;
+    async function confirmDeactivate() {
+        if (!deactivateTarget) return;
+        setDeactivating(true);
         try {
-            await deleteProduct(product.id);
+            await deleteProduct(deactivateTarget.id);
+            toast.success(`Product "${deactivateTarget.name}" deactivated.`);
+            setDeactivateTarget(null);
             fetchProducts();
         } catch (err: any) {
             if (err?.response?.status === 403) {
-                alert("You are not authorized to deactivate products.");
+                toast.error("You are not authorized to deactivate products.");
             } else if (err?.response?.status === 409 || err?.response?.status === 422) {
-                alert(err.response.data.message ?? "Cannot deactivate: product has related lots.");
+                toast.error(err.response.data.message ?? "Cannot deactivate: product has related lots.");
             } else {
-                alert("Failed to deactivate product.");
+                toast.error("Failed to deactivate product.");
             }
+        } finally {
+            setDeactivating(false);
         }
     }
 
@@ -203,24 +279,55 @@ export default function Products() {
             ) : (
                 <>
                     <section className="table-section">
-                        {products.length === 0 ? (
-                            <p className="empty-state">No products found.</p>
+                        {sortedProducts.length === 0 ? (
+                            <div className="empty-state">
+                                <p>No products found.</p>
+                                {isAdmin && (
+                                    <button
+                                        type="button"
+                                        className="btn btn--primary btn--sm mt-3"
+                                        onClick={openCreate}
+                                    >
+                                        + Create First Product
+                                    </button>
+                                )}
+                            </div>
                         ) : (
                             <div className="table-wrapper">
                                 <table className="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Name</th>
-                                            <th>Category</th>
+                                            <th className="sortable" onClick={() => handleSort("name")}>
+                                                Name
+                                                <span className={`sort-icon ${sortField === "name" ? "sort-icon--active" : ""}`}>
+                                                    {sortField === "name" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}
+                                                </span>
+                                            </th>
+                                            <th className="sortable" onClick={() => handleSort("category")}>
+                                                Category
+                                                <span className={`sort-icon ${sortField === "category" ? "sort-icon--active" : ""}`}>
+                                                    {sortField === "category" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}
+                                                </span>
+                                            </th>
                                             <th>Unit</th>
-                                            <th>Cost / Price</th>
+                                            <th className="sortable" onClick={() => handleSort("unit_cost")}>
+                                                Cost / Price
+                                                <span className={`sort-icon ${sortField === "unit_cost" || sortField === "unit_price" ? "sort-icon--active" : ""}`}>
+                                                    {sortField === "unit_cost" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}
+                                                </span>
+                                            </th>
                                             <th>Barcode</th>
-                                            <th>Status</th>
+                                            <th className="sortable" onClick={() => handleSort("status")}>
+                                                Status
+                                                <span className={`sort-icon ${sortField === "status" ? "sort-icon--active" : ""}`}>
+                                                    {sortField === "status" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}
+                                                </span>
+                                            </th>
                                             {isAdmin && <th>Actions</th>}
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {products.map((prod) => (
+                                        {sortedProducts.map((prod) => (
                                             <tr key={prod.id}>
                                                 <td className="td-bold">{prod.name}</td>
                                                 <td>{prod.category?.name ?? "—"}</td>
@@ -232,7 +339,13 @@ export default function Products() {
                                                         </span>
                                                     ) : "—"}
                                                 </td>
-                                                <td><code>{prod.barcode ?? "—"}</code></td>
+                                                <td>
+                                                    {prod.barcode ? (
+                                                        <CopyBadge value={prod.barcode} label={prod.barcode} />
+                                                    ) : (
+                                                        <span className="text-muted">—</span>
+                                                    )}
+                                                </td>
                                                 <td>
                                                     <span className={`badge badge--${prod.status}`}>
                                                         {prod.status}
@@ -244,13 +357,15 @@ export default function Products() {
                                                             <button
                                                                 className="btn btn--sm btn--secondary"
                                                                 onClick={() => openEdit(prod)}
+                                                                aria-label={`Edit ${prod.name}`}
                                                             >
                                                                 Edit
                                                             </button>
                                                             {prod.status === "active" && (
                                                                 <button
                                                                     className="btn btn--sm btn--danger"
-                                                                    onClick={() => handleDeactivate(prod)}
+                                                                    onClick={() => setDeactivateTarget(prod)}
+                                                                    aria-label={`Deactivate ${prod.name}`}
                                                                 >
                                                                     Deactivate
                                                                 </button>
@@ -295,172 +410,202 @@ export default function Products() {
             )}
 
             {/* Modal */}
-            {modalMode && (
-                <div className="modal-overlay" onClick={closeModal}>
-                    <div className="modal modal--wide" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal__header">
-                            <h2>{modalMode === "create" ? "New Product" : "Edit Product"}</h2>
-                            <button className="modal__close" onClick={closeModal}>×</button>
+            <Modal
+                isOpen={modalMode !== null}
+                onClose={closeModal}
+                title={modalMode === "create" ? "New Product" : "Edit Product"}
+                subtitle="Specify product attributes, pricing, and category classification."
+                size="wide"
+            >
+                {formError && <div className="form-error mb-4">{formError}</div>}
+
+                <form className="modal__form" onSubmit={handleSubmit}>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label htmlFor="prod-name">Name *</label>
+                            <input
+                                id="prod-name"
+                                type="text"
+                                value={formName}
+                                onChange={(e) => setFormName(e.target.value)}
+                                required
+                                placeholder="Product name"
+                                aria-invalid={!!fieldErrors.name}
+                            />
+                            {fieldErrors.name && (
+                                <p className="field-error">{fieldErrors.name[0]}</p>
+                            )}
                         </div>
 
-                        {formError && <div className="form-error">{formError}</div>}
-
-                        <form className="modal__form" onSubmit={handleSubmit}>
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label htmlFor="prod-name">Name</label>
-                                    <input
-                                        id="prod-name"
-                                        type="text"
-                                        value={formName}
-                                        onChange={(e) => setFormName(e.target.value)}
-                                        required
-                                        placeholder="Product name"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="prod-category">Category</label>
-                                    <select
-                                        id="prod-category"
-                                        value={formCategoryId}
-                                        onChange={(e) => setFormCategoryId(e.target.value)}
-                                        required
-                                    >
-                                        <option value="">Select category</option>
-                                        {categories.map((cat) => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label htmlFor="prod-unit">Unit of Measure</label>
-                                    <select
-                                        id="prod-unit"
-                                        value={formUnit}
-                                        onChange={(e) => setFormUnit(e.target.value)}
-                                        required
-                                    >
-                                        {UNIT_OPTIONS.map((opt) => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                        {formUnit && !UNIT_OPTIONS.some((opt) => opt.value === formUnit) && (
-                                            <option value={formUnit}>{formUnit}</option>
-                                        )}
-                                    </select>
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="prod-barcode">Barcode</label>
-                                    <input
-                                        id="prod-barcode"
-                                        type="text"
-                                        value={formBarcode}
-                                        onChange={(e) => setFormBarcode(e.target.value)}
-                                        placeholder="Optional barcode"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label htmlFor="prod-unit-cost">Unit Cost (₱)</label>
-                                    <input
-                                        id="prod-unit-cost"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={formUnitCost}
-                                        onChange={(e) => setFormUnitCost(e.target.value)}
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="prod-unit-price">Unit Price (₱)</label>
-                                    <input
-                                        id="prod-unit-price"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={formUnitPrice}
-                                        onChange={(e) => setFormUnitPrice(e.target.value)}
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="prod-desc">Description</label>
-                                <textarea
-                                    id="prod-desc"
-                                    value={formDescription}
-                                    onChange={(e) => setFormDescription(e.target.value)}
-                                    placeholder="Optional description"
-                                    rows={2}
-                                />
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label htmlFor="prod-shelf">Shelf Life (days)</label>
-                                    <input
-                                        id="prod-shelf"
-                                        type="number"
-                                        min="0"
-                                        value={formShelfLife}
-                                        onChange={(e) => setFormShelfLife(e.target.value)}
-                                        placeholder={formIsSeasonal ? "Required for seasonal" : "Optional"}
-                                    />
-                                </div>
-
-                                <div className="form-group form-group--checkbox">
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={formIsSeasonal}
-                                            onChange={(e) => setFormIsSeasonal(e.target.checked)}
-                                        />
-                                        Seasonal product
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="form-row">
-                                <div className="form-group form-group--checkbox">
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            checked={formIsActive}
-                                            onChange={(e) => setFormIsActive(e.target.checked)}
-                                        />
-                                        Active
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="modal__actions">
-                                <button type="button" className="btn btn--secondary" onClick={closeModal}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="btn btn--primary" disabled={submitting}>
-                                    {submitting
-                                        ? "Saving…"
-                                        : modalMode === "create"
-                                          ? "Create"
-                                          : "Update"}
-                                </button>
-                            </div>
-                        </form>
+                        <div className="form-group">
+                            <label htmlFor="prod-category">Category *</label>
+                            <select
+                                id="prod-category"
+                                value={formCategoryId}
+                                onChange={(e) => setFormCategoryId(e.target.value)}
+                                required
+                                aria-invalid={!!fieldErrors.category_id}
+                            >
+                                <option value="">Select category</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {fieldErrors.category_id && (
+                                <p className="field-error">{fieldErrors.category_id[0]}</p>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label htmlFor="prod-unit">Unit of Measure *</label>
+                            <select
+                                id="prod-unit"
+                                value={formUnit}
+                                onChange={(e) => setFormUnit(e.target.value)}
+                                required
+                            >
+                                {UNIT_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                                {formUnit && !UNIT_OPTIONS.some((opt) => opt.value === formUnit) && (
+                                    <option value={formUnit}>{formUnit}</option>
+                                )}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="prod-barcode">Barcode</label>
+                            <input
+                                id="prod-barcode"
+                                type="text"
+                                value={formBarcode}
+                                onChange={(e) => setFormBarcode(e.target.value)}
+                                placeholder="Optional barcode"
+                            />
+                            {fieldErrors.barcode && (
+                                <p className="field-error">{fieldErrors.barcode[0]}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label htmlFor="prod-unit-cost">Unit Cost (₱)</label>
+                            <input
+                                id="prod-unit-cost"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={formUnitCost}
+                                onChange={(e) => setFormUnitCost(e.target.value)}
+                                placeholder="0.00"
+                            />
+                            {fieldErrors.unit_cost && (
+                                <p className="field-error">{fieldErrors.unit_cost[0]}</p>
+                            )}
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="prod-unit-price">Unit Price (₱)</label>
+                            <input
+                                id="prod-unit-price"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={formUnitPrice}
+                                onChange={(e) => setFormUnitPrice(e.target.value)}
+                                placeholder="0.00"
+                            />
+                            {fieldErrors.unit_price && (
+                                <p className="field-error">{fieldErrors.unit_price[0]}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="prod-desc">Description</label>
+                        <textarea
+                            id="prod-desc"
+                            value={formDescription}
+                            onChange={(e) => setFormDescription(e.target.value)}
+                            placeholder="Optional description"
+                            rows={2}
+                        />
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label htmlFor="prod-shelf">Shelf Life (days)</label>
+                            <input
+                                id="prod-shelf"
+                                type="number"
+                                min="0"
+                                value={formShelfLife}
+                                onChange={(e) => setFormShelfLife(e.target.value)}
+                                placeholder={formIsSeasonal ? "Required for seasonal" : "Optional"}
+                            />
+                        </div>
+
+                        <div className="form-group form-group--checkbox">
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    checked={formIsSeasonal}
+                                    onChange={(e) => setFormIsSeasonal(e.target.checked)}
+                                />
+                                Seasonal product
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group form-group--checkbox">
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    checked={formIsActive}
+                                    onChange={(e) => setFormIsActive(e.target.checked)}
+                                />
+                                Active
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="modal__actions">
+                        <button type="button" className="btn btn--secondary" onClick={closeModal}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn btn--primary" disabled={submitting}>
+                            {submitting
+                                ? "Saving…"
+                                : modalMode === "create"
+                                  ? "Create"
+                                  : "Update"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Deactivation Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deactivateTarget !== null}
+                onClose={() => setDeactivateTarget(null)}
+                onConfirm={confirmDeactivate}
+                title="Deactivate Product"
+                message={
+                    deactivateTarget
+                        ? `Are you sure you want to deactivate "${deactivateTarget.name}"? Inactive products cannot be selected for new customer orders or receipts.`
+                        : ""
+                }
+                confirmLabel="Deactivate"
+                variant="danger"
+                loading={deactivating}
+            />
         </>
     );
 }
