@@ -1,4 +1,5 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Products from "./Products";
@@ -219,26 +220,30 @@ describe("Products Component", () => {
     });
 
     it("allows uninterrupted typing into inputs when editing product without losing focus or resetting values", async () => {
+        const user = userEvent.setup();
         renderWithRouter(<Products />);
 
         const editButton = await screen.findByRole("button", { name: /edit/i });
-        fireEvent.click(editButton);
+        await user.click(editButton);
 
         const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
-        nameInput.focus();
+        await user.click(nameInput);
         expect(document.activeElement).toBe(nameInput);
 
-        // Simulate typing keystroke by keystroke
-        fireEvent.change(nameInput, { target: { value: "P" } });
-        fireEvent.change(nameInput, { target: { value: "Po" } });
-        fireEvent.change(nameInput, { target: { value: "Por" } });
-        fireEvent.change(nameInput, { target: { value: "Portable AC Updated" } });
+        // Clear and type with real keystroke dispatch
+        await user.clear(nameInput);
+        await user.type(nameInput, "Portable AC Updated");
 
         expect(nameInput.value).toBe("Portable AC Updated");
+        expect(document.activeElement).toBe(nameInput);
 
         const descInput = screen.getByLabelText(/description/i) as HTMLTextAreaElement;
-        descInput.focus();
-        fireEvent.change(descInput, { target: { value: "New continuous description without stop" } });
+        await user.click(descInput);
+        expect(document.activeElement).toBe(descInput);
+
+        await user.clear(descInput);
+        await user.type(descInput, "New continuous description without stop");
         expect(descInput.value).toBe("New continuous description without stop");
+        expect(document.activeElement).toBe(descInput);
     });
 });
