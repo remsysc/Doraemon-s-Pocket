@@ -1,8 +1,13 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Categories from "./Categories";
 import * as inventoryApi from "../lib/inventory-api";
 import * as api from "../lib/api";
+
+function renderWithRouter(ui: React.ReactElement) {
+    return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 vi.mock("../lib/inventory-api", () => ({
     getCategories: vi.fn(),
@@ -37,7 +42,7 @@ describe("Categories Component", () => {
     });
 
     it("renders categories table", async () => {
-        render(<Categories />);
+        renderWithRouter(<Categories />);
 
         expect(await screen.findByText("Kitchen Appliances")).toBeInTheDocument();
         expect(screen.getByText("kitchen-appliances")).toBeInTheDocument();
@@ -46,14 +51,14 @@ describe("Categories Component", () => {
 
     it("creates a category with optional description left empty", async () => {
         vi.mocked(inventoryApi.createCategory).mockResolvedValue({ data: mockCategories[0] } as any);
-        render(<Categories />);
+        renderWithRouter(<Categories />);
 
         fireEvent.click(await screen.findByRole("button", { name: "+ New Category" }));
 
         expect(screen.getByRole("heading", { name: "New Category" })).toBeInTheDocument();
 
-        fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Cooling & Fans" } });
-        fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "cooling-fans" } });
+        fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "Cooling & Fans" } });
+        fireEvent.change(screen.getByLabelText(/slug/i), { target: { value: "cooling-fans" } });
         // Description left blank
 
         fireEvent.click(screen.getByRole("button", { name: "Create" }));
@@ -69,13 +74,13 @@ describe("Categories Component", () => {
 
     it("creates a category with all fields populated", async () => {
         vi.mocked(inventoryApi.createCategory).mockResolvedValue({ data: mockCategories[0] } as any);
-        render(<Categories />);
+        renderWithRouter(<Categories />);
 
         fireEvent.click(await screen.findByRole("button", { name: "+ New Category" }));
 
-        fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Thermostats" } });
-        fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "thermostats" } });
-        fireEvent.change(screen.getByLabelText("Description"), { target: { value: "Temperature controls" } });
+        fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "Thermostats" } });
+        fireEvent.change(screen.getByLabelText(/slug/i), { target: { value: "thermostats" } });
+        fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "Temperature controls" } });
 
         fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
