@@ -65,6 +65,20 @@ export default function Lots() {
     }, [page]);
 
     // Handle Quick Add ?action=new
+    const highlightLotId = searchParams.get("highlight");
+
+    useEffect(() => {
+        if (!loading && highlightLotId) {
+            const timer = setTimeout(() => {
+                const el = document.getElementById(`lot-row-${highlightLotId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }, 120);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, highlightLotId]);
+
     useEffect(() => {
         if (searchParams.get("action") === "new") {
             openCreate();
@@ -330,14 +344,25 @@ export default function Lots() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {sortedLots.map((lot) => (
-                                            <tr key={lot.lot_id}>
-                                                <td>
-                                                    <CopyBadge value={lot.lot_id} label={lot.lot_id.slice(0, 8) + "…"} />
-                                                </td>
-                                                <td className="td-bold">
-                                                    {lot.product?.name ?? lot.sku_id}
-                                                </td>
+                                        {sortedLots.map((lot) => {
+                                            const isHighlighted = lot.lot_id === highlightLotId;
+                                            return (
+                                                <tr
+                                                    key={lot.lot_id}
+                                                    id={`lot-row-${lot.lot_id}`}
+                                                    className={isHighlighted ? "table-row--highlighted" : ""}
+                                                >
+                                                    <td>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <CopyBadge value={lot.lot_id} label={lot.lot_id.slice(0, 8) + "…"} />
+                                                            {isHighlighted && (
+                                                                <span className="badge badge--flagged text-xs">Targeted</span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="td-bold">
+                                                        {lot.product?.name ?? lot.sku_id}
+                                                    </td>
                                                 <td><code>{lot.bin_location ?? "—"}</code></td>
                                                 <td>
                                                     {lot.received_date
@@ -370,8 +395,9 @@ export default function Lots() {
                                                     </td>
                                                 )}
                                             </tr>
-                                        ))}
-                                    </tbody>
+                                        );
+                                    })}
+                                </tbody>
                                 </table>
                             </div>
                         )}
@@ -410,7 +436,11 @@ export default function Lots() {
                 isOpen={modalMode !== null}
                 onClose={closeModal}
                 title={modalMode === "create" ? "New Lot" : "Edit Lot"}
-                subtitle="Record physical stock lot batch and assigned warehouse bin."
+                subtitle={
+                    modalMode === "create"
+                        ? "Record physical stock lot batch and assigned warehouse bin."
+                        : "Update batch details, expiry date, or warehouse bin location."
+                }
             >
                 {formError && <div className="form-error mb-4">{formError}</div>}
 

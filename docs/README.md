@@ -42,4 +42,5 @@ The individual `sprints/sprint-1.md` through `sprints/sprint-6.md` files are sup
 | [design/data-management.md](design/data-management.md)           | Initial Data Management UI scope (historical; see expanded spec for current capability notes) |
 | [design/data-management-spec.md](design/data-management-spec.md) | Expanded Data Management design and implementation boundary notes                             |
 | [demo/DEMO_FLOW.md](demo/DEMO_FLOW.md)                           | Role-based demo flow and verified seed-data limitations                                       |
+| [demo/LIVE_DEMO_PRESENTATION_GUIDE.md](demo/LIVE_DEMO_PRESENTATION_GUIDE.md) | Comprehensive PRD-problem-based live demo guide & presentation playbook                       |
 | [tech-debt.md](tech-debt.md)                                     | Production hardening and deployment target guidance                                           |

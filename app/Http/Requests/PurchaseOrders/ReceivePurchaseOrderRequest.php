@@ -21,6 +21,8 @@ class ReceivePurchaseOrderRequest extends FormRequest
             'items.*.qty_received' => ['required', 'integer', 'min:1'],
             // Optional: attach receipt to an existing lot, or a new lot will be created by the caller
             'items.*.lot_id' => ['nullable', 'uuid', 'exists:lots,lot_id'],
+            'items.*.bin_location' => ['nullable', 'string', 'max:50'],
+            'items.*.expiry_date' => ['nullable', 'date'],
         ];
     }
 }

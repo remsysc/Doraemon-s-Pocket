@@ -80,7 +80,9 @@ export default function PurchaseOrders() {
     // Receive modal
     const [receiveOpen, setReceiveOpen] = useState(false);
     const [receivePo, setReceivePo] = useState<PurchaseOrder | null>(null);
-    const [receiveItems, setReceiveItems] = useState<Array<{ sku_id: string; qty_received: number }>>([]);
+    const [receiveItems, setReceiveItems] = useState<
+        Array<{ sku_id: string; qty_received: number; bin_location?: string }>
+    >([]);
 
     const canWrite = user?.role === "admin" || user?.role === "purchasing_manager";
     const canReceive = user?.role === "admin" || user?.role === "warehouse_staff";
@@ -186,8 +188,9 @@ export default function PurchaseOrders() {
         const items = (po.items ?? []).map((item) => ({
             sku_id: item.sku_id,
             qty_received: Math.max(0, item.quantity_ordered - item.quantity_received),
+            bin_location: "",
         }));
-        setReceiveItems(items.length > 0 ? items : [{ sku_id: "", qty_received: 1 }]);
+        setReceiveItems(items.length > 0 ? items : [{ sku_id: "", qty_received: 1, bin_location: "" }]);
         setReceiveOpen(true);
     };
 
@@ -198,7 +201,13 @@ export default function PurchaseOrders() {
         setError(null);
         try {
             await receivePurchaseOrder(receivePo.id, {
-                items: receiveItems.filter((i) => i.sku_id && i.qty_received > 0),
+                items: receiveItems
+                    .filter((i) => i.sku_id && i.qty_received > 0)
+                    .map((i) => ({
+                        sku_id: i.sku_id,
+                        qty_received: i.qty_received,
+                        bin_location: i.bin_location?.trim() || undefined,
+                    })),
             });
             setReceiveOpen(false);
             toast.success(`Receipt recorded for PO ${receivePo.po_number}.`);
@@ -671,25 +680,27 @@ export default function PurchaseOrders() {
                 onClose={() => setReceiveOpen(false)}
                 title={receivePo ? `Receive Order: ${receivePo.po_number}` : "Receive Order"}
                 subtitle="Enter physical delivered quantities into warehouse stock."
+                size="wide"
             >
                 <form onSubmit={handleReceive} className="modal__form">
                     <p className="text-xs text-secondary leading-relaxed">
-                        Enter the physical quantities delivered. Unreceived balances remain open.
+                        Enter physical delivered quantities and target bin locations. Lots without a bin will be placed in the <code>RECEIVING</code> staging area.
                     </p>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         {receiveItems.map((item, idx) => {
                             const prod = products.find((p) => p.id === item.sku_id);
                             return (
-                                <div key={idx} className="flex items-center gap-2">
-                                    <div className="flex-1">
+                                <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 rounded bg-surface-2 border border-wb-border">
+                                    <div className="form-group flex-1" style={{ marginBottom: 0 }}>
+                                        <label className="text-xs text-muted mb-1 block">Product</label>
                                         <input
                                             readOnly
                                             disabled
                                             value={prod?.name ?? item.sku_id}
-                                            style={{ opacity: 0.85 }}
                                         />
                                     </div>
-                                    <div style={{ width: 110 }}>
+                                    <div className="form-group shrink-0" style={{ width: 130, marginBottom: 0 }}>
+                                        <label className="text-xs text-muted mb-1 block">Delivered Qty</label>
                                         <input
                                             type="number"
                                             min={0}
@@ -699,6 +710,22 @@ export default function PurchaseOrders() {
                                                 items[idx] = {
                                                     ...items[idx],
                                                     qty_received: parseInt(e.target.value, 10) || 0,
+                                                };
+                                                setReceiveItems(items);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="form-group shrink-0" style={{ width: 170, marginBottom: 0 }}>
+                                        <label className="text-xs text-muted mb-1 block">Target Bin</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. AC-A01 (or staging)"
+                                            value={item.bin_location ?? ""}
+                                            onChange={(e) => {
+                                                const items = [...receiveItems];
+                                                items[idx] = {
+                                                    ...items[idx],
+                                                    bin_location: e.target.value,
                                                 };
                                                 setReceiveItems(items);
                                             }}

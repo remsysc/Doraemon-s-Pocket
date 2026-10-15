@@ -672,6 +672,8 @@ export interface ReceivePurchaseOrderPayload {
         sku_id: string;
         qty_received: number;
         lot_id?: string;
+        bin_location?: string;
+        expiry_date?: string | null;
     }>;
 }
 
