@@ -122,7 +122,14 @@ export default function Modal({
 
     if (!isOpen) return null;
 
-    const sizeClass = size === "wide" || size === "lg" ? "modal--wide" : size === "sm" ? "modal--sm" : "";
+    const sizeClass =
+        size === "lg"
+            ? "modal--lg"
+            : size === "wide"
+            ? "modal--wide"
+            : size === "sm"
+            ? "modal--sm"
+            : "";
 
     return (
         <div

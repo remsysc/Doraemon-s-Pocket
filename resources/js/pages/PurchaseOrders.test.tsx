@@ -122,4 +122,44 @@ describe("PurchaseOrders Component", () => {
             }));
         });
     });
+
+    it("opens receive modal with intake table and records receipt with target bin", async () => {
+        vi.mocked(api.getCurrentUser).mockResolvedValue({
+            data: { id: "2", name: "Warehouse Staff", email: "ws@example.com", role: "warehouse_staff" },
+        } as any);
+        vi.mocked(inventoryApi.receivePurchaseOrder).mockResolvedValue({
+            data: { ...mockPO, status: "received" },
+        } as any);
+
+        renderWithRouter(<PurchaseOrders />);
+
+        const receiveBtn = await screen.findByRole("button", { name: "Receive" });
+        fireEvent.click(receiveBtn);
+
+        expect(screen.getByRole("heading", { name: `Receive Order: ${mockPO.po_number}` })).toBeInTheDocument();
+        expect(screen.getByText("Portable AC 1.0 HP")).toBeInTheDocument();
+        expect(screen.getByText(/Ordered:/)).toBeInTheDocument();
+
+        const binInput = screen.getByLabelText("Target bin for Portable AC 1.0 HP");
+        fireEvent.change(binInput, { target: { value: "AC-A01" } });
+
+        const confirmBtn = screen.getByRole("button", { name: "Confirm Receipt" });
+        fireEvent.click(confirmBtn);
+
+        await waitFor(() => {
+            expect(inventoryApi.receivePurchaseOrder).toHaveBeenCalledWith(
+                mockPO.id,
+                {
+                    items: [
+                        {
+                            sku_id: "prod-1",
+                            qty_received: 10,
+                            bin_location: "AC-A01",
+                        },
+                    ],
+                }
+            );
+        });
+    });
 });
+

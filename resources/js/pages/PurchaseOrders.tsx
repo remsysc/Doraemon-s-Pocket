@@ -680,60 +680,117 @@ export default function PurchaseOrders() {
                 onClose={() => setReceiveOpen(false)}
                 title={receivePo ? `Receive Order: ${receivePo.po_number}` : "Receive Order"}
                 subtitle="Enter physical delivered quantities into warehouse stock."
-                size="wide"
+                size="lg"
             >
                 <form onSubmit={handleReceive} className="modal__form">
-                    <p className="text-xs text-secondary leading-relaxed">
-                        Enter physical delivered quantities and target bin locations. Lots without a bin will be placed in the <code>RECEIVING</code> staging area.
-                    </p>
-                    <div className="space-y-3">
-                        {receiveItems.map((item, idx) => {
-                            const prod = products.find((p) => p.id === item.sku_id);
-                            return (
-                                <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 rounded bg-surface-2 border border-wb-border">
-                                    <div className="form-group flex-1" style={{ marginBottom: 0 }}>
-                                        <label className="text-xs text-muted mb-1 block">Product</label>
-                                        <input
-                                            readOnly
-                                            disabled
-                                            value={prod?.name ?? item.sku_id}
-                                        />
-                                    </div>
-                                    <div className="form-group shrink-0" style={{ width: 130, marginBottom: 0 }}>
-                                        <label className="text-xs text-muted mb-1 block">Delivered Qty</label>
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            value={item.qty_received}
-                                            onChange={(e) => {
-                                                const items = [...receiveItems];
-                                                items[idx] = {
-                                                    ...items[idx],
-                                                    qty_received: parseInt(e.target.value, 10) || 0,
-                                                };
-                                                setReceiveItems(items);
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="form-group shrink-0" style={{ width: 170, marginBottom: 0 }}>
-                                        <label className="text-xs text-muted mb-1 block">Target Bin</label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. AC-A01 (or staging)"
-                                            value={item.bin_location ?? ""}
-                                            onChange={(e) => {
-                                                const items = [...receiveItems];
-                                                items[idx] = {
-                                                    ...items[idx],
-                                                    bin_location: e.target.value,
-                                                };
-                                                setReceiveItems(items);
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div className="alert-banner alert-banner--info" style={{ marginBottom: 0, padding: "10px 14px", fontSize: "12.5px" }}>
+                        <div>
+                            <span>Enter physical delivered quantities and target bin locations. Lots without a designated bin will be staged in the </span>
+                            <code>RECEIVING</code>
+                            <span> area for putaway.</span>
+                        </div>
+                    </div>
+
+                    <div style={{ border: "1px solid var(--wb-border)", borderRadius: "var(--wb-radius-sm)", overflow: "hidden" }}>
+                        <table className="data-table" style={{ width: "100%", margin: 0 }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ width: "46%" }}>Product</th>
+                                    <th style={{ width: "24%" }}>Delivered Qty</th>
+                                    <th style={{ width: "30%" }}>Target Bin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {receiveItems.map((item, idx) => {
+                                    const prod = products.find((p) => p.id === item.sku_id);
+                                    const poItem = receivePo?.items?.find((i) => i.sku_id === item.sku_id);
+                                    const qtyOrdered = poItem?.quantity_ordered ?? 0;
+                                    const qtyReceived = poItem?.quantity_received ?? 0;
+                                    const remaining = Math.max(0, qtyOrdered - qtyReceived);
+
+                                    return (
+                                        <tr key={idx}>
+                                            <td style={{ verticalAlign: "top", padding: "12px 14px" }}>
+                                                <div style={{ fontWeight: 600, color: "var(--wb-text-primary)", fontSize: "13.5px", lineHeight: "1.3" }}>
+                                                    {prod?.name ?? item.sku_id}
+                                                </div>
+                                                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", marginTop: "4px", fontSize: "12px", color: "var(--wb-text-muted)" }}>
+                                                    {prod?.barcode && (
+                                                        <code style={{ fontSize: "11px", padding: "1px 5px", background: "var(--wb-surface-2)", borderRadius: "3px" }}>
+                                                            {prod.barcode}
+                                                        </code>
+                                                    )}
+                                                    <span>
+                                                        Ordered: <strong style={{ color: "var(--wb-text-secondary)" }}>{qtyOrdered}</strong>
+                                                        {qtyReceived > 0 && ` (${qtyReceived} received)`}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td style={{ verticalAlign: "top", padding: "12px 14px" }}>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        value={item.qty_received}
+                                                        aria-label={`Delivered quantity for ${prod?.name ?? item.sku_id}`}
+                                                        style={{
+                                                            width: "100%",
+                                                            padding: "7px 10px",
+                                                            fontSize: "13.5px",
+                                                            borderRadius: "var(--wb-radius-xs)",
+                                                            border: "1px solid var(--wb-border-strong)",
+                                                            background: "var(--wb-surface-1)",
+                                                            color: "var(--wb-text-primary)",
+                                                        }}
+                                                        onChange={(e) => {
+                                                            const items = [...receiveItems];
+                                                            items[idx] = {
+                                                                ...items[idx],
+                                                                qty_received: parseInt(e.target.value, 10) || 0,
+                                                            };
+                                                            setReceiveItems(items);
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: "11px", color: "var(--wb-text-muted)" }}>
+                                                        Pending: {remaining} {prod?.unit_of_measure ?? "units"}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td style={{ verticalAlign: "top", padding: "12px 14px" }}>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="RECEIVING"
+                                                        value={item.bin_location ?? ""}
+                                                        aria-label={`Target bin for ${prod?.name ?? item.sku_id}`}
+                                                        style={{
+                                                            width: "100%",
+                                                            padding: "7px 10px",
+                                                            fontSize: "13.5px",
+                                                            borderRadius: "var(--wb-radius-xs)",
+                                                            border: "1px solid var(--wb-border-strong)",
+                                                            background: "var(--wb-surface-1)",
+                                                            color: "var(--wb-text-primary)",
+                                                        }}
+                                                        onChange={(e) => {
+                                                            const items = [...receiveItems];
+                                                            items[idx] = {
+                                                                ...items[idx],
+                                                                bin_location: e.target.value,
+                                                            };
+                                                            setReceiveItems(items);
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: "11px", color: "var(--wb-text-muted)" }}>
+                                                        Leave blank for staging bin
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
 
                     <div className="modal__actions">
