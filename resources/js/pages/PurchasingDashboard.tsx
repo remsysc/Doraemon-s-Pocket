@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import {
     getReorderAlerts,
     getExpiryAlerts,
@@ -17,6 +18,10 @@ const PurchasingAnalyticsCharts = lazy(() =>
 );
 
 export default function PurchasingDashboard() {
+    const [searchParams] = useSearchParams();
+    const highlightSku = searchParams.get("highlight");
+    const highlightLot = searchParams.get("highlight_lot");
+
     const [reorderAlerts, setReorderAlerts] = useState<ReorderAlert[]>([]);
     const [expiryAlerts, setExpiryAlerts] = useState<ExpiryAlert[]>([]);
     const [configs, setConfigs] = useState<ReorderConfig[]>([]);
@@ -53,6 +58,30 @@ export default function PurchasingDashboard() {
 
         return () => { active = false; };
     }, []);
+
+    useEffect(() => {
+        if (!loading && highlightSku) {
+            const timer = setTimeout(() => {
+                const el = document.getElementById(`reorder-row-${highlightSku}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, highlightSku]);
+
+    useEffect(() => {
+        if (!loading && highlightLot) {
+            const timer = setTimeout(() => {
+                const el = document.getElementById(`expiry-row-${highlightLot}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, highlightLot]);
 
     const classACount = classifications.filter((c) => c.abc === "A").length;
 
@@ -138,30 +167,54 @@ export default function PurchasingDashboard() {
                                             <th>ROP</th>
                                             <th>Suggested Order</th>
                                             <th>Demand</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {reorderAlerts.map((alert) => (
-                                            <tr key={alert.sku_id}>
-                                                <td className="td-bold">{alert.product?.name ?? alert.sku_id}</td>
-                                                <td className="text-red">{alert.qty_available} units</td>
-                                                <td>{alert.reorder_point} units</td>
-                                                <td>
-                                                    {alert.suggested_order_qty ? (
-                                                        <span className="text-green">{alert.suggested_order_qty} units</span>
-                                                    ) : (
-                                                        <span className="text-muted">—</span>
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    {alert.seasonal ? (
-                                                        <span className="badge badge--sale">Seasonal</span>
-                                                    ) : (
-                                                        <span className="badge badge--receipt">Steady</span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {reorderAlerts.map((alert) => {
+                                            const isHighlighted = alert.sku_id === highlightSku;
+                                            return (
+                                                <tr
+                                                    key={alert.sku_id}
+                                                    id={`reorder-row-${alert.sku_id}`}
+                                                    className={isHighlighted ? "table-row--highlighted" : ""}
+                                                >
+                                                    <td className="td-bold">
+                                                        <div className="flex items-center gap-2">
+                                                            <span>{alert.product?.name ?? alert.sku_id}</span>
+                                                            {isHighlighted && (
+                                                                <span className="badge badge--flagged text-xs">Targeted</span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="text-red">{alert.qty_available} units</td>
+                                                    <td>{alert.reorder_point} units</td>
+                                                    <td>
+                                                        {alert.suggested_order_qty ? (
+                                                            <span className="text-green">{alert.suggested_order_qty} units</span>
+                                                        ) : (
+                                                            <span className="text-muted">—</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        {alert.seasonal ? (
+                                                            <span className="badge badge--sale">Seasonal</span>
+                                                        ) : (
+                                                            <span className="badge badge--receipt">Steady</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <Link
+                                                            to={`/purchase-orders?action=new&sku_id=${encodeURIComponent(alert.sku_id)}`}
+                                                            className="btn btn--secondary btn--xs"
+                                                            title="Create Purchase Order for this item"
+                                                        >
+                                                            Create PO
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -185,21 +238,45 @@ export default function PurchasingDashboard() {
                                             <th>Expiry Date</th>
                                             <th>Days Left</th>
                                             <th>Units</th>
+                                            <th>Location</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {expiryAlerts.map((alert) => (
-                                            <tr key={alert.lot_id}>
-                                                <td className="td-bold">{alert.product?.name ?? alert.sku_id}</td>
-                                                <td>{alert.expiry_date}</td>
-                                                <td>
-                                                    <span className={`badge ${alert.days_to_expiry <= 10 ? "badge--flagged" : "badge--pending"}`}>
-                                                        {alert.days_to_expiry}d
-                                                    </span>
-                                                </td>
-                                                <td className="td-bold">{alert.qty_on_hand}</td>
-                                            </tr>
-                                        ))}
+                                        {expiryAlerts.map((alert) => {
+                                            const isHighlighted = alert.lot_id === highlightLot;
+                                            return (
+                                                <tr
+                                                    key={alert.lot_id}
+                                                    id={`expiry-row-${alert.lot_id}`}
+                                                    className={isHighlighted ? "table-row--highlighted" : ""}
+                                                >
+                                                    <td className="td-bold">
+                                                        <div className="flex items-center gap-2">
+                                                            <span>{alert.product?.name ?? alert.sku_id}</span>
+                                                            {isHighlighted && (
+                                                                <span className="badge badge--flagged text-xs">Targeted</span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td>{alert.expiry_date}</td>
+                                                    <td>
+                                                        <span className={`badge ${alert.days_to_expiry <= 10 ? "badge--flagged" : "badge--pending"}`}>
+                                                            {alert.days_to_expiry}d
+                                                        </span>
+                                                    </td>
+                                                    <td className="td-bold">{alert.qty_on_hand}</td>
+                                                    <td>
+                                                        <Link
+                                                            to={`/lots?highlight=${encodeURIComponent(alert.lot_id)}`}
+                                                            className="btn btn--secondary btn--xs"
+                                                            title="View physical bin location in Lots"
+                                                        >
+                                                            Inspect Bin →
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

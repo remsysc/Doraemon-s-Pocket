@@ -80,7 +80,9 @@ export default function PurchaseOrders() {
     // Receive modal
     const [receiveOpen, setReceiveOpen] = useState(false);
     const [receivePo, setReceivePo] = useState<PurchaseOrder | null>(null);
-    const [receiveItems, setReceiveItems] = useState<Array<{ sku_id: string; qty_received: number }>>([]);
+    const [receiveItems, setReceiveItems] = useState<
+        Array<{ sku_id: string; qty_received: number; bin_location?: string }>
+    >([]);
 
     const canWrite = user?.role === "admin" || user?.role === "purchasing_manager";
     const canReceive = user?.role === "admin" || user?.role === "warehouse_staff";
@@ -186,8 +188,9 @@ export default function PurchaseOrders() {
         const items = (po.items ?? []).map((item) => ({
             sku_id: item.sku_id,
             qty_received: Math.max(0, item.quantity_ordered - item.quantity_received),
+            bin_location: "",
         }));
-        setReceiveItems(items.length > 0 ? items : [{ sku_id: "", qty_received: 1 }]);
+        setReceiveItems(items.length > 0 ? items : [{ sku_id: "", qty_received: 1, bin_location: "" }]);
         setReceiveOpen(true);
     };
 
@@ -198,7 +201,13 @@ export default function PurchaseOrders() {
         setError(null);
         try {
             await receivePurchaseOrder(receivePo.id, {
-                items: receiveItems.filter((i) => i.sku_id && i.qty_received > 0),
+                items: receiveItems
+                    .filter((i) => i.sku_id && i.qty_received > 0)
+                    .map((i) => ({
+                        sku_id: i.sku_id,
+                        qty_received: i.qty_received,
+                        bin_location: i.bin_location?.trim() || undefined,
+                    })),
             });
             setReceiveOpen(false);
             toast.success(`Receipt recorded for PO ${receivePo.po_number}.`);
@@ -671,42 +680,117 @@ export default function PurchaseOrders() {
                 onClose={() => setReceiveOpen(false)}
                 title={receivePo ? `Receive Order: ${receivePo.po_number}` : "Receive Order"}
                 subtitle="Enter physical delivered quantities into warehouse stock."
+                size="lg"
             >
                 <form onSubmit={handleReceive} className="modal__form">
-                    <p className="text-xs text-secondary leading-relaxed">
-                        Enter the physical quantities delivered. Unreceived balances remain open.
-                    </p>
-                    <div className="space-y-2">
-                        {receiveItems.map((item, idx) => {
-                            const prod = products.find((p) => p.id === item.sku_id);
-                            return (
-                                <div key={idx} className="flex items-center gap-2">
-                                    <div className="flex-1">
-                                        <input
-                                            readOnly
-                                            disabled
-                                            value={prod?.name ?? item.sku_id}
-                                            style={{ opacity: 0.85 }}
-                                        />
-                                    </div>
-                                    <div style={{ width: 110 }}>
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            value={item.qty_received}
-                                            onChange={(e) => {
-                                                const items = [...receiveItems];
-                                                items[idx] = {
-                                                    ...items[idx],
-                                                    qty_received: parseInt(e.target.value, 10) || 0,
-                                                };
-                                                setReceiveItems(items);
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div className="alert-banner alert-banner--info" style={{ marginBottom: 0, padding: "10px 14px", fontSize: "12.5px" }}>
+                        <div>
+                            <span>Enter physical delivered quantities and target bin locations. Lots without a designated bin will be staged in the </span>
+                            <code>RECEIVING</code>
+                            <span> area for putaway.</span>
+                        </div>
+                    </div>
+
+                    <div style={{ border: "1px solid var(--wb-border)", borderRadius: "var(--wb-radius-sm)", overflow: "hidden" }}>
+                        <table className="data-table" style={{ width: "100%", margin: 0 }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ width: "46%" }}>Product</th>
+                                    <th style={{ width: "24%" }}>Delivered Qty</th>
+                                    <th style={{ width: "30%" }}>Target Bin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {receiveItems.map((item, idx) => {
+                                    const prod = products.find((p) => p.id === item.sku_id);
+                                    const poItem = receivePo?.items?.find((i) => i.sku_id === item.sku_id);
+                                    const qtyOrdered = poItem?.quantity_ordered ?? 0;
+                                    const qtyReceived = poItem?.quantity_received ?? 0;
+                                    const remaining = Math.max(0, qtyOrdered - qtyReceived);
+
+                                    return (
+                                        <tr key={idx}>
+                                            <td style={{ verticalAlign: "top", padding: "12px 14px" }}>
+                                                <div style={{ fontWeight: 600, color: "var(--wb-text-primary)", fontSize: "13.5px", lineHeight: "1.3" }}>
+                                                    {prod?.name ?? item.sku_id}
+                                                </div>
+                                                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", marginTop: "4px", fontSize: "12px", color: "var(--wb-text-muted)" }}>
+                                                    {prod?.barcode && (
+                                                        <code style={{ fontSize: "11px", padding: "1px 5px", background: "var(--wb-surface-2)", borderRadius: "3px" }}>
+                                                            {prod.barcode}
+                                                        </code>
+                                                    )}
+                                                    <span>
+                                                        Ordered: <strong style={{ color: "var(--wb-text-secondary)" }}>{qtyOrdered}</strong>
+                                                        {qtyReceived > 0 && ` (${qtyReceived} received)`}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td style={{ verticalAlign: "top", padding: "12px 14px" }}>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        value={item.qty_received}
+                                                        aria-label={`Delivered quantity for ${prod?.name ?? item.sku_id}`}
+                                                        style={{
+                                                            width: "100%",
+                                                            padding: "7px 10px",
+                                                            fontSize: "13.5px",
+                                                            borderRadius: "var(--wb-radius-xs)",
+                                                            border: "1px solid var(--wb-border-strong)",
+                                                            background: "var(--wb-surface-1)",
+                                                            color: "var(--wb-text-primary)",
+                                                        }}
+                                                        onChange={(e) => {
+                                                            const items = [...receiveItems];
+                                                            items[idx] = {
+                                                                ...items[idx],
+                                                                qty_received: parseInt(e.target.value, 10) || 0,
+                                                            };
+                                                            setReceiveItems(items);
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: "11px", color: "var(--wb-text-muted)" }}>
+                                                        Pending: {remaining} {prod?.unit_of_measure ?? "units"}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td style={{ verticalAlign: "top", padding: "12px 14px" }}>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="RECEIVING"
+                                                        value={item.bin_location ?? ""}
+                                                        aria-label={`Target bin for ${prod?.name ?? item.sku_id}`}
+                                                        style={{
+                                                            width: "100%",
+                                                            padding: "7px 10px",
+                                                            fontSize: "13.5px",
+                                                            borderRadius: "var(--wb-radius-xs)",
+                                                            border: "1px solid var(--wb-border-strong)",
+                                                            background: "var(--wb-surface-1)",
+                                                            color: "var(--wb-text-primary)",
+                                                        }}
+                                                        onChange={(e) => {
+                                                            const items = [...receiveItems];
+                                                            items[idx] = {
+                                                                ...items[idx],
+                                                                bin_location: e.target.value,
+                                                            };
+                                                            setReceiveItems(items);
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: "11px", color: "var(--wb-text-muted)" }}>
+                                                        Leave blank for staging bin
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
 
                     <div className="modal__actions">

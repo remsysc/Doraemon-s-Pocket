@@ -168,7 +168,61 @@ export default function DashboardLayout() {
     const alertBellRef = useRef<HTMLDivElement>(null);
     const [expiryAlerts, setExpiryAlerts] = useState<ExpiryAlert[]>([]);
     const [reorderAlerts, setReorderAlerts] = useState<ReorderAlert[]>([]);
+    const [readAlertKeys, setReadAlertKeys] = useState<string[]>(() => {
+        try {
+            const stored = localStorage.getItem("wb-read-alerts");
+            return stored ? (JSON.parse(stored) as string[]) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    const markAlertAsRead = useCallback((key: string) => {
+        setReadAlertKeys((prev) => {
+            if (prev.includes(key)) return prev;
+            const next = [...prev, key];
+            try {
+                localStorage.setItem("wb-read-alerts", JSON.stringify(next));
+            } catch {
+                // localStorage unavailable
+            }
+            return next;
+        });
+    }, []);
+
+    const markAllAlertsAsRead = useCallback(() => {
+        const allKeys = [
+            ...reorderAlerts.map((a) => `reorder:${a.sku_id}`),
+            ...expiryAlerts.map((a) => `expiry:${a.lot_id}`),
+        ];
+        setReadAlertKeys(allKeys);
+        try {
+            localStorage.setItem("wb-read-alerts", JSON.stringify(allKeys));
+        } catch {
+            // localStorage unavailable
+        }
+    }, [reorderAlerts, expiryAlerts]);
+
+    const unreadReorderAlerts = reorderAlerts.filter(
+        (a) => !readAlertKeys.includes(`reorder:${a.sku_id}`),
+    );
+    const unreadExpiryAlerts = expiryAlerts.filter(
+        (a) => !readAlertKeys.includes(`expiry:${a.lot_id}`),
+    );
+    const unreadAlertsCount = unreadReorderAlerts.length + unreadExpiryAlerts.length;
     const totalAlerts = expiryAlerts.length + reorderAlerts.length;
+
+    const handleReorderAlertClick = (skuId: string) => {
+        markAlertAsRead(`reorder:${skuId}`);
+        setAlertBellOpen(false);
+        navigate(`/purchasing?highlight=${encodeURIComponent(skuId)}`);
+    };
+
+    const handleExpiryAlertClick = (lotId: string) => {
+        markAlertAsRead(`expiry:${lotId}`);
+        setAlertBellOpen(false);
+        navigate(`/lots?highlight=${encodeURIComponent(lotId)}`);
+    };
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -222,6 +276,7 @@ export default function DashboardLayout() {
         } catch {
             // localStorage unavailable
         }
+        document.documentElement.setAttribute("data-theme", theme);
     }, [theme]);
 
     const toggleTheme = () => {
@@ -594,7 +649,7 @@ export default function DashboardLayout() {
                             <div className="topbar__btn-wrap">
                                 <button
                                     className="topbar__theme-toggle"
-                                    aria-label={`Alerts${totalAlerts > 0 ? ` — ${totalAlerts} active` : ""}`}
+                                    aria-label={`Alerts${unreadAlertsCount > 0 ? ` — ${unreadAlertsCount} unread` : ""}`}
                                     title="Alerts"
                                     aria-expanded={alertBellOpen}
                                     onClick={() => setAlertBellOpen(!alertBellOpen)}
@@ -604,9 +659,9 @@ export default function DashboardLayout() {
                                         <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                                     </svg>
                                 </button>
-                                {totalAlerts > 0 && (
+                                {unreadAlertsCount > 0 && (
                                     <span className="topbar__alert-badge" aria-hidden="true">
-                                        {totalAlerts > 99 ? "99+" : totalAlerts}
+                                        {unreadAlertsCount > 99 ? "99+" : unreadAlertsCount}
                                     </span>
                                 )}
                             </div>
@@ -614,9 +669,22 @@ export default function DashboardLayout() {
                             {alertBellOpen && (
                                 <div className="alert-dropdown" role="dialog" aria-label="Alerts">
                                     <div className="alert-dropdown__header">
-                                        <span className="alert-dropdown__title">Alerts</span>
-                                        {totalAlerts > 0 && (
-                                            <span className="alert-dropdown__count">{totalAlerts} active</span>
+                                        <div className="alert-dropdown__title-wrap">
+                                            <span className="alert-dropdown__title">Alerts</span>
+                                            {unreadAlertsCount > 0 ? (
+                                                <span className="alert-dropdown__count">{unreadAlertsCount} new</span>
+                                            ) : (
+                                                <span className="alert-dropdown__count alert-dropdown__count--muted">All read</span>
+                                            )}
+                                        </div>
+                                        {unreadAlertsCount > 0 && (
+                                            <button
+                                                type="button"
+                                                className="alert-dropdown__mark-read"
+                                                onClick={markAllAlertsAsRead}
+                                            >
+                                                Mark all read
+                                            </button>
                                         )}
                                     </div>
 
@@ -638,25 +706,33 @@ export default function DashboardLayout() {
                                                     <div className="alert-dropdown__group-label">
                                                         Reorder ({reorderAlerts.length})
                                                     </div>
-                                                    {reorderAlerts.slice(0, 5).map((a) => (
-                                                        <div key={a.sku_id} className="alert-item">
-                                                            <span className="alert-item__dot alert-item__dot--danger" />
-                                                            <div className="alert-item__body">
-                                                                <span className="alert-item__title">
-                                                                    {a.product?.name ?? a.sku_id}
-                                                                </span>
-                                                                <span className="alert-item__meta">
-                                                                    {a.qty_available} available · ROP {a.reorder_point}
-                                                                    {a.suggested_order_qty ? ` · Suggest ${a.suggested_order_qty} units` : ""}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
+                                                    {reorderAlerts.slice(0, 5).map((a) => {
+                                                        const isRead = readAlertKeys.includes(`reorder:${a.sku_id}`);
+                                                        return (
+                                                            <button
+                                                                key={a.sku_id}
+                                                                type="button"
+                                                                className={`alert-item ${isRead ? "alert-item--read" : "alert-item--unread"}`}
+                                                                onClick={() => handleReorderAlertClick(a.sku_id)}
+                                                                title="Click to view and configure reorder in Purchasing Hub"
+                                                            >
+                                                                <span className={`alert-item__dot ${isRead ? "alert-item__dot--muted" : "alert-item__dot--danger"}`} />
+                                                                <div className="alert-item__body">
+                                                                    <span className="alert-item__title">
+                                                                        {a.product?.name ?? a.sku_id}
+                                                                    </span>
+                                                                    <span className="alert-item__meta">
+                                                                        {a.qty_available} available · ROP {a.reorder_point}
+                                                                        {a.suggested_order_qty ? ` · Suggest ${a.suggested_order_qty} units` : ""}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="alert-item__action-hint" aria-hidden="true">Resolve →</span>
+                                                            </button>
+                                                        );
+                                                    })}
                                                     {reorderAlerts.length > 5 && (
-                                                        <div className="alert-item">
-                                                            <span className="alert-item__meta">
-                                                                +{reorderAlerts.length - 5} more reorder alerts
-                                                            </span>
+                                                        <div className="alert-dropdown__overflow-note">
+                                                            +{reorderAlerts.length - 5} more reorder alerts
                                                         </div>
                                                     )}
                                                 </>
@@ -666,24 +742,32 @@ export default function DashboardLayout() {
                                                     <div className="alert-dropdown__group-label">
                                                         Expiring soon ({expiryAlerts.length})
                                                     </div>
-                                                    {expiryAlerts.slice(0, 5).map((a) => (
-                                                        <div key={a.lot_id} className="alert-item">
-                                                            <span className="alert-item__dot alert-item__dot--warning" />
-                                                            <div className="alert-item__body">
-                                                                <span className="alert-item__title">
-                                                                    {a.product?.name ?? a.sku_id}
-                                                                </span>
-                                                                <span className="alert-item__meta">
-                                                                    Lot {a.lot_id.slice(0, 8)} · {a.days_to_expiry}d left · {a.qty_on_hand} units
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
+                                                    {expiryAlerts.slice(0, 5).map((a) => {
+                                                        const isRead = readAlertKeys.includes(`expiry:${a.lot_id}`);
+                                                        return (
+                                                            <button
+                                                                key={a.lot_id}
+                                                                type="button"
+                                                                className={`alert-item ${isRead ? "alert-item--read" : "alert-item--unread"}`}
+                                                                onClick={() => handleExpiryAlertClick(a.lot_id)}
+                                                                title="Click to inspect expiring lot in warehouse Bins"
+                                                            >
+                                                                <span className={`alert-item__dot ${isRead ? "alert-item__dot--muted" : "alert-item__dot--warning"}`} />
+                                                                <div className="alert-item__body">
+                                                                    <span className="alert-item__title">
+                                                                        {a.product?.name ?? a.sku_id}
+                                                                    </span>
+                                                                    <span className="alert-item__meta">
+                                                                        Lot {a.lot_id.slice(0, 8)} · {a.days_to_expiry}d left · {a.qty_on_hand} units
+                                                                    </span>
+                                                                </div>
+                                                                <span className="alert-item__action-hint" aria-hidden="true">Inspect →</span>
+                                                            </button>
+                                                        );
+                                                    })}
                                                     {expiryAlerts.length > 5 && (
-                                                        <div className="alert-item">
-                                                            <span className="alert-item__meta">
-                                                                +{expiryAlerts.length - 5} more expiry alerts
-                                                            </span>
+                                                        <div className="alert-dropdown__overflow-note">
+                                                            +{expiryAlerts.length - 5} more expiry alerts
                                                         </div>
                                                     )}
                                                 </>
@@ -692,9 +776,16 @@ export default function DashboardLayout() {
                                     )}
 
                                     <div className="alert-dropdown__footer">
-                                        <a href="/purchasing" onClick={() => setAlertBellOpen(false)}>
+                                        <button
+                                            type="button"
+                                            className="alert-dropdown__footer-btn"
+                                            onClick={() => {
+                                                setAlertBellOpen(false);
+                                                navigate("/purchasing");
+                                            }}
+                                        >
                                             View all in Purchasing Hub →
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                             )}

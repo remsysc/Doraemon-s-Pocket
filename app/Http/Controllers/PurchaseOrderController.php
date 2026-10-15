@@ -131,14 +131,16 @@ class PurchaseOrderController extends Controller
                     ->where('sku_id', $incoming['sku_id'])
                     ->first();
 
-                // If no lot_id supplied, create a minimal lot for this receipt.
+                // If no lot_id supplied, create a lot for this receipt.
                 $lotId = $incoming['lot_id'] ?? null;
 
                 if ($lotId === null) {
+                    $binLocation = ! empty($incoming['bin_location']) ? trim($incoming['bin_location']) : 'RECEIVING';
                     $lot = Lot::create([
                         'sku_id' => $incoming['sku_id'],
                         'received_date' => now(),
-                        'bin_location' => 'RECEIVING',
+                        'bin_location' => $binLocation,
+                        'expiry_date' => $incoming['expiry_date'] ?? null,
                     ]);
                     $lotId = $lot->lot_id;
                 }

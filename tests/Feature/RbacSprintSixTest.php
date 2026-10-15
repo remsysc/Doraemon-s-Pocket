@@ -236,6 +236,44 @@ class RbacSprintSixTest extends TestCase
                 ],
             ])
             ->assertOk();
+
+        $this->assertDatabaseHas('lots', [
+            'sku_id' => $product->sku_id,
+            'bin_location' => 'RECEIVING',
+        ]);
+    }
+
+    public function test_warehouse_staff_can_receive_with_custom_bin_location(): void
+    {
+        $supplier = $this->makeSupplier();
+        $product = $this->makeProduct();
+
+        $po = $this->actingAs($this->admin())
+            ->postJson('/api/purchase-orders', [
+                'supplier_id' => $supplier->id,
+                'items' => [
+                    ['sku_id' => $product->sku_id, 'quantity_ordered' => 8],
+                ],
+            ])
+            ->assertCreated()
+            ->json('data');
+
+        $this->actingAs($this->ws())
+            ->postJson("/api/purchase-orders/{$po['id']}/receive", [
+                'items' => [
+                    [
+                        'sku_id' => $product->sku_id,
+                        'qty_received' => 8,
+                        'bin_location' => 'AC-A01',
+                    ],
+                ],
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('lots', [
+            'sku_id' => $product->sku_id,
+            'bin_location' => 'AC-A01',
+        ]);
     }
 
     public function test_purchasing_manager_cannot_call_receive_endpoint(): void
