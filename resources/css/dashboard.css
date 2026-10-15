@@ -1247,7 +1247,11 @@ body {
 }
 
 .modal--wide {
-    max-width: 580px;
+    max-width: 620px;
+}
+
+.modal--lg {
+    max-width: 760px;
 }
 
 .modal__header {
